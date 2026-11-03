@@ -35,7 +35,7 @@
 </p>
 
 > [!NOTE]
-> **Iridium Decks is built for people who present.** Iridium Technologies, Inc. builds it from an open-source clean-room project in pure Rust.
+> **Iridium Decks is built for people who present.** Iridium Technologies, Inc. builds it from an open-source independent project in pure Rust.
 
 <p align="center">
   <img alt="Iridium Decks editing a slide: ribbon, slide thumbnails with sections, a process diagram on the canvas, notes and status bar" src="docs/images/editor.png" width="900">
@@ -262,7 +262,7 @@ ALSA headers).
 ## The Crafting Apps
 
 Iridium Decks is one of the Iridium applications, alongside the Iridium Docs word processor and the
-Iridium Sheets spreadsheet. Each is built from an open-source clean-room project, in pure Rust, and
+Iridium Sheets spreadsheet. Each is built from an open-source independent project, in pure Rust, and
 each stands on its own.
 
 | App | What it's for | Code |
@@ -274,7 +274,7 @@ each stands on its own.
 ## License and credits
 
 Iridium Decks is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
-Copyright (c) 2026 ArtCraft Team and the Iridium Decks contributors. Required notices are in [NOTICE](NOTICE).
+Copyright (c) 2026 ArtCraft Team and the DeckCraft contributors. Required notices are in [NOTICE](NOTICE).
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed
 with its author, source and license in [ATTRIBUTION.md](ATTRIBUTION.md).

@@ -10,9 +10,15 @@
 /// prompt shows both, and an AppImage's menu entry gets the icon.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
+    id: "iridium-decks",
+    name: "Iridium Decks",
+    tagline: "Presentations and slide shows",
+    repo: "ngjordan/iridium-decks",
+    former_ids: &[],
+    former_names: &[],
     icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ph.iridium.decks.png")),
-    accent: Some([0xf0, 0x7a, 0x1e]),
-    ..craft_update::suite::DECKCRAFT
+    accent: Some([0x0b, 0x6e, 0x4f]),
+    developer: "Iridium Technologies, Inc.",
 };
 
 pub mod backstage;
