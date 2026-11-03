@@ -88,8 +88,8 @@ foreach ($check in @(@('deckcraft.exe', 2), @('deckcraft-cli.exe', 3))) {
 # deckcraft.exe (#1114). -SkipBuild takes whatever binary is already there, which may come from a
 # build without DECKCRAFT_REQUIRE_WINRES=1 whose resource compilation failed: refuse an exe with no
 # icon instead of shipping shortcuts with a generic one. ExtractIconEx with index -1 counts them.
-Add-Type -Namespace Iridium Decks -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern uint ExtractIconEx(string file, int index, IntPtr[] large, IntPtr[] small, uint icons);'
-$Icons = [Iridium Decks.Shell]::ExtractIconEx((Join-Path $Bin 'deckcraft.exe'), -1, $null, $null, 0)
+Add-Type -Namespace IridiumDecks -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern uint ExtractIconEx(string file, int index, IntPtr[] large, IntPtr[] small, uint icons);'
+$Icons = [IridiumDecks.Shell]::ExtractIconEx((Join-Path $Bin 'deckcraft.exe'), -1, $null, $null, 0)
 if ($Icons -eq 0) { throw 'deckcraft.exe has no embedded icon: rebuild it with DECKCRAFT_REQUIRE_WINRES=1 (omit -SkipBuild)' }
 Write-Output "ok deckcraft.exe: $Icons embedded icon group(s)"
 $Stage = Join-Path $TargetDir "windows-package\$Arch"

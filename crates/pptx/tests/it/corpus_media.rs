@@ -46,7 +46,7 @@ fn field(text: &str, kind: &str) -> TextBody {
 
 const SMARTART: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Diagram"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="0" y="0"/><a:ext cx="3657600" cy="1828800"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/diagram"><dgm:relIds xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram"/><dgm:pt xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram"><dgm:t>Quarter</dgm:t></dgm:pt></a:graphicData></a:graphic></p:graphicFrame>"#;
 
-const OLE: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Embedded"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="3810000" y="0"/><a:ext cx="1828800" cy="914400"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole"><p:oleObj name="Note" progId="Iridium Decks.Note.1"><p:embed/></p:oleObj></a:graphicData></a:graphic></p:graphicFrame>"#;
+const OLE: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Embedded"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="3810000" y="0"/><a:ext cx="1828800" cy="914400"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole"><p:oleObj name="Note" progId="IridiumDecks.Note.1"><p:embed/></p:oleObj></a:graphicData></a:graphic></p:graphicFrame>"#;
 
 fn corpus() -> (Presentation, Vec<u8>, Vec<u8>, Vec<u8>) {
     let mut p = defaults::new_presentation(None);
