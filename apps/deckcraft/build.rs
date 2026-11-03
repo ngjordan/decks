@@ -7,13 +7,13 @@
 
 fn main() {
     println!("cargo:rerun-if-changed=build.rs");
-    println!("cargo:rerun-if-changed=../../assets/app-icon/deckcraft.ico");
+    println!("cargo:rerun-if-changed=../../assets/app-icon/iridium-decks.ico");
     println!("cargo:rerun-if-env-changed=DECKCRAFT_REQUIRE_WINRES");
     if std::env::var("CARGO_CFG_TARGET_OS").as_deref() != Ok("windows") {
         return;
     }
     let mut res = winresource::WindowsResource::new();
-    res.set_icon("../../assets/app-icon/deckcraft.ico")
+    res.set_icon("../../assets/app-icon/iridium-decks.ico")
         .set("ProductName", "Iridium Decks")
         .set("FileDescription", "Iridium Decks presentations")
         .set("CompanyName", "Learning Machines LLC")

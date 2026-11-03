@@ -119,7 +119,7 @@ $Msi = Join-Path $Dist "deckcraft-$Version-windows-$Arch.msi"
 Invoke-Native 'WiX UI extension' { wix extension add -g WixToolset.UI.wixext/5.0.2 }
 Invoke-Native 'wix build' {
   wix build (Join-Path $PSScriptRoot 'deckcraft.wxs') -arch $Arch -ext WixToolset.UI.wixext `
-    -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\deckcraft.ico')" `
+    -d "Version=$MsiVersion" -d "BinDir=$Stage" -d "IconPath=$(Join-Path $Root 'assets\app-icon\iridium-decks.ico')" `
     -d "DocsDir=$Docs" -d "HasCraftFontLicences=$HasCraftFontLicences" `
     -o $Msi
 }

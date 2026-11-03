@@ -5,7 +5,7 @@
   "sources": [
     "deckcraft.wxs"
   ],
-  "icon": "assets/app-icon/deckcraft.ico",
+  "icon": "assets/app-icon/iridium-decks.ico",
   "localization": [],
   "extensions": [
     "UI"
