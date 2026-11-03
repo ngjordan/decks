@@ -72,15 +72,15 @@
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
-      "",
-      "&quot;[#DeckcraftExe]&quot; &quot;%1&quot;"
-    ],
-    [
-      "-1",
       "Software\\Iridium Decks",
       "InstallDir",
       "[INSTALLFOLDER]"
+    ],
+    [
+      "-1",
+      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
+      "",
+      "\"[#DeckcraftExe]\" \"%1\""
     ]
   ],
   "mode": "dualScope"
