@@ -29,5 +29,5 @@ jobs:
     with:
       app-name: deckcraft
       app-dir: Iridium Decks
-      install-relative-path: Programs/ArtCraft/Iridium Decks
+      install-relative-path: Programs/Iridium/Iridium Decks
       install-scope: perUser

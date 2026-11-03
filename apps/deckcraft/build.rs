@@ -16,7 +16,7 @@ fn main() {
     res.set_icon("../../assets/app-icon/iridium-decks.ico")
         .set("ProductName", "Iridium Decks")
         .set("FileDescription", "Iridium Decks presentations")
-        .set("CompanyName", "Learning Machines LLC")
+        .set("CompanyName", "Iridium Technologies, Inc.")
         .set("LegalCopyright", "Copyright (c) the Iridium Decks authors. MIT OR Apache-2.0.")
         .set("OriginalFilename", "deckcraft.exe")
         .set("InternalName", "deckcraft");
