@@ -24,12 +24,6 @@
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
-      "",
-      "\"[#DeckcraftExe]\" \"%1\""
-    ],
-    [
-      "-1",
       "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
       ".deckcraft",
       ""
@@ -75,6 +69,18 @@
       "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\deckcraft.exe",
       "",
       "[#DeckcraftExe]"
+    ],
+    [
+      "-1",
+      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
+      "",
+      "&quot;[#DeckcraftExe]&quot; &quot;%1&quot;"
+    ],
+    [
+      "-1",
+      "Software\\Iridium Decks",
+      "InstallDir",
+      "[INSTALLFOLDER]"
     ]
   ],
   "mode": "dualScope"
