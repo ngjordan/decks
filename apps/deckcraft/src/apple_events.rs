@@ -1,6 +1,6 @@
 //! macOS open-documents and quit Apple events.
 //!
-//! Finder double-clicks, Open With, drops on the Dock icon and `open -a DeckCraft deck.pptx` don't
+//! Finder double-clicks, Open With, drops on the Dock icon and `open -a Iridium Decks deck.pptx` don't
 //! pass paths on the command line: LaunchServices sends the running (or just-launched) app a
 //! `kAEOpenDocuments` ('odoc') Apple event. winit 0.30 doesn't handle it and owns the
 //! `NSApplicationDelegate`. Handling it ourselves needs Objective-C class declarations, i.e.

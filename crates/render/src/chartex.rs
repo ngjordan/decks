@@ -90,7 +90,7 @@ fn mix(a: Rgba, b: Rgba, t: f64) -> Rgba {
 }
 
 /// A region map without its geography: the boundaries PowerPoint caches come from an online
-/// map service in an undocumented format and DeckCraft ships no map data, so each region is a
+/// map service in an undocumented format and Iridium Decks ships no map data, so each region is a
 /// tile in a grid, coloured on the map's value scale, with the scale below and a note saying
 /// the map itself is not drawn.
 fn region_tiles(ctx: &mut RenderContext, rctx: &Ctx, c: &Chart, m: Affine, area: Rect, base: f64, text_col: Rgba) {

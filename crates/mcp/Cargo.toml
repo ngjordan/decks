@@ -3,7 +3,7 @@ name = "deckcraft-mcp"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
+description = "Iridium Decks MCP server: JSON-RPC 2.0 over stdio, driving a running app or a headless session"
 
 [lints]
 workspace = true

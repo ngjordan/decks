@@ -1,7 +1,7 @@
 //! Owned corpus: themes, several masters and layouts, shape effects (shadow, glow, soft edge,
 //! reflection) and hyperlinks and actions on text and shapes.
 //!
-//! The decks are built as PowerPoint writes them: a DeckCraft package whose theme, slides and
+//! The decks are built as PowerPoint writes them: a Iridium Decks package whose theme, slides and
 //! relationships are replaced with PowerPoint-shaped XML, and a two-master deck built in the model.
 //! The check is open → save → reopen with nothing lost.
 

@@ -69,7 +69,7 @@ fn transition_from_xml_raw(e: &El) -> Option<(String, String)> {
             if e.attr("pattern") == Some("hexagon") { (k("glitter"), format!("hex{}", d.to_ascii_uppercase())) } else { (k("glitter"), d) }
         }
         "shred" => {
-            // `crush` is what DeckCraft wrote before it knew PowerPoint's `rectangle`.
+            // `crush` is what Iridium Decks wrote before it knew PowerPoint's `rectangle`.
             let particles = matches!(e.attr("pattern"), Some("rectangle" | "crush"));
             let out = e.attr("dir") == Some("out");
             (k("shred"), format!("{}{}", if particles { "particles" } else { "strips" }, if out { "Out" } else { "In" }))

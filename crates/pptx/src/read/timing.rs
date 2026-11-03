@@ -142,7 +142,7 @@ fn place_by_parent_delays(out: &mut [(Animation, u32, String, bool)], at: &[(Opt
             continue;
         }
         let abs: Vec<u32> = idx.iter().map(|&i| at[i].2.saturating_add(out[i].0.delay_ms)).collect();
-        // Only a file that lists effects out of time order needs this: files PowerPoint or DeckCraft
+        // Only a file that lists effects out of time order needs this: files PowerPoint or Iridium Decks
         // save are in order, and their reading stays exactly as before.
         if abs.is_sorted() {
             continue;

@@ -1,7 +1,7 @@
-//! DeckCraft's MCP server.
+//! Iridium Decks's MCP server.
 //!
 //! [Model Context Protocol](https://modelcontextprotocol.io) over stdio: newline-delimited
-//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes DeckCraft as a set of MCP
+//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes Iridium Decks as a set of MCP
 //! tools and resources and forwards everything to a [`Backend`]:
 //!
 //! - [`Remote`] talks to a running desktop app through its loopback JSON-lines control channel

@@ -3,7 +3,7 @@ name = "deckcraft-geom"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft geometry: units (EMU/pt), transforms, preset shape generators, adjust handles, hit testing"
+description = "Iridium Decks geometry: units (EMU/pt), transforms, preset shape generators, adjust handles, hit testing"
 
 [lints]
 workspace = true

@@ -132,12 +132,12 @@ pub(super) fn font_add(_s: &mut Session, p: &Value) -> Result<Value> {
     }
     let faces = deckcraft_fonts::FontDb::global().add_font(data);
     if faces == 0 {
-        return Err(bad("font.add", "not a font DeckCraft can read (or already added)"));
+        return Err(bad("font.add", "not a font Iridium Decks can read (or already added)"));
     }
     Ok(json!({"faces": faces}))
 }
 
-/// Catalog the installed fonts again, so fonts installed while DeckCraft runs appear.
+/// Catalog the installed fonts again, so fonts installed while Iridium Decks runs appear.
 pub(super) fn font_rescan(_s: &mut Session, _p: &Value) -> Result<Value> {
     let db = deckcraft_fonts::FontDb::global();
     #[cfg(not(target_arch = "wasm32"))]

@@ -21,7 +21,7 @@ pub trait Backend {
     fn describe(&self) -> String;
 }
 
-/// A running DeckCraft app, reached through its loopback control port.
+/// A running Iridium Decks app, reached through its loopback control port.
 pub struct Remote {
     addr: String,
     conn: Option<(BufReader<TcpStream>, TcpStream)>,
@@ -127,13 +127,13 @@ impl Backend for Remote {
             self.conn = None;
             self.send(&line).map_err(|e| {
                 self.conn = None;
-                format!("DeckCraft app at {} is not reachable: {e}", self.addr)
+                format!("Iridium Decks app at {} is not reachable: {e}", self.addr)
             })?;
         }
         self.receive(id).map_err(|e| {
             self.conn = None;
             format!(
-                "lost the reply from the DeckCraft app at {} ({e}); the command may or may not have run, check the document before retrying",
+                "lost the reply from the Iridium Decks app at {} ({e}); the command may or may not have run, check the document before retrying",
                 self.addr
             )
         })?
@@ -144,7 +144,7 @@ impl Backend for Remote {
     }
 
     fn describe(&self) -> String {
-        format!("connected to the DeckCraft app at {}", self.addr)
+        format!("connected to the Iridium Decks app at {}", self.addr)
     }
 }
 

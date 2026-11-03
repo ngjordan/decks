@@ -109,7 +109,7 @@ fn package_carries_both_parts_and_the_slide_anchor() {
     let rels = part(&bytes, "ppt/slides/_rels/slide1.xml.rels");
     assert!(rels.contains("2018/10/relationships/comments"), "{rels}");
     // The slide's commentRel anchor names the relationship that points at THIS modern part —
-    // the wiring PowerPoint needs and DeckCraft's own reader does not check.
+    // the wiring PowerPoint needs and Iridium Decks's own reader does not check.
     let slide = part(&bytes, "ppt/slides/slide1.xml");
     assert!(slide.contains("commentRel") && slide.contains("{6950BFC3-D8DA-4A85-94F7-54DA5524770B}"), "{slide}");
     let anchor_at = slide.find("commentRel").expect("anchor");

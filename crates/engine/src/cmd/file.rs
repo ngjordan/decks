@@ -164,7 +164,7 @@ fn open_other(name: &str, bytes: &[u8]) -> Result<(Presentation, Vec<String>)> {
         return Ok((p, lost_slides));
     }
     if deckcraft_pptx::is_encrypted(bytes) {
-        return Err(EngineError::Other(format!("{name} is password-protected. DeckCraft can't open password-protected presentations yet.")));
+        return Err(EngineError::Other(format!("{name} is password-protected. Iridium Decks can't open password-protected presentations yet.")));
     }
     let lower = name.to_ascii_lowercase();
     let rtf = deckcraft_format::rtf::sniff_rtf(bytes);
@@ -182,7 +182,7 @@ fn open_other(name: &str, bytes: &[u8]) -> Result<(Presentation, Vec<String>)> {
         }
         return Ok((p, vec![]));
     }
-    Err(EngineError::Other(format!("{name}: not a presentation DeckCraft can read")))
+    Err(EngineError::Other(format!("{name}: not a presentation Iridium Decks can read")))
 }
 
 /// Fill in each audio and video clip's length and picture size from its bytes: a `.pptx` doesn't
@@ -432,7 +432,7 @@ pub fn pdf_bytes(doc: &Presentation, p: &Value) -> Result<Vec<u8>> {
 pub const WRITABLE_EXTENSIONS: &[&str] = &["deckcraft", "pptx", "potx", "ppsx", "pdf", "png", "jpg", "jpeg", "gif", "txt", "md", "rtf"];
 
 /// The format a file named `path` is written in, or `None` when its extension names no format
-/// DeckCraft writes (`.odp`, `.svg`, no extension …): [`format_for_path`] would save
+/// Iridium Decks writes (`.odp`, `.svg`, no extension …): [`format_for_path`] would save
 /// those as native `.deckcraft` bytes under the wrong name.
 pub fn writable_format_for_path(path: &str) -> Option<&'static str> {
     let ext = std::path::Path::new(path).extension()?.to_str()?.to_ascii_lowercase();

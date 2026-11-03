@@ -9,7 +9,7 @@ pub struct AudioInfo {
     pub codec: String,
     pub sample_rate: u32,
     pub channels: u16,
-    /// DeckCraft can decode it.
+    /// Iridium Decks can decode it.
     pub decodable: bool,
 }
 

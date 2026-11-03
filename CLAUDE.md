@@ -1,4 +1,4 @@
-# DeckCraft — working notes for Claude
+# Iridium Decks — working notes for Claude
 
 Read [AGENTS.md](AGENTS.md) first: its rules (asset policy, clean room, never crash) bind you and
 win over anything here.

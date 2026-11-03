@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Repackage a DeckCraft Linux tarball as a single-file Flatpak bundle:
+# Repackage a Iridium Decks Linux tarball as a single-file Flatpak bundle:
 #
 #   $DIST/deckcraft-<version>-linux-<arch>.flatpak
 #
@@ -11,12 +11,12 @@
 # `appstreamcli compose`; the freedesktop runtime and SDK named in the manifest are
 # installed per-user from Flathub. Unless --no-test, the bundle is then installed per-user and
 # `deckcraft-cli --version` is run inside the sandbox as a smoke test.
-# Manifest: packaging/linux/flatpak/ai.storyteller.deckcraft.bundle.yml.
+# Manifest: packaging/linux/flatpak/ph.iridium.decks.bundle.yml.
 set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.deckcraft
+APP_ID=ph.iridium.decks
 FLATHUB=https://dl.flathub.org/repo/flathub.flatpakrepo
 
 TEST=1
@@ -45,7 +45,7 @@ for tool in flatpak flatpak-builder; do
   command -v "$tool" >/dev/null || { echo "error: $tool not found (apt install flatpak flatpak-builder librsvg2-common)" >&2; exit 1; }
 done
 
-echo "==> DeckCraft $VERSION Flatpak bundle for $ARCH from $(basename "$TARBALL")"
+echo "==> Iridium Decks $VERSION Flatpak bundle for $ARCH from $(basename "$TARBALL")"
 
 WORK="$CARGO_TARGET_DIR/flatpak-bundle"
 rm -rf "$WORK"

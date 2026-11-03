@@ -259,7 +259,7 @@ impl Popup {
         });
         window.add_event_listener_with_callback("message", listener.as_ref().unchecked_ref()).map_err(error)?;
         if let Some(document) = window.document() {
-            document.set_title("Presenter View — DeckCraft");
+            document.set_title("Presenter View — Iridium Decks");
         }
         let popup = Self { token, origin, opener, snapshot, last_received, listener, view: View::default() };
         send(&popup.opener, &popup.origin, serde_json::json!({"kind":"ready","token":popup.token}))?;

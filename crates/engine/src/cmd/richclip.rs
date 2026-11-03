@@ -1,6 +1,6 @@
 //! Rich text on the system clipboard, as HTML.
 //!
-//! Pages and Keynote put copied text on the pasteboard as HTML (and plain text). DeckCraft writes
+//! Pages and Keynote put copied text on the pasteboard as HTML (and plain text). Iridium Decks writes
 //! the same pair when it copies, and reads it back on paste: bold, italic and underline survive.
 //! Anything else in the markup is skipped. A hostile fragment is capped, never executed.
 

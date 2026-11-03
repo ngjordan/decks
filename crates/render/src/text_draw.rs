@@ -89,7 +89,7 @@ pub fn text_transform(m: Affine, tr: Rect, rotation: f64) -> Affine {
     t
 }
 
-/// The WordArt warp of `s`'s text over its text rectangle `tr`, if it has one DeckCraft draws.
+/// The WordArt warp of `s`'s text over its text rectangle `tr`, if it has one Iridium Decks draws.
 pub fn text_warp(rctx: &Ctx, s: &Shape, tr: Rect) -> Option<deckcraft_geom::warp::Warp> {
     let bp = resolve::body(rctx, s);
     let name = bp.warp.as_deref()?;

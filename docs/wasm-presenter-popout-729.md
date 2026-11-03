@@ -4,7 +4,7 @@ Tracks https://github.com/storytold/deckcraft/issues/729 (the reporter moved dup
 
 ## Implementation
 
-The browser presenter opens the same DeckCraft web build in a separate, same-origin window.
+The browser presenter opens the same Iridium Decks web build in a separate, same-origin window.
 That window starts its own eframe runner and renders only presenter controls, current/next
 previews and notes. The audience window remains the sole owner of slideshow state, animations,
 media and navigation. Presenter keyboard input uses the same navigation handler as the native

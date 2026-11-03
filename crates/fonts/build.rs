@@ -12,7 +12,7 @@
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-/// Families DeckCraft never embeds (AGENTS.md §1: no Adobe-authored visual design, and no Noto
+/// Families Iridium Decks never embeds (AGENTS.md §1: no Adobe-authored visual design, and no Noto
 /// CJK rebrand of Source Han on any platform).
 const EXCLUDED_FAMILIES: &[&str] = &["Source Sans 3", "Source Serif 4", "Source Han Sans", "Source Han Serif"];
 
@@ -145,7 +145,7 @@ fn manifest(dir: &std::path::Path, manifest: &std::path::Path, wasm: bool) -> Re
         let [family, style, file, scripts, ..] = f.as_slice() else {
             return Err(format!("malformed manifest line: {line}"));
         };
-        // DeckCraft's asset policy: no Adobe-authored typefaces, even openly licensed ones.
+        // Iridium Decks's asset policy: no Adobe-authored typefaces, even openly licensed ones.
         if is_excluded_family(family) {
             continue;
         }

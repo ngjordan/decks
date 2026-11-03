@@ -1165,7 +1165,7 @@ fn colour_glyphs_paint_their_layers() {
     let mut t = TextBody::from_text("\u{E000} \u{E001}");
     let props = &mut t.paragraphs[0].runs[0].props;
     props.size = Some(72.0);
-    props.font = Some("DeckCraft Colr Squares".into());
+    props.font = Some("Iridium Decks Colr Squares".into());
     props.fill = Some(deckcraft_model::style::Fill::solid(ColorRef::rgb(deckcraft_color::Rgba::rgb(0, 160, 0))));
     sh.text = Some(t);
     let p = deck_with(vec![sh]);
@@ -1403,7 +1403,7 @@ fn soft_edges_fade_to_the_outline() {
 #[test]
 fn a_file_defined_table_style_draws_its_parts() {
     // Red table background (tblBg), see-through white on banded rows, a 4 pt blue left border and
-    // no inside lines: drawn from the definition, not DeckCraft's own look for the style.
+    // no inside lines: drawn from the definition, not Iridium Decks's own look for the style.
     use deckcraft_model::style::{Fill, Line};
     use deckcraft_model::table::{TableBorder, TablePart, TablePartStyle, TableStyleDef};
     let rgb = |r, g, b| ColorRef::rgb(deckcraft_color::Rgba::rgb(r, g, b));

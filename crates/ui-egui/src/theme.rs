@@ -32,7 +32,7 @@ pub struct Tokens {
     pub hover: Color32,
     pub pressed: Color32,
     pub selected: Color32,
-    /// DeckCraft's accent (tabs underline, selected thumbnail, primary buttons).
+    /// Iridium Decks's accent (tabs underline, selected thumbnail, primary buttons).
     pub accent: Color32,
     pub accent_text: Color32,
     pub contextual: Color32,
@@ -69,7 +69,7 @@ impl Tokens {
             hover: Color32::from_rgb(0xEB, 0xEB, 0xEB),
             pressed: Color32::from_rgb(0xDE, 0xDE, 0xDE),
             selected: Color32::from_rgb(0xE6, 0xE6, 0xE6),
-            accent: Color32::from_rgb(0xD9, 0x5A, 0x1A),
+            accent: Color32::from_rgb(0x0B, 0x6E, 0x4F),
             accent_text: Color32::WHITE,
             contextual: Color32::from_rgb(0xC2, 0x4E, 0x14),
             selection: Color32::from_rgb(0x7A, 0x7A, 0x7A),
@@ -101,7 +101,7 @@ impl Tokens {
             hover: Color32::from_rgb(0x40, 0x40, 0x40),
             pressed: Color32::from_rgb(0x4C, 0x4C, 0x4C),
             selected: Color32::from_rgb(0x47, 0x47, 0x47),
-            accent: Color32::from_rgb(0xF2, 0x6B, 0x1D),
+            accent: Color32::from_rgb(0x3F, 0xA8, 0x6C),
             accent_text: Color32::WHITE,
             contextual: Color32::from_rgb(0xF5, 0x8A, 0x4B),
             selection: Color32::from_rgb(0xAA, 0xAA, 0xAA),

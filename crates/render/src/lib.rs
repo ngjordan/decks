@@ -1,4 +1,4 @@
-//! The DeckCraft renderer: draws slides, layouts and masters with `vello_cpu`.
+//! The Iridium Decks renderer: draws slides, layouts and masters with `vello_cpu`.
 //!
 //! One code path serves the editor canvas, thumbnails, image/PDF-raster export and the slide show:
 //! [`render_slide`] draws the background, the master and layout graphics, then the slide's shapes

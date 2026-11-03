@@ -86,7 +86,7 @@ fn kind_of(layout: &str) -> Option<ChartType> {
     })
 }
 
-/// Parse a `chartEx` part. `None` for anything else, and for layouts DeckCraft has no type for.
+/// Parse a `chartEx` part. `None` for anything else, and for layouts Iridium Decks has no type for.
 pub fn read_chartex_xml(bytes: &[u8]) -> Option<Chart> {
     let doc = crate::xml::parse(bytes).ok()?;
     let mut root = doc.root;

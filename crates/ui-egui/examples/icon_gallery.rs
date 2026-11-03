@@ -1,4 +1,4 @@
-//! Renders every DeckCraft icon into a labelled PNG grid, on a light and a dark background.
+//! Renders every Iridium Decks icon into a labelled PNG grid, on a light and a dark background.
 //!
 //! ```sh
 //! cargo run -p deckcraft-ui-egui --example icon_gallery -- /tmp/gallery.png

@@ -47,7 +47,7 @@ pub fn fit_text_box(s: &mut Session, id: ShapeId) -> Result<()> {
 }
 
 /// Store the shrink-on-overflow scale the layout computes for `id`, so a save keeps
-/// `fontScale`/`lnSpcReduction` in step with what DeckCraft draws (#724). Runs after a text
+/// `fontScale`/`lnSpcReduction` in step with what Iridium Decks draws (#724). Runs after a text
 /// change: a body with no meaningful saved scale — a file's bare `<a:normAutofit/>` (`None`) or
 /// the reset an edit leaves (`1.0`, no reduction) — is fitted afresh; a scale the file saved is
 /// left as it is, as PowerPoint draws it.

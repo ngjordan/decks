@@ -1,6 +1,6 @@
 //! PDF export.
 //!
-//! Each slide is drawn by the DeckCraft renderer at print resolution (so the PDF looks exactly like
+//! Each slide is drawn by the Iridium Decks renderer at print resolution (so the PDF looks exactly like
 //! the slide, effects included) and overlaid with an invisible layer of real text from the text
 //! layout engine with embedded font subsets, so the text can be searched, selected and copied.
 //! Hyperlinks and shape actions become link annotations, slide titles become bookmarks.
@@ -168,8 +168,8 @@ fn export_inner(pres: &Presentation, opts: &PdfOptions) -> Result<Vec<u8>> {
     }
     let title = opts.title.clone().unwrap_or_else(|| pres.props.title.clone());
     let metadata = Metadata {
-        creator: "DeckCraft".into(),
-        producer: "DeckCraft".into(),
+        creator: "Iridium Decks".into(),
+        producer: "Iridium Decks".into(),
         title: (!title.trim().is_empty()).then_some(title),
         authors: if pres.props.author.trim().is_empty() { Vec::new() } else { vec![pres.props.author.clone()] },
         ..Default::default()

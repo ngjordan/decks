@@ -1364,7 +1364,7 @@ fn dlg_preferences(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         }
         d.fields.remove("uiScale");
     }
-    // PowerPoint takes the unit from the system's measurement setting; DeckCraft asks here.
+    // PowerPoint takes the unit from the system's measurement setting; Iridium Decks asks here.
     ui.horizontal(|ui| {
         ui.label("Measurement units:");
         let units = &mut app.session.prefs.units;

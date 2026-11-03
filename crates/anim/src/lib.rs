@@ -1,4 +1,4 @@
-//! Slide show timing for DeckCraft.
+//! Slide show timing for Iridium Decks.
 //!
 //! - [`Timeline`]: a slide's animation list grouped into click steps, with per-shape (and
 //!   per-paragraph) [`AnimState`] at any point of the show.

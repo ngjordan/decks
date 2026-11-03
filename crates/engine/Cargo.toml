@@ -3,7 +3,7 @@ name = "deckcraft-engine"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft engine: sessions, undo history, selection, the command registry every frontend dispatches through, and pointer tools"
+description = "Iridium Decks engine: sessions, undo history, selection, the command registry every frontend dispatches through, and pointer tools"
 
 [lints]
 workspace = true

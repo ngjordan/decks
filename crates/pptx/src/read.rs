@@ -172,7 +172,7 @@ pub fn keep_xml(el: &El, ns: &[(String, String)]) -> String {
 /// Namespace prefixes whose `mc:Choice` content we understand.
 const SUPPORTED_MC: [&str; 10] = ["p14", "p15", "p159", "a14", "a16", "p1510", "a15", "c14", "p188", "cx1"];
 
-/// Office 2016 charts sit in a `cx1` choice; take it only for a layout DeckCraft reads (the
+/// Office 2016 charts sit in a `cx1` choice; take it only for a layout Iridium Decks reads (the
 /// fallback is a picture or "this chart isn't available" text). The part is checked later, when
 /// the frame is read, so here only the namespace counts.
 fn chartex_readable(ch: &El) -> bool {

@@ -331,7 +331,7 @@ pub fn box_handles(x: &Xfrm) -> ([Point; 8], Point) {
 }
 
 /// WordArt adjust handles for `sh`, in shape-local points (the text rectangle). Empty when the
-/// resolved body has no warp DeckCraft draws, or the shape has no text to store one on.
+/// resolved body has no warp Iridium Decks draws, or the shape has no text to store one on.
 pub fn wordart_handles(
     doc: &deckcraft_model::Presentation,
     sel: &crate::Selection,

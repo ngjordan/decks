@@ -1,5 +1,5 @@
 //! Table styles: our style ids ↔ table style GUIDs, and `tableStyles.xml` definitions for the
-//! styles we write (generated from theme accents, matching how DeckCraft draws them).
+//! styles we write (generated from theme accents, matching how Iridium Decks draws them).
 
 use crate::opc::NS_A;
 use crate::xml::{A, W};
@@ -47,7 +47,7 @@ fn own_guid(style: &str) -> String {
     guid(&format!("deckcraft-table-style:{style}"))
 }
 
-/// Is `g` the GUID DeckCraft writes for one of its own styles?
+/// Is `g` the GUID Iridium Decks writes for one of its own styles?
 pub fn is_own_guid(g: &str) -> bool {
     let up = g.to_ascii_uppercase();
     deckcraft_model::table::table_styles().iter().any(|(id, _)| own_guid(id) == up)
@@ -226,7 +226,7 @@ pub fn table_styles_xml(used: &[String], defs: &[deckcraft_model::table::TableSt
         if !define {
             continue;
         }
-        let name = names.iter().find(|(id, _)| id == s).map(|(_, n)| format!("DeckCraft {n}")).unwrap_or_else(|| s.clone());
+        let name = names.iter().find(|(id, _)| id == s).map(|(_, n)| format!("Iridium Decks {n}")).unwrap_or_else(|| s.clone());
         style_def(&mut w, s, &name);
     }
     // Styles the file defined but no table uses still belong to the deck.

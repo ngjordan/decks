@@ -1,4 +1,4 @@
-//! The DeckCraft engine façade.
+//! The Iridium Decks engine façade.
 //!
 //! Every user-visible action is a command with a stable id (`slide.new`, `shape.insert`,
 //! `text.insert`, `format.bold`…) and JSON parameters. The egui UI, the CLI, the control channel
@@ -495,7 +495,7 @@ pub struct Session {
     pub gif_paused: std::collections::HashSet<ShapeId>,
     /// Text keys follow the Mac (Option+arrows move by word, Cmd+arrows to the line or text
     /// ends) instead of Windows and Linux (Ctrl+arrows by word or paragraph). Defaults to the
-    /// platform DeckCraft was built for.
+    /// platform Iridium Decks was built for.
     pub mac_keys: bool,
     /// Command panics caught by the guard (the document was rolled back); soak tests require 0.
     pub panics_caught: u64,

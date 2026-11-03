@@ -189,7 +189,7 @@ fn font_group(app: &mut SlideApp, ui: &mut Ui, st: &Value) {
                         }
                     }
                     ui.separator();
-                    // Fonts installed while DeckCraft runs (e.g. into ~/.local/share/fonts).
+                    // Fonts installed while Iridium Decks runs (e.g. into ~/.local/share/fonts).
                     if ui.button("Rescan Installed Fonts").clicked() {
                         run(app, "font.rescan", json!({}));
                         ui.close();

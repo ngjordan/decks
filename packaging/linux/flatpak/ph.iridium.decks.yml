@@ -1,16 +1,16 @@
-# Flatpak manifest for DeckCraft, ready for a Flathub submission.
+# Flatpak manifest for Iridium Decks, ready for a Flathub submission.
 #
 # Flatpak builds run offline, so the crate sources must be vendored first. From the repo root:
 #
 #   curl -fsSLO https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 #   python3 flatpak-cargo-generator.py Cargo.lock -o packaging/linux/flatpak/cargo-sources.json
-#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/ai.storyteller.deckcraft.yml
-#   flatpak run ai.storyteller.deckcraft
+#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/ph.iridium.decks.yml
+#   flatpak run ph.iridium.decks
 #
 # For Flathub, replace the `dir` source with a `git` source pinned to a release tag and commit.
-# The release's .flatpak bundles are built from ai.storyteller.deckcraft.bundle.yml instead (it
+# The release's .flatpak bundles are built from ph.iridium.decks.bundle.yml instead (it
 # repackages the Linux tarball); keep runtime-version and finish-args identical in both.
-id: ai.storyteller.deckcraft
+id: ph.iridium.decks
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -18,7 +18,7 @@ sdk-extensions:
   - org.freedesktop.Sdk.Extension.rust-stable
 command: deckcraft
 finish-args:
-  - --filesystem=xdg-data/ArtCraft/versions:ro
+  - --filesystem=xdg-data/Iridium Decks/versions:ro
   # Display: Wayland first; X11 only when no Wayland compositor is running.
   - --socket=wayland
   - --socket=fallback-x11
@@ -49,14 +49,14 @@ modules:
       - cargo --offline build --release --locked -p deckcraft
       - install -Dm755 target/release/deckcraft /app/bin/deckcraft
       - install -Dm644 NOTICE /app/share/doc/deckcraft/NOTICE
-      - install -Dm644 packaging/linux/ai.storyteller.deckcraft.desktop /app/share/applications/ai.storyteller.deckcraft.desktop
-      - install -Dm644 packaging/linux/ai.storyteller.deckcraft.mime.xml /app/share/mime/packages/ai.storyteller.deckcraft.xml
+      - install -Dm644 packaging/linux/ph.iridium.decks.desktop /app/share/applications/ph.iridium.decks.desktop
+      - install -Dm644 packaging/linux/ph.iridium.decks.mime.xml /app/share/mime/packages/ph.iridium.decks.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
       - >-
         version=$(awk '/^\[/{p=($0=="[workspace.package]");next} p&&$1=="version"{gsub(/[" ]/,"",$3);print $3;exit}' Cargo.toml);
         install -d /app/share/metainfo;
         sed -e "s/@VERSION@/$version/" -e "s/@DATE@/$(date -u +%Y-%m-%d)/"
-        packaging/linux/ai.storyteller.deckcraft.metainfo.xml.in > /app/share/metainfo/ai.storyteller.deckcraft.metainfo.xml
+        packaging/linux/ph.iridium.decks.metainfo.xml.in > /app/share/metainfo/ph.iridium.decks.metainfo.xml
     sources:
       - type: dir
         path: ../../..

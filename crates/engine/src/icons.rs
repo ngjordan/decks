@@ -1,7 +1,7 @@
 //! Insert › Icons: Lucide stroke icons as custom geometry.
 //!
 //! The paths in `icon_data.rs` are Lucide 1.56.0 centerlines (24×24, fill none). They are converted
-//! to DeckCraft's `M`/`L`/`C`/`Q`/`Z` syntax when inserted, so the shape is a stroked outline rather
+//! to Iridium Decks's `M`/`L`/`C`/`Q`/`Z` syntax when inserted, so the shape is a stroked outline rather
 //! than a filled silhouette or an SVG picture.
 
 use std::collections::HashMap;
@@ -46,7 +46,7 @@ pub fn outline(name: &str) -> Option<&'static BezPath> {
     parsed().get(icon.name)
 }
 
-/// DeckCraft path syntax for `name`, in the 24×24 viewBox.
+/// Iridium Decks path syntax for `name`, in the 24×24 viewBox.
 pub fn path_data(name: &str) -> Option<String> {
     outline(name).and_then(deck_path)
 }

@@ -1,4 +1,4 @@
-//! DeckCraft in the browser.
+//! Iridium Decks in the browser.
 //!
 //! Runs the same [`deckcraft_ui_egui::SlideApp`] as the desktop app through eframe's web
 //! runner (wgpu: WebGPU where available, WebGL2 otherwise). Build with `trunk build --release`

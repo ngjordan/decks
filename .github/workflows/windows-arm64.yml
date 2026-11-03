@@ -28,6 +28,6 @@ jobs:
     uses: storytold/craft-common-actions/.github/workflows/windows-arm64.yml@main
     with:
       app-name: deckcraft
-      app-dir: DeckCraft
-      install-relative-path: Programs/ArtCraft/DeckCraft
+      app-dir: Iridium Decks
+      install-relative-path: Programs/ArtCraft/Iridium Decks
       install-scope: perUser

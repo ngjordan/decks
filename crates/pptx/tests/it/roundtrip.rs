@@ -43,7 +43,7 @@ fn new_slide(p: &mut Presentation, title: &str) -> Slide {
 pub fn rich_deck() -> Presentation {
     let mut p = defaults::new_presentation(None);
     p.props.title = "Rich deck".into();
-    p.props.author = "DeckCraft tests".into();
+    p.props.author = "Iridium Decks tests".into();
     p.props.created = "2025-01-02T03:04:05Z".into();
     let img = p.add_media("image1.png", "image/png", png(40, 30, [200, 40, 40])).expect("media");
     let img2 = p.add_media("image2.png", "image/png", png(8, 8, [20, 140, 220])).expect("media");
@@ -417,7 +417,7 @@ fn deck_level_round_trip() {
     assert_eq!(q.slide_size, p.slide_size);
     assert_eq!(q.first_slide_number, 0);
     assert_eq!(q.props.title, "Rich deck");
-    assert_eq!(q.props.author, "DeckCraft tests");
+    assert_eq!(q.props.author, "Iridium Decks tests");
     assert_eq!(q.props.created, "2025-01-02T03:04:05Z");
     assert_eq!(
         q.sections.iter().map(|s| (s.name.clone(), s.slides.len())).collect::<Vec<_>>(),
@@ -1872,7 +1872,7 @@ fn chartex_waterfall_reads_and_round_trips() {
     assert_eq!(again.subtotals, c.subtotals);
 }
 
-/// New Office 2016 charts made in DeckCraft are written as chartEx parts that read back as the
+/// New Office 2016 charts made in Iridium Decks are written as chartEx parts that read back as the
 /// same type, data and options.
 #[test]
 fn chartex_new_charts_save_as_their_own_type() {

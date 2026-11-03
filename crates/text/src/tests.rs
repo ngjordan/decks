@@ -233,7 +233,7 @@ fn saved_shrink_scale_is_drawn() {
 }
 
 /// A body whose file has `<a:normAutofit/>` with no `fontScale` is the schema default 100 %:
-/// PowerPoint draws it as it is, even overflowing. DeckCraft draws it the same (#724).
+/// PowerPoint draws it as it is, even overflowing. Iridium Decks draws it the same (#724).
 #[test]
 fn bare_normautofit_draws_at_full_size() {
     let text = (0..30).map(|i| format!("Line number {i}")).collect::<Vec<_>>().join("\n");

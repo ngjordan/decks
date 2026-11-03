@@ -1,4 +1,4 @@
-# Where DeckCraft falls short of PowerPoint
+# Where Iridium Decks falls short of PowerPoint
 
 > **Last reviewed:** 2026-10-30 · **Last updated:** 2026-11-03 · **Change:** trivial (run alternate language and reflection transforms survive saves; reused slide contents scale to the destination, picker thumbnails remain a gap; previous: trivial (locked No Fill and no-outline click-through regression coverage added; No Fill hit-testing follows resolved fill instead of the presence of a style (#1621); scores unchanged)) · **Target:** Microsoft PowerPoint for Mac 16.113 (Microsoft 365)
 
@@ -42,7 +42,7 @@ revision history.
 
 ### Startup crashes on some Windows GPUs (#40, #59)
 - **Evidence:** #59 (Intel UHD, access violation in `igvk64.dll` during Vulkan enumeration), #40
-  (WordCraft, GridCraft and DeckCraft all fail on one Windows 11 PC). The DX12 default (#16) fixed
+  (WordCraft, GridCraft and Iridium Decks all fail on one Windows 11 PC). The DX12 default (#16) fixed
   AMD's `atio6axx.dll` crash only.
 - **Impact:** the app never opens for those users.
 - **Estimate:** 4–8 h (backend probing outside the process or a safe-mode fallback, a software
@@ -119,7 +119,7 @@ Detail in [file-format-parity.md](file-format-parity.md).
 
 ### No legacy `.ppt`/`.pot`/`.pps` import
 - **Evidence:** PowerPoint for Mac still opens and saves the 97–2003 binary formats
-  (`CFBundleDocumentTypes`); DeckCraft doesn't read them.
+  (`CFBundleDocumentTypes`); Iridium Decks doesn't read them.
 - **Impact:** archives of older decks don't open.
 - **Estimate:** 20–35 h (import only, from the public [MS-PPT] spec). Owner decision whether it's
   worth it.
@@ -174,7 +174,7 @@ Detail in [file-format-parity.md](file-format-parity.md).
   have their own layouts, histograms and Paretos bin their data (count, width or Scott's rule),
   and box & whisker charts use exclusive or inclusive quartiles with 1.5 IQR whiskers. Region maps are kept
   (their cached geography too, also through edits) and drawn as value-coloured tiles with a
-  colour scale, since DeckCraft ships no map boundaries. Radar charts are drawn polar (filled
+  colour scale, since Iridium Decks ships no map boundaries. Radar charts are drawn polar (filled
   or lines), stock charts as high-low lines with close dashes or up/down bars and saved as
   `c:stockChart`, and combo charts start as columns with a line. Trendlines round-trip
   (`corpus_charts.rs`) and are drawn: linear, exponential, logarithmic, polynomial, power and
@@ -195,11 +195,11 @@ Detail in [file-format-parity.md](file-format-parity.md).
   cached drawing; `crates/pptx/src/dgm.rs`), and PowerPoint diagrams read their outline from the
   data model, so they get the Text Pane too. 15 layouts (bullet and block lists, five process, two cycle and
   a radial, hierarchy, two pyramids, two matrices), four SmartArt Styles and Change Colors
-  (colourful or one accent). Still missing: DeckCraft's own layout definitions are simple (not yet
+  (colourful or one accent). Still missing: Iridium Decks's own layout definitions are simple (not yet
   checked in PowerPoint itself); PowerPoint has ~200 layouts, picture layouts and 3-D styles; editing an
-  imported diagram's outline redraws it with DeckCraft's layout; a diagram with no cached drawing
+  imported diagram's outline redraws it with Iridium Decks's layout; a diagram with no cached drawing
   isn't drawn.
-- **Impact:** a PowerPoint diagram edited in DeckCraft changes look.
+- **Impact:** a PowerPoint diagram edited in Iridium Decks changes look.
 - **Estimate:** 6–10 h.
 
 ### Animation Pane, effect count and preview
@@ -260,7 +260,7 @@ and starts at that effect. The pane has an advanced timeline with draggable bars
   Review › Language marks the selection's proofing language or Do Not Check Spelling, or the
   whole presentation's (`format.languageAll`: every run, notes, masters, layouts and the default
   text style) (`lang`/`noProof` round-trip in PPTX). No grammar checking. The web build checks on the UI
-  thread a few milliseconds per frame. No dictionaries ship with DeckCraft, so without one
+  thread a few milliseconds per frame. No dictionaries ship with Iridium Decks, so without one
   installed (always on Windows and the web) only a short list of common misspellings is found.
   `review.thesaurus` looks up the selected word (checklist row partial). AutoCorrect has
   PowerPoint's options (two initial capitals, sentence and day capitals, caps lock, fractions, an

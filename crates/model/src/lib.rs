@@ -1,4 +1,4 @@
-//! The DeckCraft document model.
+//! The Iridium Decks document model.
 //!
 //! A [`Presentation`] has slide masters (each with a theme and layouts) and slides. Each slide
 //! uses a layout; placeholders on a slide inherit position, formatting and text styles from the
@@ -954,7 +954,7 @@ fn lenient_size<'de, D: serde::Deserializer<'de>>(d: D) -> std::result::Result<S
     Ok(Size::new(side("width"), side("height")))
 }
 
-/// An XML package part DeckCraft doesn't model, kept as written.
+/// An XML package part Iridium Decks doesn't model, kept as written.
 #[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default, rename_all = "camelCase")]
 pub struct KeptPart {

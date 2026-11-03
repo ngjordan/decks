@@ -10,7 +10,7 @@ ready** (estimated), **10–16 h** to parity.
 
 ## Running the show
 
-| Feature | PowerPoint | DeckCraft | Notes |
+| Feature | PowerPoint | Iridium Decks | Notes |
 |---|---|---|---|
 | Play from Start / from Current Slide (F5, Shift+F5, Cmd+Enter) | yes | yes | |
 | Next/previous by click, arrows, Space, Page Up/Down, Enter, Backspace | yes | yes | #17 reported arrows not working in v0.3.0 AppImage; recheck |
@@ -34,12 +34,12 @@ ready** (estimated), **10–16 h** to parity.
 | Laser pointer | yes | yes in the show | Cmd/Ctrl+L and the on-screen button draw the show's laser colour and leave no ink. The presenter window does not move that dot |
 | Subtitles and live captions | yes (cloud speech) | no | AI dimension |
 | Custom shows | yes | yes: Show plays that list in order and does not change Set Up; Set Up Slide Show can keep one for Play from Start | Hidden slides in the list are skipped; deleting a slide removes its ID from every custom show |
-| Set Up Show: loop until Esc, kiosk (browsed at a kiosk), show without animation/narration, pen colour, slides range | yes | yes, most options | Keep mouse cursor visible (DeckCraft's own, #1445) stops the show hiding a still pointer after 2.5 s, for decks with clickable choices; it is a user preference (`ui.json`, `showKeepCursor`), since PPTX has no place for it |
+| Set Up Show: loop until Esc, kiosk (browsed at a kiosk), show without animation/narration, pen colour, slides range | yes | yes, most options | Keep mouse cursor visible (Iridium Decks's own, #1445) stops the show hiding a still pointer after 2.5 s, for decks with clickable choices; it is a user preference (`ui.json`, `showKeepCursor`), since PPTX has no place for it |
 | Use rehearsed timings | yes | yes | |
 
 ## Presenter view
 
-| Feature | PowerPoint | DeckCraft | Notes |
+| Feature | PowerPoint | Iridium Decks | Notes |
 |---|---|---|---|
 | Separate presenter window with current slide, next slide, notes | yes | yes (an egui viewport, 1100×700); the notes keep their bullets, numbers, indents and bold/italic, as in the notes pane | |
 | Elapsed timer | yes | yes | |
@@ -55,7 +55,7 @@ ready** (estimated), **10–16 h** to parity.
 
 ## Rehearse and record
 
-| Feature | PowerPoint | DeckCraft |
+| Feature | PowerPoint | Iridium Decks |
 |---|---|---|
 | Rehearse Timings, keep timings | yes | yes |
 | Record Slide Show (narration, ink, laser, camera; Cameo) | yes | no |

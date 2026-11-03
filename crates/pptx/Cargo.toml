@@ -3,7 +3,7 @@ name = "deckcraft-pptx"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft PPTX: Office Open XML (PresentationML/DrawingML) import and export, written from the public ECMA-376 standard"
+description = "Iridium Decks PPTX: Office Open XML (PresentationML/DrawingML) import and export, written from the public ECMA-376 standard"
 
 [lints]
 workspace = true

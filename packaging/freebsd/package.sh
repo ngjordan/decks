@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build and package DeckCraft for FreeBSD:
+# Build and package Iridium Decks for FreeBSD:
 #
 #   $DIST/deckcraft-<version>-freebsd-<arch>.tar.gz   bin/, share/ (desktop entry, icons, AppStream)
 #
@@ -12,7 +12,7 @@ set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 LINUX="$ROOT/packaging/linux"
-APP_ID=ai.storyteller.deckcraft
+APP_ID=ph.iridium.decks
 
 TARGET_ARGS=()
 BIN="$CARGO_TARGET_DIR/release"

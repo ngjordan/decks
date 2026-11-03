@@ -1,7 +1,7 @@
 # MCP server
 
 `deckcraft-cli mcp` runs a Model Context Protocol server on stdio. By default it drives its own
-headless engine (no window); with `--connect PORT` it drives a running DeckCraft started with
+headless engine (no window); with `--connect PORT` it drives a running Iridium Decks started with
 `--control PORT`, so an agent and a person can work on the same deck. `--sample` opens the sample
 deck. Stdio request frames are limited to 16 MiB including the newline; oversized frames receive a
 JSON-RPC error and are drained so the next request can still be handled. Invalid UTF-8 frames receive
@@ -65,7 +65,7 @@ folders:
   to allow access to another folder; both `--flag <dir>` and `--flag=<dir>` forms work.
 
 The flags confine the in-process server, so `--connect` together with them is an error: the server
-would otherwise talk to an app that isn't confined. DeckCraft's desktop app has no equivalent flags
+would otherwise talk to an app that isn't confined. Iridium Decks's desktop app has no equivalent flags
 yet, so a running app (`deckcraft --control`) is not confined. `--sample` is the operator's own
 choice and is opened before the roots apply.
 

@@ -1,4 +1,4 @@
-# DeckCraft: egui 0.37 migration plan
+# Iridium Decks: egui 0.37 migration plan
 
 Current candidate font pin: `37827adc41fd165f9a9234ac40f94dbad353aa69` restores the complete prior Latin catalog alongside the migration fallbacks. All three workflows use that published revision.
 
@@ -49,7 +49,7 @@ app performance remain open. No publication or merge is authorized by these resu
 > final current local review is `final-landing/deck-final-review0045.txt`; its disposition is
 > recorded in the final status section.
 
-This plan is app-specific to DeckCraft. It is grounded in the baseline source and in the 0.37
+This plan is app-specific to Iridium Decks. It is grounded in the baseline source and in the 0.37
 sources available in the migration workspace; it is not a generic template. The repository rules
 in `AGENTS.md` (asset policy, clean room, never crash, command architecture, quality gates) apply
 in full. The cross-app engineering decision guide
@@ -72,7 +72,7 @@ in-flight and completed images together.
 
 ## 1. Executive decision
 
-DeckCraft already uses the 0.36 `eframe::App::logic` / `App::ui` split and the root `Ui`; the
+Iridium Decks already uses the 0.36 `eframe::App::logic` / `App::ui` split and the root `Ui`; the
 0.34–0.36 "more `Ui`, less `Context`" transition is **not** new work here. The 0.37 migration is
 therefore mostly:
 
@@ -85,10 +85,10 @@ therefore mostly:
 4. measured UI regressions and performance, with explicit acceptance thresholds.
 
 Do **not** adopt `craft-ui`, `craft-window`, `egui_dock` or a new generic compatibility layer as part
-of this migration. DeckCraft does not depend on `craft-ui` today; `craft-ui` PR 199 and language
-work #198 are useful precedent and the eventual shared home, not a reason to replace DeckCraft's
+of this migration. Iridium Decks does not depend on `craft-ui` today; `craft-ui` PR 199 and language
+work #198 are useful precedent and the eventual shared home, not a reason to replace Iridium Decks's
 ribbon, panes, canvas, dialogs, commands or persistence. The only `craft-libs` dependencies in
-DeckCraft remain `craft-pdf` and the `krilla` patch at their current immutable revision.
+Iridium Decks remain `craft-pdf` and the `krilla` patch at their current immutable revision.
 
 ---
 
@@ -98,7 +98,7 @@ DeckCraft remain `craft-pdf` and the `krilla` patch at their current immutable r
 
 | Item | Baseline |
 |---|---|
-| DeckCraft | baseline snapshot of this plan `9aef21e627cb447dd2180cd804db85343e73e5cf` (superseded dirty snapshot); historical planning baseline `b47195feec0f0fe4220d8943ad1c8add5dad8072`. Current reviewed local base is `770f4653bff0700b33d8475181e168da90a7ad4f` (dirty union, not a qualified commit) |
+| Iridium Decks | baseline snapshot of this plan `9aef21e627cb447dd2180cd804db85343e73e5cf` (superseded dirty snapshot); historical planning baseline `b47195feec0f0fe4220d8943ad1c8add5dad8072`. Current reviewed local base is `770f4653bff0700b33d8475181e168da90a7ad4f` (dirty union, not a qualified commit) |
 | `Cargo.lock` | format 4; `egui`/`eframe`/`egui-wgpu`/`egui-winit`/`egui_kittest`/`epaint`/`ecolor`/`emath`/`epaint_default_fonts` all `0.36.2` |
 | winit | `0.30.13` from crates.io (`a6755fa58a9f8350bd1e472d4c3fcc25f824ec358933bba33306d0b63df5978d`) |
 | wgpu | `30.0.1` in this lock. Upstream egui `0.37.0` holds `30.0.0` (its `Cargo.toml` comment keeps that version for `wasm-bindgen-futures`); they are semver-compatible but a different lock, so the wasm dependency set must be re-verified after the bump |
@@ -203,18 +203,18 @@ checkouts are not this checkout):
 
 ## 3. What actually changes in egui 0.37
 
-### 3.1 Breaking and behavior-changing items used by DeckCraft
+### 3.1 Breaking and behavior-changing items used by Iridium Decks
 
 Verified against the stock `0.37.0` sources and the suite candidate:
 
-| Area | 0.36.2 baseline | 0.37.0 target | DeckCraft action |
+| Area | 0.36.2 baseline | 0.37.0 target | Iridium Decks action |
 |---|---|---|---|
 | Widget roles | `egui::WidgetType` | deprecated alias of `accesskit::Role`; `TextEdit -> TextInput`, `Checkbox -> CheckBox`, `SelectableLabel -> Button`, `Other -> Unknown` | Replace imports and variants; keep `ComboBox`, `Button`; choose semantic roles for custom controls where safe |
 | ID API | `Id::new`, `AsId`, `Ui::id` | `Id::unique`; `Ui::scope_id` (with `Ui::id` deprecated); `UiBuilder::scope_id`; `Ui::unique_id` is globally unique but order-dependent and explicitly unstable; `Panel` constructors take `impl AsIdSalt` | Replace `Id::new` with `Id::unique` and every `ui.id()`/`UiBuilder::id` with `scope_id` (38 `ui.id()` references in the baseline; `UiBuilder::id` is not used today). `Ui::scope_id` is the stable rename of the old `Ui::id`; use `Ui::unique_id` only for transient widget/accessibility relations, never persisted state. Deprecations are fatal under `-D warnings`; `Response::id` is not affected |
 | Screenshot | `ViewportCommand::Screenshot(UserData)` + `Event::Screenshot { user_data, image }` | `ViewportCommand::Screenshot(ScreenshotCallback)`; `Context::request_screenshot`; `UserData` and the event are gone | Replace the queue with one bounded completion slot per admitted request (§4.3); preserve token/path/reply/deadline semantics |
 | Wheel events | `Event::MouseWheel { unit, delta, phase, modifiers }` | adds `source: MouseWheelSource` | Add `MouseWheelSource::Wheel` for wheel tests/synthetic input; `Unknown` where the source is genuinely unknown |
 | Clipboard | `Paste(String)`; image workaround in `keyboard` | adds `PasteImage(Arc<ColorImage>)` and `MiddleClickPaste { pos, text }`; PRIMARY support in egui-winit | Handle `PasteImage` directly; keep the image workaround only as a compatibility fallback. Candidate E4 still routes PRIMARY through arboard; the required shared W15P winit/SCTK path is a separate prerequisite (§4.8, §5.2) |
-| IME | 0.36.2 **already has** `ImeEvent::DeleteSurrounding { before_chars, after_chars }` and the deprecated `Enabled` variant | stock 0.37 keeps the same incoming events; the suite fork E21 adds `DeleteSurroundingBytes`; **new E21b** adds outgoing surrounding text to `IMEOutput` | DeckCraft silently ignores `DeleteSurrounding` today (`_ => Ok(Value::Null)`), so this is a pre-existing gap, not a new 0.37 API. Handle the stock and fork variants, and supply the E21b model-aware producer from `canvas::ime_output`; do not claim E21/E21b support without them |
+| IME | 0.36.2 **already has** `ImeEvent::DeleteSurrounding { before_chars, after_chars }` and the deprecated `Enabled` variant | stock 0.37 keeps the same incoming events; the suite fork E21 adds `DeleteSurroundingBytes`; **new E21b** adds outgoing surrounding text to `IMEOutput` | Iridium Decks silently ignores `DeleteSurrounding` today (`_ => Ok(Value::Null)`), so this is a pre-existing gap, not a new 0.37 API. Handle the stock and fork variants, and supply the E21b model-aware producer from `canvas::ime_output`; do not claim E21/E21b support without them |
 | kittest | unnamed inputs accepted; missing glyphs draw tofu | unnamed visible inputs panic by default; missing glyphs panic by default (`MissingGlyphPolicy::Panic`), `allow_missing_glyphs()` opts out | Audit and label text fields; keep panic policy for curated UI screens; opt out only for arbitrary-script soak tests |
 | Accessibility | `WidgetType`; fewer names/roles | `Role`; `Response::accessible_name`, `labelled_by`, `Ui::name_inputs`, panel resize handles, invisible widgets hidden; `Response::widget_info` **does** register an AccessKit role/label/value | Add names only where missing; keep and repair existing `widget_info` where it already supplies role/label/value. Do not treat `widget_info` as output-only and do not replace a working role with a bare name |
 | Panels/root UI | panels on a root `Ui`, state keyed by the supplied `Id` | same model, but `Panel` stores `IdSalt` and keys by `parent_ui.scope_id().with_salt(self.id_salt)`; panel/Scene clip respects parent (#8562) | Keep the current panel order and nesting; unchanged strings still produce different effective IDs, so keep parent-salted panel identities; assert app-owned UiState dimensions survive save/reopen; no persisted egui panel reset exists (§4.5). Never call `root_ui` inside `App::ui` |
@@ -257,7 +257,7 @@ Verified against the stock `0.37.0` sources and the suite candidate:
 
 ---
 
-## 4. DeckCraft lifecycle and root-Ui design
+## 4. Iridium Decks lifecycle and root-Ui design
 
 ### 4.1 Frame phases
 
@@ -418,7 +418,7 @@ Actions:
 
 - Keep the panel salts (`title_bar`, `ribbon`, `status`, `task_pane`, `thumbs`,
   `outline`, `backstage_nav`, `doc_window_bar`, `notes`). 0.37 changes effective panel
-  IDs to parent-salted values. DeckCraft has no eframe persistence feature, so there is
+  IDs to parent-salted values. Iridium Decks has no eframe persistence feature, so there is
   no saved egui PanelState blob to migrate or reset. App-owned `UiState` dimensions
   (`pane_width`, `thumbs_width`, `notes_height`) remain the durable source of truth.
   Outline width is session-local at baseline; preserve resizing within the session,
@@ -460,7 +460,7 @@ Actions:
 
 ### 4.7 Fonts, glyph coverage and accessibility
 
-**Font policy decision:** keep DeckCraft's custom `FontDefinitions` (`theme::font_definitions`),
+**Font policy decision:** keep Iridium Decks's custom `FontDefinitions` (`theme::font_definitions`),
 keep the explicit `default_fonts` feature on **both the app and the UI library**, and keep
 `UiFonts`' fallback selection. Do **not** enable eframe's `system_fonts` feature in this migration.
 Reasons:
@@ -469,7 +469,7 @@ Reasons:
   color-face rejection policy; enabling `egui_system_font_provider` would add a second, less
   controlled fallback path and the upstream-reported system-font startup cost (#8512 comments).
 - Screenshot/layout determinism across machines is easier with the explicit face order.
-- Color emoji rendering is not a DeckCraft requirement for this migration; slide rendering uses
+- Color emoji rendering is not a Iridium Decks requirement for this migration; slide rendering uses
   its own text pipeline. If color emoji is later required, make it a separate product decision
   with startup, memory and golden-image evidence.
 
@@ -494,7 +494,7 @@ Actions:
   adversarial multi-script input, duplicate faces and replacement behaviour.
 - Production missing-glyph policy: egui's default `Tofu` is acceptable (never panic in
   production); do not set `Panic` outside tests. In tests, keep kittest's default `Panic` for
-  curated DeckCraft screens so a literal UI glyph that no interface face draws is caught. Use
+  curated Iridium Decks screens so a literal UI glyph that no interface face draws is caught. Use
   `HarnessBuilder::allow_missing_glyphs()` only in the soak test that deliberately types
   arbitrary scripts.
 - Inventory literal UI glyphs (`→`, `↘`, `↓`, `↙`, `←`, `↖`, `↑`, `↗`, `•`, `○`, `■`, `□`, `◆`,
@@ -541,7 +541,7 @@ Actions:
   integrations that do not emit `PasteImage`; ensure the same paste does not insert twice when
   both arrive.
 - **PRIMARY:** `Event::MiddleClickPaste { pos, text }` is handled by egui's focused `TextEdit`
-  (notes, dialogs). DeckCraft's custom canvas does not consume it. Test middle-click on notes and
+  (notes, dialogs). Iridium Decks's custom canvas does not consume it. Test middle-click on notes and
   on the canvas; the canvas must not insert text implicitly. Keep regular clipboard copy/cut
   behavior (`ctx.copy_text`, HTML/image services) unchanged.
 - **PRIMARY backend is not solved by E4.** Candidate E4 routes PRIMARY through arboard
@@ -553,7 +553,7 @@ Actions:
   changes, empty/absent offers, self-paste, password exclusion, no unchanged-selection reclaim and
   canceled/slow transfers on wlroots/KWin/Mutter; ordinary paste is not PRIMARY acceptance.
 - **IME composition (incoming):** `ImeEvent::DeleteSurrounding` is **not** new 0.37 API; 0.36.2
-  already has it and DeckCraft ignores it in `ime_event` (`_ => Ok(Value::Null)`). This is a
+  already has it and Iridium Decks ignores it in `ime_event` (`_ => Ok(Value::Null)`). This is a
   pre-existing gap. Keep `Preedit`/`Commit` mapping to `Session::compose_text`/`commit_text`,
   handle `DeleteSurrounding { before_chars, after_chars }` (stock) and the fork's
   `DeleteSurroundingBytes` when the fork is pinned, and add one narrow engine range-delete API
@@ -583,7 +583,7 @@ Actions:
   disable/enable boundary on owner/unavailable transitions and clears old pending batches.
   Current-epoch done serial mismatch applies incoming edits once but defers outgoing state
   until a match; stale focus epochs cannot edit a new owner. Test text-to-non-text/password
-  multipass clearing and ordinary updates preserving composition. DeckCraft's custom canvas producer (`crates/ui-egui/src/canvas.rs:321-333`) must supply
+  multipass clearing and ordinary updates preserving composition. Iridium Decks's custom canvas producer (`crates/ui-egui/src/canvas.rs:321-333`) must supply
   logical model text and convert the slide-text selection/caret to byte indices; setting the new
   field to `None` is not acceptance. Test outgoing text immediately after delete+commit and
   deletion-only batches, preedit exclusion, reversed selection, supplementary/combining/RTL text,
@@ -599,7 +599,7 @@ Actions:
   layouts. Test Ctrl+S/Ctrl+Z/Ctrl+C with a Russian/Arabic/Hebrew layout event sequence (where
   the integration can produce it), and a letter that has no Latin mapping must not fire a
   shortcut.
-- **UI language:** DeckCraft is English-only (`docs/localization-parity.md`). Do not set a global
+- **UI language:** Iridium Decks is English-only (`docs/localization-parity.md`). Do not set a global
   `Context::set_language` or `Frame::set_ui_language` in this migration unless the UI actually
   localizes; an English root tag on Arabic document titles would be wrong. The fork's E17/E18
   hooks remain available for a later localization task. Per-widget language tagging is an open
@@ -607,7 +607,7 @@ Actions:
 
 ### 4.9 GPU, textures and rendering
 
-- DeckCraft's lock holds wgpu `30.0.1`; upstream egui 0.37.0's lock holds `30.0.0` (held back for
+- Iridium Decks's lock holds wgpu `30.0.1`; upstream egui 0.37.0's lock holds `30.0.0` (held back for
   `wasm-bindgen-futures`). They are semver-compatible, but do not claim they are the same version:
   verify `egui::wgpu` re-exports, `eframe::wgpu`/`egui_wgpu::WgpuSetup` paths and the wasm
   dependency set after the bump. The Windows `Dx12Compiler::Fxc` setup remains valid in shape.
@@ -615,7 +615,7 @@ Actions:
   linear minification, clamp) because the slide canvas is device-pixel aligned (#184). Do not let
   the 0.37 texture/`ColorImage` or predictable-filtering changes silently switch filtering.
 - E2+E3 (`egui-wgpu` surface fits `max_texture_dimension_2d` and setup errors are returned) are
-  relevant: DeckCraft already bounds its own textures but relies on eframe/egui-wgpu for the
+  relevant: Iridium Decks already bounds its own textures but relies on eframe/egui-wgpu for the
   surface. Test a window larger than the adapter limit, a zero-sized/minimized surface, and a
   bad adapter/device creation path; assert no panic and a logged/returned error.
 - Windows DX12 FXC: 0.37's `wrap_texel_coord` makes `Renderer::new` slower on FXC (upstream #8736).
@@ -680,7 +680,7 @@ must not be published as an intermediate consumer release; the production graph 
 **Stage B — reviewed storytold production pins.** Add a root `[patch.crates-io]` block pinning
 every used egui-family crate and winit to reviewed, published, immutable **storytold** full SHAs,
 landed as one coherent set. Cargo does not propagate the fork workspace's winit patch into
-DeckCraft. The shape is:
+Iridium Decks. The shape is:
 
 ```toml
 [patch.crates-io]
@@ -702,7 +702,7 @@ publishable pins. Production waits until the reviewed series (including W15P PRI
 published under storytold with immutable full SHAs. `egui_extras` is unused today; do not add it
 to the patch list unless a real consumer appears. Do not patch `egui_system_font_provider` because
 `system_fonts` stays off; if enabled later, patch it to the same revision. Do not patch
-`egui_plot`, `egui_dock` or `egui_glow`; they are not in DeckCraft's graph. Keep the `krilla`
+`egui_plot`, `egui_dock` or `egui_glow`; they are not in Iridium Decks's graph. Keep the `krilla`
 patch and its `cargo xtask pdf-deps` check.
 
 **Publication rules.** No machine-local path overrides may be committed. Only public git URLs and
@@ -718,7 +718,7 @@ reviewed Chinese manifest but has no `fonts/latin-manifest.txt` or Inter. The ea
 `43913056ce82a3fdad0ef69f6b88d1dc922a8104` tree carried the Latin manifest/Inter but not the
 Chinese input. The parent is restoring the licensed Inter faces in the central
 `craft-fonts-implementation` checkout; that work is unpublished and must not be committed from the
-DeckCraft checkout. Therefore this approval packet is **stale**: do not approve or publish it until
+Iridium Decks checkout. Therefore this approval packet is **stale**: do not approve or publish it until
 the reviewed Latin manifest/faces and Chinese manifest are committed together in `craft-fonts`, an
 immutable full SHA is obtained, and **all three** pins move together:
 `.github/workflows/ci.yml` (`CRAFT_FONTS_REF`), `.github/workflows/freebsd.yml` and
@@ -747,31 +747,31 @@ The required-input gate is explicit, but CI and FreeBSD qualification remain par
 The font assets stay in the central `storytold/craft-fonts` repository; no font file is added to
 this checkout.
 
-### 5.2 Fork patch ledger and DeckCraft decisions
+### 5.2 Fork patch ledger and Iridium Decks decisions
 
 The candidate fork's `PATCHES.md` (base upstream 0.37.0) lists E1–E21; E21b is the new, separately
-reviewed addition. DeckCraft decisions:
+reviewed addition. Iridium Decks decisions:
 
-| Patch | Provenance / behavior | DeckCraft decision | Test / removal |
+| Patch | Provenance / behavior | Iridium Decks decision | Test / removal |
 |---|---|---|---|
-| E1 `8f3abf06` eframe `viewport_hooks` | per-viewport native windows and raw input | Not used by DeckCraft; harmless fork API. Do not build craft-tablet behavior on it here. | Remove only with the fork; no app code depends on it |
-| E2+E3 `9dd799ab` egui-wgpu | fit surface to texture limit; surface/renderer errors | Keep. Relevant on Windows/Linux/WebGPU and to DeckCraft's large-window texture policy. | Test oversized/minimized surface, error path; remove when upstream release contains and stock passes |
+| E1 `8f3abf06` eframe `viewport_hooks` | per-viewport native windows and raw input | Not used by Iridium Decks; harmless fork API. Do not build craft-tablet behavior on it here. | Remove only with the fork; no app code depends on it |
+| E2+E3 `9dd799ab` egui-wgpu | fit surface to texture limit; surface/renderer errors | Keep. Relevant on Windows/Linux/WebGPU and to Iridium Decks's large-window texture policy. | Test oversized/minimized surface, error path; remove when upstream release contains and stock passes |
 | E4 `66bacf23` egui-winit | Wayland regular clipboard via winit data device; **candidate PRIMARY still goes through arboard** | Keep the regular clipboard path. PRIMARY is an **unresolved fork gap**: require the shared W15P winit/SCTK per-seat path on the existing connection/event queue before production. | Regular copy/cut/paste, own copy, file-drop-then-paste; PRIMARY lifecycle tests on wlroots/KWin/Mutter. Do not claim #8657/PRIMARY from arboard alone |
-| E5/E12/E13/E14/E15/E16/E20 | bidi shaping/rows, direction, grapheme caret/delete, fallback baseline, line breaker, visual cursor, UI text language | Keep. Relevant to titles, notes, dialogs, RTL/CJK UI text. DeckCraft's slide renderer is separate and unchanged. | Arabic/Hebrew/CJK/Thai/Vietnamese tests; grapheme Delete; screenshots; remove when upstream equivalent lands |
+| E5/E12/E13/E14/E15/E16/E20 | bidi shaping/rows, direction, grapheme caret/delete, fallback baseline, line breaker, visual cursor, UI text language | Keep. Relevant to titles, notes, dialogs, RTL/CJK UI text. Iridium Decks's slide renderer is separate and unchanged. | Arabic/Hebrew/CJK/Thai/Vietnamese tests; grapheme Delete; screenshots; remove when upstream equivalent lands |
 | E6 `0abfabcf` egui focus/IME | `request_focus` on focused widget does not interrupt IME | Keep. Relevant to notes/dialog TextEdits. | IME composition focus test; remove on upstream fix |
 | E7 `0670c58a` egui-winit | Windows letter keys from virtual-key code on non-A–Z layouts | Keep. Relevant to shortcuts. | Russian/Arabic/Hebrew layout shortcut test; remove on upstream |
 | E8 `1b03c10f` egui TextEdit | no clipping of glyphs above/below row | Keep. Relevant to notes/dialog text. | Thai/Vietnamese/Arabic marks; remove on upstream |
 | E9 `b2f5cafc...` egui RTL style | mirrors menus, scroll bars, headers, title bars, combo boxes, popups, resize grips | Keep. No app code sets `right_to_left`, so LTR must not change. | LTR geometry golden and RTL review; remove on upstream |
 | E10 `dc90c13e...` eframe web | named keys not text; `code`-based letters; `lang` on hidden input/speech | Keep. Relevant to `deckcraft-web`. | Browser keyboard/IME test; wasm compile; remove on upstream |
-| E11 `92e61afd` epaint | glyphs rasterized on single-threaded vello_cpu; no multithreading panic | Keep for egui text. DeckCraft's `deckcraft-render` uses its own vello_cpu and already has a filters/threads regression test. | UI text with filters/emoji; slide renderer tests; remove on upstream |
+| E11 `92e61afd` epaint | glyphs rasterized on single-threaded vello_cpu; no multithreading panic | Keep for egui text. Iridium Decks's `deckcraft-render` uses its own vello_cpu and already has a filters/threads regression test. | UI text with filters/emoji; slide renderer tests; remove on upstream |
 | E17 `520435df` egui language | `Context::set_language`, `UiBuilder::language`, AccessKit language | Keep but do not enable an app locale yet. | AccessKit language test only if the app sets it; otherwise compile-only |
-| E18 `89de8f3c` eframe | `Frame::set_ui_language`; web fallback | Keep available; DeckCraft has no localized UI. | No app call in this migration; revisit with localization |
+| E18 `89de8f3c` eframe | `Frame::set_ui_language`; web fallback | Keep available; Iridium Decks has no localized UI. | No app call in this migration; revisit with localization |
 | E19 `d64047bf...` egui/winit | one Latin letter-key rule; `keyboard_layout_is_latin`, `latin_layout_chars` | Keep. Relevant to shortcuts. | Shortcut tests; remove with winit API |
 | E21 `a70470b0` egui/winit | `ImeEvent::DeleteSurroundingBytes` | Keep; handle it in the custom slide-text path. `DeleteSurrounding` itself already exists in 0.36.2 and is currently ignored, so this is a pre-existing gap plus the byte-range variant, not a new 0.37 API. | macOS press-and-hold/dictation, Wayland text-input; remove with upstream equivalent |
-| **E21b** (new) | `IMEOutput` bounded logical surrounding-text payload, TextEdit producer and Wayland delivery through W27 | **Required new prerequisite**, not existing E21 capability. DeckCraft must implement the model-aware producer for `canvas::ime_output`, with UTF-8 byte cursor/anchor, preedit exclusion, password exclusion and a 4,000-byte bounded extraction. | Outgoing text after delete+commit/deletion-only, preedit/selection/focus/password/long-selection/two-window/multi-pass tests; native Wayland IME trace; measure allocation/time |
+| **E21b** (new) | `IMEOutput` bounded logical surrounding-text payload, TextEdit producer and Wayland delivery through W27 | **Required new prerequisite**, not existing E21 capability. Iridium Decks must implement the model-aware producer for `canvas::ime_output`, with UTF-8 byte cursor/anchor, preedit exclusion, password exclusion and a 4,000-byte bounded extraction. | Outgoing text after delete+commit/deletion-only, preedit/selection/focus/password/long-selection/two-window/multi-pass tests; native Wayland IME trace; measure allocation/time |
 
 Winit W1–W27 are inherited through the reviewed winit series, plus the new **W15P** PRIMARY support.
-DeckCraft-relevant ones are W1/W11 (DPI/X11 scaling), W2/W3/W5–W10/W12/W13/W18–W27 (IME, clipboard,
+Iridium Decks-relevant ones are W1/W11 (DPI/X11 scaling), W2/W3/W5–W10/W12/W13/W18–W27 (IME, clipboard,
 drag, shortcuts, hidden windows), W15 (regular Wayland clipboard, needed by E4) and W15P (PRIMARY).
 Do not remove any of them independently; removal is tied to an upstream release and the tests
 named in the craft-libs ledger. W11 can change `pixels_per_point`, so every geometry/perf run
@@ -781,7 +781,7 @@ records the exact winit SHA.
 
 - PR 199 updates `craft-ui` (and its dev dependencies) to 0.37 and applies the same `WidgetType`
   -> `Role`, `UiBuilder::id` -> `scope_id`, `Id::new` -> `Id::unique` mapping. It is useful
-  precedent and should remain the shared UI library's migration, but DeckCraft does not consume
+  precedent and should remain the shared UI library's migration, but Iridium Decks does not consume
   `craft-ui`; do not add it just to align versions.
 - **Use the reconciled shared-library base.** The implementation builds on merged PR 199 at
   `3832c47ef68a0e6214f2c1e85f3526b6adcb686e`; the reviewed 0.37 API changes are already part of
@@ -789,10 +789,10 @@ records the exact winit SHA.
   older `8614e4a`/`1764bca`/`4919088` references were plan-only and are superseded. Preserve
   unrelated vendors and current-main fixes; regenerate the lock with the final reviewed
   storytold set.
-- PR 199 does not add a fork pin or winit pin and does not test hidden `App::logic`. DeckCraft's
+- PR 199 does not add a fork pin or winit pin and does not test hidden `App::logic`. Iridium Decks's
   root patch and lifecycle tests must stand on their own.
 - Language work (#198) and the fork's E5/E12/E13/E17/E18/E19/E20 are the relevant source for
-  RTL/IME/grapheme behavior. DeckCraft's slide text renderer already has its own bidi/line
+  RTL/IME/grapheme behavior. Iridium Decks's slide text renderer already has its own bidi/line
   breaking; this migration only changes the egui UI/text-edit layer. Do not move slide layout
   policy into `craft-ui` or an egui compatibility layer.
 - `craft-pdf`/`krilla` stay at their existing revision. They do not depend on egui; do not update
@@ -897,7 +897,7 @@ Dependencies: D1 and D2. Use the already pinned final dependency unit; no second
 pinning stage. Exercise E2/E3 surface behavior, bounded E4/W15P transfer cancellation and
 responsiveness, E19 held-key release pairing, E21/E21b IME and native child focus/close.
 Run graph checks, Linux X11/Wayland, Windows clone and browser workflows with exact evidence.
-No fork internals are copied into DeckCraft. Record unqualified native rows as gates.
+No fork internals are copied into Iridium Decks. Record unqualified native rows as gates.
 
 ### D4 — Language/IME/clipboard app integration
 
@@ -1007,7 +1007,7 @@ Required new/updated tests:
   geometry shift >1 device pixel for unchanged regions. 0.37's intentional style changes
   (roomier buttons/corner radius) require an explained baseline update; do not silently accept a
   changed golden. Review the `.diff`/`.new` images.
-- Screenshots of DeckCraft are contributor-original; store them under evidence, not as untracked
+- Screenshots of Iridium Decks are contributor-original; store them under evidence, not as untracked
   repo assets. Do not use PowerPoint screenshots; the private `plan/powerpoint/screenshots/`
   policy remains.
 
@@ -1036,7 +1036,7 @@ Run each as a temporary local patch, never commit, and record the failure output
 - **Linux native:** X11 and Wayland (Hyprland/KWin if available), 1×/2×, `deckcraft --sample
   --control`; `ui.screenshot`, `ui.resize`, input/IME, regular clipboard, W15P PRIMARY, viewports.
 - **Windows native:** fresh clone from `VMs/craft-windows`, new ports, separate source/target,
-  `Build-DesignCraft` equivalent for DeckCraft (`cargo build --release -p deckcraft` with
+  `Build-DesignCraft` equivalent for Iridium Decks (`cargo build --release -p deckcraft` with
   `CRAFT_FONTS_DIR`), DX12/FXC, Windows IME/layout, screenshot/GUI via `vm.py`/`guest-exec.py`,
   `ui.screenshot`, doc window, save/reopen.
 - **Web:** `trunk build --release` in `apps/deckcraft-web`; Chrome/Chromium with WebGPU and
@@ -1181,12 +1181,12 @@ clamp-only shortcut.
 3. **Upstream 0.37 regressions.** #8731 (text tessellation ~+60% instructions) and #8736 (DX12
    FXC pipeline ~+40 ms startup) are open reports, not this task's results; measure them with the
    targeted benchmark and 20+ fresh startup processes. #8763 (TextEdit click-away selection loss)
-   is open; require the fork-owned tested fix and the DeckCraft selection-action regression.
+   is open; require the fork-owned tested fix and the Iridium Decks selection-action regression.
    The separate `upstream-8764-fresh.json` snapshot verifies #8764 as open/unmerged at
    `6eb460a2a6d537d312a80579cb801895509deaed`; it is a proposal, not a released fix. #8748 is **closed and not merged**, and is not in
    0.37.0; do not claim it fixes hidden-parent/deferred-child behavior. #8512 is a closed
    PR/comment thread; its system-font discovery startup cost is motivation for keeping
-   `system_fonts` off, not a fresh DeckCraft defect or an acceptance result.
+   `system_fonts` off, not a fresh Iridium Decks defect or an acceptance result.
 4. **Accessibility inventory.** Many `TextEdit::` references and custom `interact` controls need
    names/roles; the actual kittest failures are unknown until the stock 0.37 run. Keep and repair
    working `widget_info` role/label/value rather than replacing it wholesale. Do not disable the
@@ -1212,7 +1212,7 @@ clamp-only shortcut.
 9. **PR 199 / #198 merge state.** They are external work; this plan does not merge, rebase or
    publish them. The implementation is based on merged PR 199 at `3832c47ef68a0e6214f2c1e85f3526b6adcb686e`
    (the older `8614e4a`/`1764bca`/`4919088` references are superseded); never merge
-   `b68de8c`/`ec8840a` as trees. DeckCraft does not depend on `craft-ui`; if that changes,
+   `b68de8c`/`ec8840a` as trees. Iridium Decks does not depend on `craft-ui`; if that changes,
    re-plan the DAG.
 10. **Nix/flake.** The repository has a `nix.yml` workflow but no local `flake.nix`/`nix` files in
     this checkout; do not claim Nix packaging validation from this plan.
@@ -1331,7 +1331,7 @@ The complete static delta review and exact old/new object identities are retaine
 ## Local implementation amendment — 2026-10-24 (v17 review findings)
 
 The v16 review found four concrete defects still open. Implementation here stays app-owned:
-DeckCraft has no `craft-ui` dependency, and the reviewed `craft-ui` PR is not part of this
+Iridium Decks has no `craft-ui` dependency, and the reviewed `craft-ui` PR is not part of this
 checkout, so no generic compatibility component is added or copied. The existing `capture.rs`
 bounded registry remains the owner of screenshot admission, memory reservation and completion.
 

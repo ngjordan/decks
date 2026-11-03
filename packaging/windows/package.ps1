@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-  Build, sign and package DeckCraft for Windows.
+  Build, sign and package Iridium Decks for Windows.
 
 .DESCRIPTION
   Produces, in $env:DIST (default: dist/release):
@@ -53,7 +53,7 @@ New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 if (-not $env:DECKCRAFT_BUILD_SHA) { $env:DECKCRAFT_BUILD_SHA = (git -C $Root rev-parse HEAD 2>$null) }
 if (-not $env:DECKCRAFT_BUILD_DATE) { $env:DECKCRAFT_BUILD_DATE = (Get-Date).ToUniversalTime().ToString('yyyy-MM-dd') }
 
-Write-Output "DeckCraft $Version for Windows $Arch ($Target)"
+Write-Output "Iridium Decks $Version for Windows $Arch ($Target)"
 
 if (-not $SkipBuild) {
   # Static CRT: no VC++ redistributable needed. Scoped to the target so host build scripts and
@@ -88,8 +88,8 @@ foreach ($check in @(@('deckcraft.exe', 2), @('deckcraft-cli.exe', 3))) {
 # deckcraft.exe (#1114). -SkipBuild takes whatever binary is already there, which may come from a
 # build without DECKCRAFT_REQUIRE_WINRES=1 whose resource compilation failed: refuse an exe with no
 # icon instead of shipping shortcuts with a generic one. ExtractIconEx with index -1 counts them.
-Add-Type -Namespace DeckCraft -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern uint ExtractIconEx(string file, int index, IntPtr[] large, IntPtr[] small, uint icons);'
-$Icons = [DeckCraft.Shell]::ExtractIconEx((Join-Path $Bin 'deckcraft.exe'), -1, $null, $null, 0)
+Add-Type -Namespace Iridium Decks -Name Shell -MemberDefinition '[DllImport("shell32.dll", CharSet = CharSet.Unicode)] public static extern uint ExtractIconEx(string file, int index, IntPtr[] large, IntPtr[] small, uint icons);'
+$Icons = [Iridium Decks.Shell]::ExtractIconEx((Join-Path $Bin 'deckcraft.exe'), -1, $null, $null, 0)
 if ($Icons -eq 0) { throw 'deckcraft.exe has no embedded icon: rebuild it with DECKCRAFT_REQUIRE_WINRES=1 (omit -SkipBuild)' }
 Write-Output "ok deckcraft.exe: $Icons embedded icon group(s)"
 $Stage = Join-Path $TargetDir "windows-package\$Arch"

@@ -760,7 +760,7 @@ fn table(imp: &mut Imp, part: &Part, tbl: &El) -> Table {
         t.rtl = pr.bool("rtl");
         if let Some(id) = pr.child("tableStyleId").map(|e| e.text()) {
             // A style the file defines is drawn from its definition (by its GUID).
-            // DeckCraft's own styles (written with GUIDs derived from their ids) map back to them.
+            // Iridium Decks's own styles (written with GUIDs derived from their ids) map back to them.
             let up = id.trim().to_ascii_uppercase();
             t.style =
                 if imp.table_style_ids.contains(&up) && !crate::tables::is_own_guid(&up) { up } else { crate::tables::style_from_guid(id.trim()) };

@@ -3,7 +3,7 @@ name = "deckcraft-cli"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "DeckCraft on the command line: render, convert, run commands, inspect, and serve MCP"
+description = "Iridium Decks on the command line: render, convert, run commands, inspect, and serve MCP"
 publish = false
 
 [lints]

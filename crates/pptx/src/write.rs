@@ -39,7 +39,7 @@ const CT_CHARTEX: &str = "application/vnd.ms-office.chartex+xml";
 const RT_CHARTEX: &str = "http://schemas.microsoft.com/office/2014/relationships/chartEx";
 const CT_COMMENTS: &str = "application/vnd.openxmlformats-officedocument.presentationml.comments+xml";
 const CT_AUTHORS: &str = "application/vnd.openxmlformats-officedocument.presentationml.commentAuthors+xml";
-/// Modern threaded comments (read by PowerPoint 2021+ and DeckCraft; the flattened legacy
+/// Modern threaded comments (read by PowerPoint 2021+ and Iridium Decks; the flattened legacy
 /// part next to it serves older readers).
 pub(crate) const CT_COMMENTS_MODERN: &str = "application/vnd.ms-powerpoint.comments+xml";
 const CT_AUTHORS_MODERN: &str = "application/vnd.ms-powerpoint.authors+xml";
@@ -665,7 +665,7 @@ pub fn export(p: &Presentation, main_ct: &str) -> Result<Vec<u8>, PptxError> {
             so.rels.add("comments", &opc::relative(&sname, &cname), false);
             x.pkg.xml_part(&cname, CT_COMMENTS, comments_xml(&s.comments, &mut authors, &mut author_map));
             // The modern threaded part next to the flattened legacy one (issue #70):
-            // PowerPoint 2021+ and DeckCraft read replies and resolved state from it,
+            // PowerPoint 2021+ and Iridium Decks read replies and resolved state from it,
             // older readers keep the legacy part.
             let mname = format!("ppt/comments/modernComment{n_comments}.xml");
             let rid = so.rels.add(RT_COMMENTS_MODERN, &opc::relative(&sname, &mname), false);
@@ -1266,7 +1266,7 @@ fn app_xml(p: &Presentation) -> Vec<u8> {
             .a("xmlns", "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties")
             .a("xmlns:vt", "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"),
     );
-    w.elt("Application", "DeckCraft");
+    w.elt("Application", "Iridium Decks");
     w.elt("Slides", &p.slides.len().to_string());
     w.elt("Notes", &p.slides.iter().filter(|s| !s.notes.is_empty()).count().to_string());
     w.elt("HiddenSlides", &p.slides.iter().filter(|s| s.hidden).count().to_string());

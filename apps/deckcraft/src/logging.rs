@@ -7,7 +7,7 @@
 //! moves the previous log to `deckcraft.1.log` (and that one to `.2`), so the log of a run that
 //! crashed survives the next launch.
 //!
-//! Levels: `info` for DeckCraft's own crates, `warn` for everything else (wgpu and naga are
+//! Levels: `info` for Iridium Decks's own crates, `warn` for everything else (wgpu and naga are
 //! chatty). `RUST_LOG` replaces that with env_logger-style directives: `debug`,
 //! `warn,deckcraft_pptx=trace`, `wgpu_core=info`. A directive ending in `*` matches every target
 //! that starts with it (`deckcraft*=debug`).
@@ -513,7 +513,7 @@ mod tests {
     fn the_logger_filters_records_and_writes_them_to_the_attached_file() {
         let dir = temp_dir("logger");
         let logger = AppLogger::new(Filter::parse(DEFAULT_FILTER), false);
-        record(&logger, log::Level::Info, "deckcraft", "DeckCraft starting");
+        record(&logger, log::Level::Info, "deckcraft", "Iridium Decks starting");
         record(&logger, log::Level::Info, "wgpu_core::device", "too chatty");
         let path = logger.attach_dir(&dir).expect("attach");
         assert_eq!(path, dir.join(LOG_FILE));
@@ -522,7 +522,7 @@ mod tests {
         let text = read(&path);
         let lines: Vec<&str> = text.lines().collect();
         assert_eq!(lines.len(), 2, "{text}");
-        assert!(lines.first().is_some_and(|l| l.contains(" INFO  [") && l.ends_with("deckcraft: DeckCraft starting")), "{text}");
+        assert!(lines.first().is_some_and(|l| l.contains(" INFO  [") && l.ends_with("deckcraft: Iridium Decks starting")), "{text}");
         assert!(lines.get(1).is_some_and(|l| l.ends_with("wgpu_hal::vulkan: a real warning")), "{text}");
         assert!(logger.enabled(&log::Metadata::builder().level(log::Level::Info).target("deckcraft_engine::recovery").build()));
         assert!(!logger.enabled(&log::Metadata::builder().level(log::Level::Info).target("naga").build()));
