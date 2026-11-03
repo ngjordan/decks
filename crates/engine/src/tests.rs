@@ -1564,18 +1564,18 @@ fn an_embedded_face_is_used_when_the_machine_lacks_it() {
     let mut p = deckcraft_model::Presentation::default();
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
     let mut body = deckcraft_model::text::TextBody::from_text("Hello");
-    body.paragraphs[0].runs[0].props.font = Some("Iridium Decks Colr Squares".into());
+    body.paragraphs[0].runs[0].props.font = Some("DeckCraft Colr Squares".into());
     slide.shapes[0].text = Some(body);
     let id = p
         .add_media("font1.fntdata", "application/x-fontdata", include_bytes!("../../render/tests/fixtures/colr-squares.ttf").to_vec())
         .expect("media");
-    p.embedded_fonts.push(deckcraft_model::EmbeddedFont { typeface: "Iridium Decks Colr Squares".into(), regular: Some(id), ..Default::default() });
+    p.embedded_fonts.push(deckcraft_model::EmbeddedFont { typeface: "DeckCraft Colr Squares".into(), regular: Some(id), ..Default::default() });
     let data = crate::cmd::base64_encode(&crate::cmd::file::save_bytes(&p, "pptx").unwrap());
     let mut s = Session::with_new();
     let r = s.execute("file.openBytes", &json!({"name": "fonts.pptx", "data": data})).unwrap();
     assert_eq!(r["missingFonts"], json!([]));
     let font = s.doc().unwrap().doc.embedded_fonts.first().unwrap();
-    assert_eq!(font.typeface, "Iridium Decks Colr Squares");
+    assert_eq!(font.typeface, "DeckCraft Colr Squares");
     assert!(font.regular.is_some());
 }
 
