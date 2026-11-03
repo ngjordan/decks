@@ -18,7 +18,7 @@
     <Property Id="ARPHELPLINK" Value="https://iridium.ph" />
 
     <StandardDirectory Id="ProgramFiles6432Folder">
-      <Directory Id="CraftSuiteFolder" Name="ArtCraft">
+      <Directory Id="CraftSuiteFolder" Name="Iridium">
         <Directory Id="INSTALLFOLDER" Name="Iridium Decks" />
       </Directory>
     </StandardDirectory>
