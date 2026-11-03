@@ -46,7 +46,7 @@ fn field(text: &str, kind: &str) -> TextBody {
 
 const SMARTART: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Diagram"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="0" y="0"/><a:ext cx="3657600" cy="1828800"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/diagram"><dgm:relIds xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram"/><dgm:pt xmlns:dgm="http://schemas.openxmlformats.org/drawingml/2006/diagram"><dgm:t>Quarter</dgm:t></dgm:pt></a:graphicData></a:graphic></p:graphicFrame>"#;
 
-const OLE: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Embedded"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="3810000" y="0"/><a:ext cx="1828800" cy="914400"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole"><p:oleObj name="Note" progId="IridiumDecks.Note.1"><p:embed/></p:oleObj></a:graphicData></a:graphic></p:graphicFrame>"#;
+const OLE: &str = r#"<p:graphicFrame><p:nvGraphicFramePr><p:cNvPr name="Embedded"/><p:cNvGraphicFramePr/><p:nvPr/></p:nvGraphicFramePr><p:xfrm><a:off x="3810000" y="0"/><a:ext cx="1828800" cy="914400"/></p:xfrm><a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/presentationml/2006/ole"><p:oleObj name="Note" progId="DeckCraft.Note.1"><p:embed/></p:oleObj></a:graphicData></a:graphic></p:graphicFrame>"#;
 
 fn corpus() -> (Presentation, Vec<u8>, Vec<u8>, Vec<u8>) {
     let mut p = defaults::new_presentation(None);
@@ -65,7 +65,7 @@ fn corpus() -> (Presentation, Vec<u8>, Vec<u8>, Vec<u8>) {
     let mut diagram = shape(&mut p, "Diagram", 40.0, 80.0, 288.0, 144.0);
     diagram.kind = ShapeKind::Opaque { xml: SMARTART.into(), preview: None, label: "SmartArt".into(), parts: vec![] };
     let mut embedded = shape(&mut p, "Embedded", 340.0, 80.0, 144.0, 72.0);
-    embedded.kind = ShapeKind::Opaque { xml: OLE.into(), preview: None, label: "Iridium Decks.Note.1".into(), parts: vec![] };
+    embedded.kind = ShapeKind::Opaque { xml: OLE.into(), preview: None, label: "DeckCraft.Note.1".into(), parts: vec![] };
     let mut block_shape = shape(&mut p, "Block", 40.0, 240.0, 120.0, 90.0);
     block_shape.kind = ShapeKind::Model3d { media: block_id, poster: None };
     let mut globe_shape = shape(&mut p, "Globe", 180.0, 240.0, 160.0, 120.0);
@@ -215,8 +215,8 @@ fn opaque_parts_survive(q: &Presentation) {
 
     let embedded = by_name(q, "Embedded");
     let ShapeKind::Opaque { xml, label, .. } = &embedded.kind else { panic!("{:?}", embedded.kind) };
-    assert_eq!(label, "Iridium Decks.Note.1");
-    assert!(xml.contains("Iridium Decks.Note.1"), "{xml}");
+    assert_eq!(label, "DeckCraft.Note.1");
+    assert!(xml.contains("DeckCraft.Note.1"), "{xml}");
     assert!(!xml.contains("r:id"), "an embedding part is issue #203");
 }
 
