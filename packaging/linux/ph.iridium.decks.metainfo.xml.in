@@ -8,7 +8,7 @@
   <name>Iridium Decks</name>
   <summary>Create and present slide decks</summary>
   <developer id="ai.storyteller">
-    <name>Learning Machines LLC</name>
+    <name>Iridium Technologies, Inc.</name>
   </developer>
   <description>
     <p>
@@ -23,9 +23,9 @@
   <launchable type="desktop-id">ph.iridium.decks.desktop</launchable>
   <icon type="stock">ph.iridium.decks</icon>
   <!-- Only url types known to appstream 0.15 (Ubuntu 22.04, where CI validates): no vcs-browser. -->
-  <url type="homepage">https://getartcraft.com/apps/deckcraft</url>
-  <url type="bugtracker">https://github.com/storytold/deckcraft/issues</url>
-  <url type="help">https://github.com/storytold/deckcraft</url>
+  <url type="homepage">https://iridium.ph</url>
+  <url type="bugtracker">https://github.com/ngjordan/iridium-decks/issues</url>
+  <url type="help">https://github.com/ngjordan/iridium-decks</url>
   <url type="contact">https://iridium.ph</url>
   <categories>
     <category>Office</category>
