@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Build and package Iridium Decks for Linux (<arch> is x86_64 or aarch64, or riscv64 when cross-compiling):
 #
-#   $DIST/deckcraft-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
-#   $DIST/deckcraft-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
-#   $DIST/deckcraft-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
-#   $DIST/deckcraft-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
-#   $DIST/deckcraft-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
+#   $DIST/iridium-decks-<version>-linux-<arch>.AppImage  any distro with glibc >= the build host's
+#   $DIST/iridium-decks-<version>-linux-<arch>.AppImage.zsync  delta updates (needs zsyncmake)
+#   $DIST/iridium-decks-<version>-linux-<arch>.deb       Debian, Ubuntu, Mint, Pop!_OS, ...
+#   $DIST/iridium-decks-<version>-linux-<arch>.rpm       Fedora, openSUSE, RHEL, ...
+#   $DIST/iridium-decks-<version>-linux-<arch>.tar.gz    plain FHS-style tree (bin/, share/)
 #
 # Usage: packaging/linux/package.sh [--skip-build] [--formats "appimage deb rpm tar"]
 #
@@ -44,7 +44,7 @@ case "$ARCH" in
   *) echo "unsupported architecture $ARCH" >&2; exit 2 ;;
 esac
 export DECKCRAFT_MAINTAINER="${DECKCRAFT_MAINTAINER:-Iridium Decks maintainers <maintainers@iridium.ph>}"
-BASENAME="deckcraft-$VERSION-linux-$ARCH"
+BASENAME="iridium-decks-$VERSION-linux-$ARCH"
 
 echo "==> Iridium Decks $VERSION for Linux $ARCH ($FORMATS)"
 

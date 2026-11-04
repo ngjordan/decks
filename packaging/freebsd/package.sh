@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Build and package Iridium Decks for FreeBSD:
 #
-#   $DIST/deckcraft-<version>-freebsd-<arch>.tar.gz   bin/, share/ (desktop entry, icons, AppStream)
+#   $DIST/iridium-decks-<version>-freebsd-<arch>.tar.gz   bin/, share/ (desktop entry, icons, AppStream)
 #
 # Usage: packaging/freebsd/package.sh [--skip-build]
 #
@@ -58,7 +58,7 @@ for f in "$BIN/deckcraft" "$BIN/deckcraft-cli"; do
   [[ "$(hex -j18 -N2 "$f")" == "$MACHINE" ]] || { echo "error: $f is not an ELF for $ARCH (e_machine $(hex -j18 -N2 "$f"))" >&2; exit 1; }
 done
 
-NAME="deckcraft-$VERSION-freebsd-$ARCH"
+NAME="iridium-decks-$VERSION-freebsd-$ARCH"
 WORK="$CARGO_TARGET_DIR/freebsd-package"
 STAGE="$WORK/$NAME"
 rm -rf "$WORK"
