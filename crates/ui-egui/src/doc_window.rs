@@ -4,8 +4,8 @@
 //! selection. It does not edit, and Arrange All is not here. Closing the window leaves the
 //! presentation open.
 
-use deckcraft_render::RenderOpts;
 use egui::{Color32, CornerRadius, Rect, RichText, pos2, vec2};
+use iridium_decks_render::RenderOpts;
 use serde_json::{Value, json};
 
 use crate::SlideApp;
@@ -82,7 +82,7 @@ pub fn show(app: &mut SlideApp, ctx: &egui::Context) {
     }
     let grayscale = app.ui.grayscale;
     ctx.show_viewport_immediate(
-        egui::ViewportId::from_hash_of("deckcraft_doc_window"),
+        egui::ViewportId::from_hash_of("iridium_decks_doc_window"),
         egui::ViewportBuilder::default().with_title(title.clone()).with_inner_size([960.0, 640.0]).with_min_inner_size([480.0, 360.0]),
         |ui, _| {
             let t = crate::theme::Tokens::get(ui);
@@ -123,7 +123,7 @@ pub fn show(app: &mut SlideApp, ctx: &egui::Context) {
     );
 }
 
-fn pixel_size(doc: &deckcraft_model::Presentation, width_pts: f32) -> (u32, u32) {
+fn pixel_size(doc: &iridium_decks_model::Presentation, width_pts: f32) -> (u32, u32) {
     let w = (width_pts.round() as u32).clamp(64, 1400);
     let aspect = doc.slide_size.height / doc.slide_size.width.max(1.0);
     let h = ((w as f64) * aspect).round().clamp(1.0, 1400.0) as u32;
@@ -144,7 +144,7 @@ fn fit_rect(avail: Rect, w: u32, h: u32) -> Rect {
 /// What a cached slide texture was drawn from: document, revision, slide, pixel size, grayscale.
 type TexKey = (u64, u64, usize, u32, u32, bool);
 
-fn ensure_texture(app: &mut SlideApp, ctx: &egui::Context, doc: &deckcraft_model::Presentation, key: TexKey) -> Option<egui::TextureHandle> {
+fn ensure_texture(app: &mut SlideApp, ctx: &egui::Context, doc: &iridium_decks_model::Presentation, key: TexKey) -> Option<egui::TextureHandle> {
     let (_, _, slide, w, h, grayscale) = key;
     if let Some(win) = app.doc_window.as_ref()
         && win.key == Some(key)
@@ -152,7 +152,7 @@ fn ensure_texture(app: &mut SlideApp, ctx: &egui::Context, doc: &deckcraft_model
     {
         return Some(tex);
     }
-    let img = deckcraft_render::render_slide(
+    let img = iridium_decks_render::render_slide(
         doc,
         slide,
         &RenderOpts { scale: w as f64 / doc.slide_size.width.max(1.0), size: Some((w, h)), edit: true, threads: 0, ..Default::default() },

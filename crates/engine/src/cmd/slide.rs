@@ -3,8 +3,8 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{LayoutId, LayoutType, Presentation, Section, SlideId, defaults};
+use iridium_decks_model::text::TextBody;
+use iridium_decks_model::{LayoutId, LayoutType, Presentation, Section, SlideId, defaults};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, bool_or, bool_param, cmd, has_doc, has_slide, ok, opt_usize_param, str_param, usize_param};
@@ -172,9 +172,9 @@ fn new(s: &mut Session, p: &Value) -> Result<Value> {
 /// Prefers `idx="1"` (the content slot PowerPoint fills), then a full-size text placeholder over
 /// a `half`/`quarter` one, then a text placeholder over a picture/chart/table one; ties keep
 /// shape order, so a layout with a single body placeholder behaves as before.
-fn body_placeholder(shapes: &mut [deckcraft_model::Shape]) -> Option<&mut deckcraft_model::Shape> {
-    use deckcraft_model::PhType;
-    let rank = |sh: &deckcraft_model::Shape| {
+fn body_placeholder(shapes: &mut [iridium_decks_model::Shape]) -> Option<&mut iridium_decks_model::Shape> {
+    use iridium_decks_model::PhType;
+    let rank = |sh: &iridium_decks_model::Shape| {
         let ph = sh.ph.as_ref()?;
         if ph.kind.is_title() {
             return None;
@@ -489,16 +489,16 @@ fn hide(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// Re-map a slide's placeholders onto a new layout (content kept, matched by type/index).
 pub fn apply_layout(doc: &mut Presentation, index: usize, layout: LayoutId) -> Result<()> {
-    let lay_shapes: Vec<deckcraft_model::Shape> =
+    let lay_shapes: Vec<iridium_decks_model::Shape> =
         doc.layout(layout).map(|(_, l)| l.shapes.clone()).ok_or_else(|| bad("slide.layout", "no such layout"))?;
     let mut fresh = vec![];
     for ls in lay_shapes.iter().filter(|x| x.ph.as_ref().is_some_and(|p| !p.kind.is_footer_kind())) {
-        let id = deckcraft_model::ShapeId(doc.alloc_id().ok_or_else(|| bad("slide.layout", NO_ID_SPACE))?);
+        let id = iridium_decks_model::ShapeId(doc.alloc_id().ok_or_else(|| bad("slide.layout", NO_ID_SPACE))?);
         fresh.push((id, ls.clone()));
     }
     let slide = doc.slides.get_mut(index).ok_or_else(|| bad("slide.layout", "no slide"))?;
     let slide = Arc::make_mut(slide);
-    let mut old: Vec<deckcraft_model::Shape> = std::mem::take(&mut slide.shapes);
+    let mut old: Vec<iridium_decks_model::Shape> = std::mem::take(&mut slide.shapes);
     let mut out = vec![];
     for (id, ls) in fresh {
         let Some(lph) = ls.ph.clone() else { continue };
@@ -517,14 +517,18 @@ pub fn apply_layout(doc: &mut Presentation, index: usize, layout: LayoutId) -> R
                 o.xfrm = None;
                 out.push(o);
             }
-            None => {
-                out.push(deckcraft_model::Shape { id, name: ls.name.clone(), ph: Some(lph), text: Some(TextBody::default()), ..Default::default() })
-            }
+            None => out.push(iridium_decks_model::Shape {
+                id,
+                name: ls.name.clone(),
+                ph: Some(lph),
+                text: Some(TextBody::default()),
+                ..Default::default()
+            }),
         }
     }
     // Leftover placeholders with content stay as they were (positioned); empty ones go.
     for o in old {
-        let empty_ph = o.ph.is_some() && o.text.as_ref().is_none_or(|t| t.is_empty()) && matches!(o.kind, deckcraft_model::ShapeKind::Shape);
+        let empty_ph = o.ph.is_some() && o.text.as_ref().is_none_or(|t| t.is_empty()) && matches!(o.kind, iridium_decks_model::ShapeKind::Shape);
         if !empty_ph {
             out.push(o);
         }
@@ -604,7 +608,7 @@ fn notes(s: &mut Session, p: &Value) -> Result<Value> {
             let notes = &mut Arc::make_mut(sl).notes;
             match body {
                 Some(b) => *notes = b,
-                None => deckcraft_model::edit::replace_text(notes, &text),
+                None => iridium_decks_model::edit::replace_text(notes, &text),
             }
         }
         Ok(())
@@ -714,7 +718,7 @@ fn from_outline(s: &mut Session, p: &Value) -> Result<Value> {
     let markdown = bool_param(p, "markdown").unwrap_or(false);
     s.edit(|doc, sel| {
         let before = doc.slides.len();
-        let n = if markdown { deckcraft_format::markdown_to_slides(doc, &text) } else { deckcraft_format::outline_to_slides(doc, &text) };
+        let n = if markdown { iridium_decks_format::markdown_to_slides(doc, &text) } else { iridium_decks_format::outline_to_slides(doc, &text) };
         // both append; move them after the current slide.
         let at = (sel.slide + 1).min(before);
         let new: Vec<_> = doc.slides.drain(before..).collect();
@@ -784,12 +788,15 @@ mod tests {
     fn deleting_slide_prunes_every_custom_show_in_one_undo_step() {
         let (mut s, ids) = deck(3);
         let shows = vec![
-            deckcraft_model::CustomShow {
+            iridium_decks_model::CustomShow {
                 name: "First".into(),
-                slides: vec![deckcraft_model::SlideId(ids[0]), deckcraft_model::SlideId(ids[1]), deckcraft_model::SlideId(ids[1])],
+                slides: vec![iridium_decks_model::SlideId(ids[0]), iridium_decks_model::SlideId(ids[1]), iridium_decks_model::SlideId(ids[1])],
             },
-            deckcraft_model::CustomShow { name: "Second".into(), slides: vec![deckcraft_model::SlideId(ids[1]), deckcraft_model::SlideId(ids[2])] },
-            deckcraft_model::CustomShow { name: "Empty after delete".into(), slides: vec![deckcraft_model::SlideId(ids[1])] },
+            iridium_decks_model::CustomShow {
+                name: "Second".into(),
+                slides: vec![iridium_decks_model::SlideId(ids[1]), iridium_decks_model::SlideId(ids[2])],
+            },
+            iridium_decks_model::CustomShow { name: "Empty after delete".into(), slides: vec![iridium_decks_model::SlideId(ids[1])] },
         ];
         s.edit(|doc, _| {
             doc.custom_shows = shows;
@@ -799,23 +806,23 @@ mod tests {
 
         s.execute("slide.delete", &json!({"index": 1})).expect("delete slide");
         let shows = &s.doc().expect("doc").doc.custom_shows;
-        assert_eq!(shows[0].slides, [deckcraft_model::SlideId(ids[0])]);
-        assert_eq!(shows[1].slides, [deckcraft_model::SlideId(ids[2])]);
+        assert_eq!(shows[0].slides, [iridium_decks_model::SlideId(ids[0])]);
+        assert_eq!(shows[1].slides, [iridium_decks_model::SlideId(ids[2])]);
         assert!(shows[2].slides.is_empty());
 
         s.execute("edit.undo", &json!({})).expect("undo deletion");
         assert_eq!(order(&s), ids);
         assert_eq!(
             s.doc().expect("doc").doc.custom_shows[0].slides,
-            [deckcraft_model::SlideId(ids[0]), deckcraft_model::SlideId(ids[1]), deckcraft_model::SlideId(ids[1])]
+            [iridium_decks_model::SlideId(ids[0]), iridium_decks_model::SlideId(ids[1]), iridium_decks_model::SlideId(ids[1])]
         );
-        assert_eq!(s.doc().expect("doc").doc.custom_shows[1].slides, [deckcraft_model::SlideId(ids[1]), deckcraft_model::SlideId(ids[2])]);
+        assert_eq!(s.doc().expect("doc").doc.custom_shows[1].slides, [iridium_decks_model::SlideId(ids[1]), iridium_decks_model::SlideId(ids[2])]);
 
         s.execute("edit.redo", &json!({})).expect("redo deletion");
-        let bytes = deckcraft_format::save(&s.doc().expect("doc").doc).expect("save deck");
-        let reopened = deckcraft_format::load(&bytes).expect("reopen deck");
-        assert_eq!(reopened.custom_shows[0].slides, [deckcraft_model::SlideId(ids[0])]);
-        assert_eq!(reopened.custom_shows[1].slides, [deckcraft_model::SlideId(ids[2])]);
+        let bytes = iridium_decks_format::save(&s.doc().expect("doc").doc).expect("save deck");
+        let reopened = iridium_decks_format::load(&bytes).expect("reopen deck");
+        assert_eq!(reopened.custom_shows[0].slides, [iridium_decks_model::SlideId(ids[0])]);
+        assert_eq!(reopened.custom_shows[1].slides, [iridium_decks_model::SlideId(ids[2])]);
         assert!(reopened.custom_shows[2].slides.is_empty());
     }
 
@@ -1028,7 +1035,7 @@ mod tests {
     fn select_range_clears_a_table_cell_selection_and_returns_to_the_slides() {
         let mut s = deck_of(3);
         s.select(|_, sel| {
-            sel.cells = Some((deckcraft_model::ShapeId(1), (0, 0), (1, 1)));
+            sel.cells = Some((iridium_decks_model::ShapeId(1), (0, 0), (1, 1)));
             sel.target = crate::Target::Master { master: 0 };
         })
         .expect("cells");

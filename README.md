@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/ph.iridium.decks.png" width="128" height="128" alt="Iridium Decks icon: a presentation screen with a bar chart on an orange tile">
+  <img src="assets/app-icon/hicolor/256x256/apps/ph.decks.png" width="128" height="128" alt="Decks icon: a presentation screen with a bar chart on an orange tile">
 </p>
 
-<h1 align="center">Iridium Decks</h1>
+<h1 align="center">Decks</h1>
 
 <p align="center">
   <b>Presentations and slide shows; an open-source, modern presentation and slide designer, built in pure Rust.</b>
@@ -21,8 +21,8 @@
   <img alt="Written in Rust" src="https://img.shields.io/badge/written%20in-Rust-084f39?style=flat-square">
   <img alt="Platforms" src="https://img.shields.io/badge/platforms-macOS%20%C2%B7%20Windows%20%C2%B7%20Linux%20%C2%B7%20BSD%20%C2%B7%20Web-555?style=flat-square">
   <br>
-  <a href="https://sonarcloud.io/project/overview?id=storytold_deckcraft"><img alt="Scanned by SonarCloud" src="https://img.shields.io/badge/Scanned_by-SonarCloud-4b9fd5?style=flat-square&logo=sonarqubecloud&logoColor=white"></a>
-  <a href="https://coderabbit.ai"><img alt="Reviewed by CodeRabbit" src="https://img.shields.io/coderabbit/prs/github/storytold/deckcraft?style=flat-square&label=Reviewed%20by%20CodeRabbit&logo=coderabbit"></a>
+  <a href="https://sonarcloud.io/project/overview?id=ngjordan_decks"><img alt="Scanned by SonarCloud" src="https://img.shields.io/badge/Scanned_by-SonarCloud-4b9fd5?style=flat-square&logo=sonarqubecloud&logoColor=white"></a>
+  <a href="https://coderabbit.ai"><img alt="Reviewed by CodeRabbit" src="https://img.shields.io/coderabbit/prs/github/ngjordan/decks?style=flat-square&label=Reviewed%20by%20CodeRabbit&logo=coderabbit"></a>
 </p>
 
 <p align="center">
@@ -30,15 +30,15 @@
 </p>
 
 <p align="center">
-  <a href="https://iridium.ph"><b>Iridium Decks by Iridium Technologies, Inc.</b></a> ·
-  <a href="https://github.com/storytold/deckcraft">Based on DeckCraft by the ArtCraft team</a>
+  <a href="https://iridium.ph"><b>Decks by Iridium Technologies, Inc.</b></a> ·
+  <a href="https://github.com/ngjordan/decks">Based on the upstream DeckCraft project</a>
 </p>
 
 > [!NOTE]
-> **Iridium Decks is built for people who present.** Iridium Technologies, Inc. builds it from an open-source independent project in pure Rust.
+> **Decks is built for people who present.** Iridium Technologies, Inc. builds it from an open-source independent project in pure Rust.
 
 <p align="center">
-  <img alt="Iridium Decks editing a slide: ribbon, slide thumbnails with sections, a process diagram on the canvas, notes and status bar" src="docs/images/editor.png" width="900">
+  <img alt="Decks editing a slide: ribbon, slide thumbnails with sections, a process diagram on the canvas, notes and status bar" src="docs/images/editor.png" width="900">
 </p>
 
 <p align="center">
@@ -53,7 +53,7 @@
 
 ## What works today
 
-Iridium Decks is in alpha, heading for beta (see the [roadmap](ROADMAP.md)).
+Decks is in alpha, heading for beta (see the [roadmap](ROADMAP.md)).
 Today it can:
 
 - **Make decks**: slide masters and eleven layouts with placeholders that inherit position and
@@ -81,13 +81,13 @@ Today it can:
   </tr>
   <tr>
     <td width="50%"><img alt="Slide Sorter view with transitions under each slide" src="docs/images/slide-sorter.png"><br><sub>Slide Sorter with each slide's transition</sub></td>
-    <td width="50%"><img alt="Iridium Decks in dark mode showing a chart slide" src="docs/images/dark-mode.png"><br><sub>Dark mode, with a native chart</sub></td>
+    <td width="50%"><img alt="Decks in dark mode showing a chart slide" src="docs/images/dark-mode.png"><br><sub>Dark mode, with a native chart</sub></td>
   </tr>
 </table>
 
 <p align="center">
   <img alt="All eight slides of the Northern Lights sample deck" src="docs/images/sample-deck.png" width="900"><br>
-  <sub>The built-in sample deck, rendered by <code>deckcraft-cli render --sample --all</code></sub>
+  <sub>The built-in sample deck, rendered by <code>iridium-decks-cli render --sample --all</code></sub>
 </p>
 
 ## Getting started
@@ -96,64 +96,64 @@ PDF export uses the shared `craft-pdf` writer with import features disabled. See
 [`crates/pdf/README.md`](crates/pdf/README.md) for the dependency and validation requirements.
 
 ```sh
-git clone https://github.com/storytold/deckcraft
-cd deckcraft
-cargo run --release -p deckcraft-cli -- render --sample --all --scale 1 out/
+git clone https://github.com/ngjordan/decks
+cd iridium-decks
+cargo run --release -p iridium-decks-cli -- render --sample --all --scale 1 out/
 ```
 
 On Linux, the build also needs the ALSA headers for slide-show sound: `alsa-lib-devel` on Fedora,
 `libasound2-dev` on Debian and Ubuntu, `alsa-lib` on Arch. Without them it stops at `alsa-sys`.
 
-Fonts come from [craft-fonts](https://github.com/storytold/craft-fonts): clone it next to this repo
-(`../craft-fonts`) and local builds pick it up automatically; without it Iridium Decks uses your system
+Fonts come from [craft-fonts](https://github.com/ngjordan/craft-fonts): clone it next to this repo
+(`../craft-fonts`) and local builds pick it up automatically; without it Decks uses your system
 fonts.
 
-Each [GitHub release](https://github.com/storytold/deckcraft/releases) has ready-made builds, on Linux as
+Each [GitHub release](https://github.com/ngjordan/decks/releases) has ready-made builds, on Linux as
 an AppImage, a `.deb`, an `.rpm` and a tarball. On Gentoo, the community [::snakebyte
 overlay](https://github.com/switch87/snakebyte-overlay) packages the Linux release as
-`app-office/deckcraft-bin` (not maintained by the Iridium Decks team):
+`app-office/iridium-decks-bin` (not maintained by the Decks team):
 
 ```sh
 eselect repository add snakebyte git https://github.com/switch87/snakebyte-overlay.git
 emaint sync -r snakebyte
-echo 'app-office/deckcraft-bin ~amd64' >> /etc/portage/package.accept_keywords/deckcraft
-emerge --ask app-office/deckcraft-bin
+echo 'app-office/iridium-decks-bin ~amd64' >> /etc/portage/package.accept_keywords/iridium-decks
+emerge --ask app-office/iridium-decks-bin
 ```
 
 ### Logs
 
-The desktop app writes its `log` records to standard error and to `logs/deckcraft.log` in the
-settings directory, beside `ui.json` and `prefs.json` (Linux `~/.config/deckcraft/logs/`, or
-`$XDG_CONFIG_HOME/deckcraft/logs/`; macOS `~/Library/Application Support/Iridium Decks/logs/`; Windows
-`%APPDATA%\Iridium Decks\logs\`). A start from a desktop menu or the Dock has no terminal, so this file
+The desktop app writes its `log` records to standard error and to `logs/iridium-decks.log` in the
+settings directory, beside `ui.json` and `prefs.json` (Linux `~/.config/iridium-decks/logs/`, or
+`$XDG_CONFIG_HOME/iridium-decks/logs/`; macOS `~/Library/Application Support/Decks/logs/`; Windows
+`%APPDATA%\Decks\logs\`). A start from a desktop menu or the Dock has no terminal, so this file
 is what to attach to a bug report: the crash guard's panic report, a failed crash-recovery save,
 Parts skipped on import and audio output problems land there. Each launch moves the
-previous log to `deckcraft.1.log` (and that one to `deckcraft.2.log`), so the log of a run that
+previous log to `iridium-decks.1.log` (and that one to `iridium-decks.2.log`), so the log of a run that
 crashed survives the next start. The file stops growing at 16 MiB. `--version` writes no file.
 
 | Variable | Effect |
 |---|---|
-| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for Iridium Decks's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,deckcraft_pptx=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`deckcraft*=debug`). |
+| `RUST_LOG` | Log levels for standard error and the log file. Default: `info` for Decks's own crates, `warn` for everything else. env_logger-style directives replace that, e.g. `RUST_LOG=debug`, `RUST_LOG=warn,deckcraft_pptx=trace` or `RUST_LOG=info,wgpu_core=warn`; a directive ending in `*` covers every target starting with it (`deckcraft*=debug`). |
 
-The logger is `apps/deckcraft/src/logging.rs`; the realtime audio callback does not log. The web
+The logger is `apps/iridium-decks/src/logging.rs`; the realtime audio callback does not log. The web
 app logs to the browser console instead.
 
 ## Agents, CLI and MCP
 
-Every action in Iridium Decks is a command with a stable id, so people, scripts and AI agents use the
+Every action in Decks is a command with a stable id, so people, scripts and AI agents use the
 same verbs:
 
 ```sh
-deckcraft-cli commands format.          # list commands
-deckcraft-cli run --sample --cmd 'slide.new={"layout":"titleOnly","title":"Hello"}' --save hello.deckcraft
-deckcraft-cli mcp                       # MCP server over stdio (headless)
-deckcraft-cli mcp --connect 7990        # drive the running app (deckcraft --control 7990)
-deckcraft-cli mcp --automation-read-root DIR --automation-write-root DIR   # confine the headless agent to folders
+iridium-decks-cli commands format.          # list commands
+iridium-decks-cli run --sample --cmd 'slide.new={"layout":"titleOnly","title":"Hello"}' --save hello.iridium-decks
+iridium-decks-cli mcp                       # MCP server over stdio (headless)
+iridium-decks-cli mcp --connect 7990        # drive the running app (iridium-decks --control 7990)
+iridium-decks-cli mcp --automation-read-root DIR --automation-write-root DIR   # confine the headless agent to folders
 ```
 
 ## Roadmap
 
-Iridium Decks is in **alpha**. It covers **84% of the features tracked in [`docs/target-app-parity.md`](docs/target-app-parity.md) by breadth** (92% of the core
+Decks is in **alpha**. It covers **84% of the features tracked in [`docs/target-app-parity.md`](docs/target-app-parity.md) by breadth** (92% of the core
 ones, measured) and is about **55% ready for real work across all tracked capabilities** (estimated).
 See [ROADMAP.md](ROADMAP.md) for the stage, numbers by dimension and what's next,
 [docs/target-app-parity.md](docs/target-app-parity.md) for the full assessment,
@@ -162,15 +162,15 @@ See [ROADMAP.md](ROADMAP.md) for the stage, numbers by dimension and what's next
 
 ## Downloads
 
-**Download Iridium Decks** from GitHub: the [latest release](https://github.com/storytold/deckcraft/releases/latest) has every build listed below, and [all releases](https://github.com/storytold/deckcraft/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
+**Download Decks** from GitHub: the [latest release](https://github.com/ngjordan/decks/releases/latest) has every build listed below, and [all releases](https://github.com/ngjordan/decks/releases) has earlier versions and their notes. `<ver>` in the file names is the version number, and `SHA256SUMS.txt` lists a checksum for every file.
 
 ### Windows
 
 | Build | Installer | Portable |
 |---|---|---|
-| x64 (64-bit Intel/AMD) | `deckcraft-<ver>-windows-x64.msi` | `deckcraft-<ver>-windows-x64-portable.zip` |
-| arm64 (Snapdragon and other ARM PCs) | `deckcraft-<ver>-windows-arm64.msi` | `deckcraft-<ver>-windows-arm64-portable.zip` |
-| x86 (32-bit) | `deckcraft-<ver>-windows-x86.msi` | `deckcraft-<ver>-windows-x86-portable.zip` |
+| x64 (64-bit Intel/AMD) | `iridium-decks-<ver>-windows-x64.msi` | `iridium-decks-<ver>-windows-x64-portable.zip` |
+| arm64 (Snapdragon and other ARM PCs) | `iridium-decks-<ver>-windows-arm64.msi` | `iridium-decks-<ver>-windows-arm64-portable.zip` |
+| x86 (32-bit) | `iridium-decks-<ver>-windows-x86.msi` | `iridium-decks-<ver>-windows-x86-portable.zip` |
 
 Installers and executables are code-signed.
 
@@ -182,7 +182,7 @@ PowerShell, from the folder containing the executable:
 
 ```powershell
 $env:WGPU_BACKEND = "vulkan"
-& .\deckcraft.exe
+& .\iridium-decks.exe
 Remove-Item Env:WGPU_BACKEND                     # restore the default for later launches
 ```
 
@@ -197,27 +197,27 @@ DirectX 12 shaders are compiled with FXC, which is part of Windows, so no `dxcom
 
 | Build | File | Notes |
 |---|---|---|
-| App, universal (Apple silicon + Intel) | `deckcraft-<ver>-macos-universal.dmg` | Signed and notarized |
-| Command-line tool, universal | `deckcraft-cli-<ver>-macos-universal.zip` | Signed and notarized |
+| App, universal (Apple silicon + Intel) | `iridium-decks-<ver>-macos-universal.dmg` | Signed and notarized |
+| Command-line tool, universal | `iridium-decks-cli-<ver>-macos-universal.zip` | Signed and notarized |
 
 ### Linux
 
 | Format | x86_64 | aarch64 (ARM64) | Notes |
 |---|---|---|---|
-| AppImage | `deckcraft-<ver>-linux-x86_64.AppImage` | `deckcraft-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
-| Flatpak | `deckcraft-<ver>-linux-x86_64.flatpak` | `deckcraft-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
-| Debian/Ubuntu | `deckcraft-<ver>-linux-x86_64.deb` | `deckcraft-<ver>-linux-aarch64.deb` | |
-| Fedora/RHEL/openSUSE | `deckcraft-<ver>-linux-x86_64.rpm` | `deckcraft-<ver>-linux-aarch64.rpm` | |
-| Tarball | `deckcraft-<ver>-linux-x86_64.tar.gz` | `deckcraft-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
+| AppImage | `iridium-decks-<ver>-linux-x86_64.AppImage` | `iridium-decks-<ver>-linux-aarch64.AppImage` | Runs anywhere; updates itself with [AppImageUpdate](https://github.com/AppImageCommunity/AppImageUpdate) (`.zsync` files) |
+| Flatpak | `iridium-decks-<ver>-linux-x86_64.flatpak` | `iridium-decks-<ver>-linux-aarch64.flatpak` | Sandboxed; `flatpak install --user <file>` |
+| Debian/Ubuntu | `iridium-decks-<ver>-linux-x86_64.deb` | `iridium-decks-<ver>-linux-aarch64.deb` | |
+| Fedora/RHEL/openSUSE | `iridium-decks-<ver>-linux-x86_64.rpm` | `iridium-decks-<ver>-linux-aarch64.rpm` | |
+| Tarball | `iridium-decks-<ver>-linux-x86_64.tar.gz` | `iridium-decks-<ver>-linux-aarch64.tar.gz` | Unpack anywhere |
 
-RISC-V 64 (riscv64): `deckcraft-<ver>-linux-riscv64.tar.gz`, a tarball only (cross-compiled; needs glibc 2.39+, e.g. Ubuntu 24.04+).
+RISC-V 64 (riscv64): `iridium-decks-<ver>-linux-riscv64.tar.gz`, a tarball only (cross-compiled; needs glibc 2.39+, e.g. Ubuntu 24.04+).
 
-**Runtime libraries.** The window-system, GPU and file-dialog libraries Iridium Decks needs are opened
+**Runtime libraries.** The window-system, GPU and file-dialog libraries Decks needs are opened
 when the app starts (`dlopen` through `x11-dl`, `xkbcommon-dl`, `ash`, `glutin` and `rfd`) instead
 of being linked in, so `ldd` shows none of them: an install that satisfies the linked dependencies
 can still fail at start-up with a loader error and no hint of what to install. Only
-`libasound.so.2` (slide-show sound) is a hard link-time dependency, and only of the `deckcraft`
-GUI — `deckcraft-cli` uses neither sound nor a display. The `.deb` and `.rpm` declare the set in
+`libasound.so.2` (slide-show sound) is a hard link-time dependency, and only of the `iridium-decks`
+GUI — `iridium-decks-cli` uses neither sound nor a display. The `.deb` and `.rpm` declare the set in
 `packaging/linux/nfpm.yaml`; a tarball install or a musl system has to provide it itself:
 
 ```sh
@@ -238,10 +238,10 @@ artifact will need (#954).
   included. On a real GPU install your vendor's driver instead (`mesa-vulkan-intel`,
   `mesa-vulkan-ati`, `mesa-vulkan-nouveau`, …).
 - Without Vulkan the app falls back to CPU rendering through Mesa's GL drivers. It works, but
-  slowly — a driver limit, not a Iridium Decks bug.
+  slowly — a driver limit, not a Decks bug.
 - `xdg-desktop-portal` (with `xdg-desktop-portal-gtk` or `-kde`; `-wlr` has no file chooser, so
   on wlroots compositors install `zenity`) is what the Open and Save dialogs talk to; `xkeyboard-config` holds the XKB keyboard data `libxkbcommon` reads.
-- fontconfig and freetype are not needed: Iridium Decks reads `/usr/share/fonts` itself and embeds its
+- fontconfig and freetype are not needed: Decks reads `/usr/share/fonts` itself and embeds its
   presentation fonts.
 
 Building from source on musl also needs `build-base pkgconf alsa-lib-dev` (`alsa-lib-dev` is the
@@ -251,43 +251,44 @@ ALSA headers).
 
 | Build | File |
 |---|---|
-| x86_64 | `deckcraft-<ver>-freebsd-x86_64.tar.gz` |
+| x86_64 | `iridium-decks-<ver>-freebsd-x86_64.tar.gz` |
 
 ### Web (WebAssembly)
 
 | Build | File | Notes |
 |---|---|---|
-| Static site | `deckcraft-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
+| Static site | `iridium-decks-web-<ver>.zip` | Runs in a modern browser; host it on any static server |
 
 ## The Crafting Apps
 
-Iridium Decks is one of the Iridium applications, alongside the Iridium Docs word processor and the
-Iridium Sheets spreadsheet. Each is built from an open-source independent project, in pure Rust, and
+Decks is one of five open-source desktop applications, alongside the Docs word processor and the
+Sheets spreadsheet. Each is built from an open-source independent project, in pure Rust, and
 each stands on its own.
 
 | App | What it's for | Code |
-|:-:|---|---|
-| **Iridium Decks** | Presentations and slide shows | [GitHub](https://github.com/ngjordan/iridium-decks) |
-| **Iridium Sheets** | Spreadsheets and data | [GitHub](https://github.com/ngjordan/iridium-sheets) |
-| **Iridium Docs** | Word processing and documents | [GitHub](https://github.com/ngjordan/iridium-docs) |
+| **Sheets** | Spreadsheets and data | [GitHub](https://github.com/ngjordan/sheets) |
+| **Docs** | Word processing and documents | [GitHub](https://github.com/ngjordan/docs) |
+| **CAD** | Computer-aided design and drafting | [GitHub](https://github.com/ngjordan/cad) |
+| **Decks** | Presentations and slide shows | [GitHub](https://github.com/ngjordan/decks) |
+| **PDF** | Reading, organizing and protecting PDF files | [GitHub](https://github.com/ngjordan/pdf) |
 
 ## License and credits
 
-Iridium Decks is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
-Copyright (c) 2026 ArtCraft Team and the DeckCraft contributors. Required notices are in [NOTICE](NOTICE).
+Decks is dual-licensed under [MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option.
+Copyright (c) 2026 Iridium Technologies, Inc. and the DeckCraft contributors. Required notices are in [NOTICE](NOTICE).
 
 Bundled fonts, icons, images and other assets keep their own open licenses; each one is listed
 with its author, source and license in [ATTRIBUTION.md](ATTRIBUTION.md).
 
-Iridium Decks's themes, layouts, shape geometry, icons and sample decks are original work, drawn or
+Decks's themes, layouts, shape geometry, icons and sample decks are original work, drawn or
 generated in code; no proprietary artwork, fonts, themes or templates are used.
 
-The ArtCraft name, wordmark and logos are trademarks of the ArtCraft Team and are not covered by
-this license. This is a modified distribution and the ArtCraft marks have been removed, as the
+The upstream project name, wordmark and logos are trademarks of the the upstream team and are not covered by
+this license. This is a modified distribution and the upstream marks have been removed, as the
 upstream brand licence requires for forks.
 
 <p align="center">
-  <sub>Based on <a href="https://github.com/storytold/deckcraft">DeckCraft</a> by the ArtCraft team.
-  Iridium Decks is a modified distribution; the ArtCraft marks have been removed as the upstream
+  <sub>Based on <a href="https://github.com/ngjordan/decks">DeckCraft</a> by the upstream team.
+  Decks is a modified distribution; the upstream marks have been removed as the upstream
   brand licence requires. MIT OR Apache-2.0.</sub>
 </p>

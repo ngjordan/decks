@@ -11,7 +11,7 @@ pub struct Painted {
     pub fill: Option<Fill>,
     pub line: Option<Line>,
     pub effects: Option<Effects>,
-    pub style: Option<deckcraft_model::ShapeStyle>,
+    pub style: Option<iridium_decks_model::ShapeStyle>,
 }
 
 pub(super) fn painter_pick(s: &mut Session, p: &Value) -> Result<Value> {
@@ -130,16 +130,16 @@ pub(super) fn font_add(_s: &mut Session, p: &Value) -> Result<Value> {
     if data.len() > 64 << 20 {
         return Err(bad("font.add", "font file larger than 64 MB"));
     }
-    let faces = deckcraft_fonts::FontDb::global().add_font(data);
+    let faces = iridium_decks_fonts::FontDb::global().add_font(data);
     if faces == 0 {
-        return Err(bad("font.add", "not a font Iridium Decks can read (or already added)"));
+        return Err(bad("font.add", "not a font Decks can read (or already added)"));
     }
     Ok(json!({"faces": faces}))
 }
 
-/// Catalog the installed fonts again, so fonts installed while Iridium Decks runs appear.
+/// Catalog the installed fonts again, so fonts installed while Decks runs appear.
 pub(super) fn font_rescan(_s: &mut Session, _p: &Value) -> Result<Value> {
-    let db = deckcraft_fonts::FontDb::global();
+    let db = iridium_decks_fonts::FontDb::global();
     #[cfg(not(target_arch = "wasm32"))]
     let faces = db.load_system_fonts();
     #[cfg(target_arch = "wasm32")]

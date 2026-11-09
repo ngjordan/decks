@@ -2,10 +2,10 @@
 //! type, direction, angle and a stop bar (add, drag, recolour, set transparency, remove stops); and
 //! the pattern editor: a gallery of the preset patterns with foreground and background colors.
 
-use deckcraft_color::{ColorScheme, ColorTransform, SchemeSlot};
-use deckcraft_model::ColorRef;
-use deckcraft_model::style::{Gradient, GradientFlip, GradientShape, GradientStop, PatternFill};
 use egui::{Color32, CornerRadius, Rect, Sense, Stroke, Ui, pos2, vec2};
+use iridium_decks_color::{ColorScheme, ColorTransform, SchemeSlot};
+use iridium_decks_model::ColorRef;
+use iridium_decks_model::style::{Gradient, GradientFlip, GradientShape, GradientStop, PatternFill};
 use serde_json::{Value, json};
 
 use crate::ribbon::cref_param;
@@ -461,11 +461,11 @@ pub fn pattern_json(pt: &PatternFill) -> Value {
 fn paint_pattern(p: &egui::Painter, r: Rect, name: &str, fg: Color32, bg: Color32) {
     const CELL: f32 = 2.0;
     p.rect_filled(r, CornerRadius::ZERO, bg);
-    let tile = deckcraft_render::pattern_tile(name);
+    let tile = iridium_decks_render::pattern_tile(name);
     let (nx, ny) = ((r.width() / CELL).floor().max(0.0) as usize, (r.height() / CELL).floor().max(0.0) as usize);
     for y in 0..ny {
         for x in 0..nx {
-            if deckcraft_render::pattern_is_fg(&tile, x, y) {
+            if iridium_decks_render::pattern_is_fg(&tile, x, y) {
                 let min = r.min + vec2(x as f32 * CELL, y as f32 * CELL);
                 p.rect_filled(Rect::from_min_size(min, vec2(CELL, CELL)), CornerRadius::ZERO, fg);
             }

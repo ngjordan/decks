@@ -2,10 +2,10 @@
 //! in the old text to their place in the new one, growing or shrinking to the new size; the rest
 //! of the old text fades out and the rest of the new one fades in, both riding the moving box.
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::resolve::Ctx;
-use deckcraft_model::{Shape, ShapeId};
-use deckcraft_text::{Fields, GlyphRun, Opts, TextLayout};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::resolve::Ctx;
+use iridium_decks_model::{Shape, ShapeId};
+use iridium_decks_text::{Fields, GlyphRun, Opts, TextLayout};
 use kurbo::{Affine, Point, Vec2};
 use vello_cpu::RenderContext;
 
@@ -91,7 +91,7 @@ fn matches(a: &[Token], b: &[Token]) -> Vec<Option<usize>> {
 fn layout(ctx: &Ctx, s: &Shape, x: Xfrm, fields: &dyn Fields) -> Option<TextLayout> {
     let body = s.text.as_ref().filter(|b| !b.is_empty())?;
     let rect = shape_geometry(s, x.w, x.h).text_rect;
-    Some(deckcraft_text::layout(ctx, s, body, &Opts { rect, fields, prompt_color: None, no_shrink: false }))
+    Some(iridium_decks_text::layout(ctx, s, body, &Opts { rect, fields, prompt_color: None, no_shrink: false }))
 }
 
 fn glyph_at(l: &TextLayout, (ri, gi): (usize, usize)) -> Option<(&GlyphRun, u32, Point)> {

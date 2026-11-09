@@ -4,10 +4,10 @@ use super::{
     break_opportunities, caps_char, chinese_num, covers_symbol, is_symbol_font, is_upright, layout, layout_scaled, map_symbol_bullet, measure_str,
     resolve, shaping_features, symbol_char, symbol_font_char, symbol_font_draw, symbol_unicode, symbol_unicode_alts,
 };
-use deckcraft_model::Fill;
-use deckcraft_model::defaults;
-use deckcraft_model::text::{Paragraph, Run};
-use deckcraft_model::{LayoutType, Presentation, Xfrm};
+use iridium_decks_model::Fill;
+use iridium_decks_model::defaults;
+use iridium_decks_model::text::{Paragraph, Run};
+use iridium_decks_model::{LayoutType, Presentation, Xfrm};
 
 fn setup(text: &str, w: f64, h: f64) -> (Presentation, Shape) {
     let mut p = Presentation::default();
@@ -77,7 +77,7 @@ const LATIN_FAMILIES: &[&str] = &["Carlito", "Calibri", "DejaVu Sans", "Liberati
 fn latin_text_draws_no_ligatures() {
     // PowerPoint keeps "fi", "ffi" and Calibri's "ti" apart, although the fonts have them as
     // standard ligatures.
-    let ligates = |f: &FontFace| deckcraft_fonts::shape(f, "office", &[], |c| c).len() < 6;
+    let ligates = |f: &FontFace| iridium_decks_fonts::shape(f, "office", &[], |c| c).len() < 6;
     let Some(family) = first_family(LATIN_FAMILIES, ligates) else {
         eprintln!("skipped: no font with an ffi ligature");
         return;
@@ -89,8 +89,8 @@ fn latin_text_draws_no_ligatures() {
 #[test]
 fn pairs_are_kerned_only_from_the_kern_size() {
     let kerns = |f: &FontFace| {
-        let w = |feat: &[deckcraft_fonts::Feature]| deckcraft_fonts::shape(f, "AVATAR", feat, |c| c).iter().map(|g| g.x_advance).sum::<i32>();
-        w(&[]) != w(&deckcraft_fonts::feature("-kern").into_iter().collect::<Vec<_>>())
+        let w = |feat: &[iridium_decks_fonts::Feature]| iridium_decks_fonts::shape(f, "AVATAR", feat, |c| c).iter().map(|g| g.x_advance).sum::<i32>();
+        w(&[]) != w(&iridium_decks_fonts::feature("-kern").into_iter().collect::<Vec<_>>())
     };
     let Some(family) = first_family(LATIN_FAMILIES, kerns) else {
         eprintln!("skipped: no font that kerns AVATAR");
@@ -129,8 +129,8 @@ fn kerned_width_beside_spacing(family: &str, spc: f64) -> f64 {
 #[test]
 fn character_spacing_in_the_body_keeps_kerning() {
     let kerns = |f: &FontFace| {
-        let w = |feat: &[deckcraft_fonts::Feature]| deckcraft_fonts::shape(f, "AVATAR", feat, |c| c).iter().map(|g| g.x_advance).sum::<i32>();
-        w(&[]) != w(&deckcraft_fonts::feature("-kern").into_iter().collect::<Vec<_>>())
+        let w = |feat: &[iridium_decks_fonts::Feature]| iridium_decks_fonts::shape(f, "AVATAR", feat, |c| c).iter().map(|g| g.x_advance).sum::<i32>();
+        w(&[]) != w(&iridium_decks_fonts::feature("-kern").into_iter().collect::<Vec<_>>())
     };
     let Some(family) = first_family(LATIN_FAMILIES, kerns) else {
         eprintln!("skipped: no font that kerns AVATAR");
@@ -149,7 +149,7 @@ fn character_spacing_in_the_body_keeps_kerning() {
 
 #[test]
 fn ligatures_stay_for_scripts_that_need_them() {
-    let has = |f: &[deckcraft_fonts::Feature], tag: &str| f.iter().any(|x| Some(*x) == deckcraft_fonts::feature(tag));
+    let has = |f: &[iridium_decks_fonts::Feature], tag: &str| f.iter().any(|x| Some(*x) == iridium_decks_fonts::feature(tag));
     let cells = |s: &str| {
         s.chars()
             .map(|ch| Cell { ch, style: 0, face: 0, level: 0, glyphs: vec![], adv: 0.0, head: 0, boundary: true, upright: false })
@@ -192,8 +192,8 @@ fn bullet_in_an_unavailable_unicode_symbol_font_keeps_its_character() {
     let l = lay(&p, &sh, 600.0, 300.0);
     let bullet = l.runs.iter().find(|r| r.chars == (0, 0)).expect("bullet run");
     assert_eq!(bullet.glyphs.len(), 1);
-    let square = deckcraft_fonts::first_glyph(&bullet.face, &['\u{2751}']);
-    let expected = if square != 0 { square } else { deckcraft_fonts::first_glyph(&bullet.face, &['\u{2022}']) };
+    let square = iridium_decks_fonts::first_glyph(&bullet.face, &['\u{2751}']);
+    let expected = if square != 0 { square } else { iridium_decks_fonts::first_glyph(&bullet.face, &['\u{2022}']) };
     assert_ne!(expected, 0, "the selected face must draw ❑ or the fallback dot");
     assert_eq!(bullet.glyphs[0].0, expected, "draw the requested bullet when covered, else the dot");
 }
@@ -233,7 +233,7 @@ fn saved_shrink_scale_is_drawn() {
 }
 
 /// A body whose file has `<a:normAutofit/>` with no `fontScale` is the schema default 100 %:
-/// PowerPoint draws it as it is, even overflowing. Iridium Decks draws it the same (#724).
+/// PowerPoint draws it as it is, even overflowing. Decks draws it the same (#724).
 #[test]
 fn bare_normautofit_draws_at_full_size() {
     let text = (0..30).map(|i| format!("Line number {i}")).collect::<Vec<_>>().join("\n");
@@ -399,7 +399,7 @@ fn empty_and_hostile_bodies_never_panic() {
     t.paragraphs = vec![Paragraph {
         runs: vec![
             Run::new("\t\u{b}\u{b}🙂 ﷽ 日本語"),
-            Run { text: String::new(), props: Default::default(), kind: deckcraft_model::text::RunKind::Break },
+            Run { text: String::new(), props: Default::default(), kind: iridium_decks_model::text::RunKind::Break },
         ],
         ..Default::default()
     }];
@@ -637,7 +637,7 @@ fn paint_only_style_changes_keep_arabic_joining() {
     };
     let whole = glyphs(vec![Run::new(word)]);
     let mut red = Run::new("سن");
-    red.props.fill = Some(Fill::solid(deckcraft_model::style::ColorRef::rgb(Rgba::from_hex("C00000").unwrap())));
+    red.props.fill = Some(Fill::solid(iridium_decks_model::style::ColorRef::rgb(Rgba::from_hex("C00000").unwrap())));
     let split = glyphs(vec![red, Run::new("ة")]);
     assert_eq!(whole, split, "a colour change inside a word keeps the joined forms");
     // And the joined forms differ from the isolated letters.
@@ -1367,8 +1367,8 @@ fn capitals_keep_characters_whose_capital_is_a_sequence() {
 fn transparent_text_is_faded_once() {
     let (p, mut sh) = setup("Faded", 2000.0, 300.0);
     let run = &mut sh.text.as_mut().unwrap().paragraphs[0].runs[0];
-    run.props.fill = Some(deckcraft_model::Fill::solid(
-        deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(255, 0, 0)).with(deckcraft_color::ColorTransform::Alpha(40000)),
+    run.props.fill = Some(iridium_decks_model::Fill::solid(
+        iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(255, 0, 0)).with(iridium_decks_color::ColorTransform::Alpha(40000)),
     ));
     let l = lay(&p, &sh, 2000.0, 300.0);
     let r = l.runs.iter().find(|r| !r.cells.is_empty()).unwrap();
@@ -1389,7 +1389,7 @@ fn tabbed(text: &str, tabs: &[(f64, &str)], w: f64) -> TextLayout {
     pp.margin_left = Some(0.0);
     pp.indent = Some(0.0);
     pp.default_tab = Some(72.0);
-    pp.tabs = Some(tabs.iter().map(|(pos, a)| deckcraft_model::text::TabStop { pos: *pos, align: a.to_string() }).collect());
+    pp.tabs = Some(tabs.iter().map(|(pos, a)| iridium_decks_model::text::TabStop { pos: *pos, align: a.to_string() }).collect());
     lay(&p, &sh, w, 300.0)
 }
 
@@ -1558,7 +1558,7 @@ fn autonumber_schemes_follow_powerpoint() {
 #[test]
 fn east_asian_vertical_text_marks_cjk_upright() {
     let (p, mut sh) = setup("日本、ABC 12", 300.0, 600.0);
-    sh.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::EaVertical);
+    sh.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::EaVertical);
     let l = lay(&p, &sh, 300.0, 600.0);
     assert_eq!(l.rotation, 90.0);
     let upright: Vec<bool> = l
@@ -1571,7 +1571,7 @@ fn east_asian_vertical_text_marks_cjk_upright() {
         .collect();
     assert_eq!(upright, vec![true, true, true, false, false, false, false, false]);
     // In vert nothing stands upright.
-    sh.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::Vertical);
+    sh.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::Vertical);
     let l = lay(&p, &sh, 300.0, 600.0);
     assert!(l.runs.iter().all(|r| !r.upright));
     assert!(is_upright('あ') && is_upright('、') && is_upright('Ａ') && !is_upright('A') && !is_upright('1'));
@@ -1580,9 +1580,9 @@ fn east_asian_vertical_text_marks_cjk_upright() {
 #[test]
 fn mongolian_lines_run_left_to_right_and_stacked_letters_stand_one_em_apart() {
     let (p, mut sh) = setup("one\ntwo", 200.0, 400.0);
-    sh.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::Vertical);
+    sh.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::Vertical);
     let v = lay(&p, &sh, 200.0, 400.0);
-    sh.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::MongolianVertical);
+    sh.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::MongolianVertical);
     let m = lay(&p, &sh, 200.0, 400.0);
     assert_eq!(m.rotation, 90.0);
     // In layout space (turned a quarter turn) vert puts the first line at the top, which shows on
@@ -1594,17 +1594,17 @@ fn mongolian_lines_run_left_to_right_and_stacked_letters_stand_one_em_apart() {
     // Stacked: every letter upright, one em apart.
     let (p, mut sh) = setup("Lil", 200.0, 400.0);
     let t = sh.text.as_mut().unwrap();
-    t.body.vert = Some(deckcraft_model::text::TextDir::Stacked);
+    t.body.vert = Some(iridium_decks_model::text::TextDir::Stacked);
     t.paragraphs[0].runs[0].props.size = Some(20.0);
     let s = lay(&p, &sh, 200.0, 400.0);
     assert!(s.runs.iter().filter(|r| !r.cells.is_empty()).all(|r| r.upright));
     // Its lines run left to right too.
     let (p2, mut sh2) = setup("one\ntwo", 200.0, 400.0);
-    sh2.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::Stacked);
+    sh2.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::Stacked);
     let st = lay(&p2, &sh2, 200.0, 400.0);
     assert!(st.lines[0].top > st.lines[1].top);
     // wordArtVertRtl stacks the same way with lines from right to left.
-    sh2.text.as_mut().unwrap().body.vert = Some(deckcraft_model::text::TextDir::StackedRtl);
+    sh2.text.as_mut().unwrap().body.vert = Some(iridium_decks_model::text::TextDir::StackedRtl);
     let sr = lay(&p2, &sh2, 200.0, 400.0);
     assert!(sr.lines[0].top < sr.lines[1].top);
     assert!(sr.runs.iter().filter(|r| !r.cells.is_empty()).all(|r| r.upright));
@@ -1691,7 +1691,7 @@ fn stacked_combining_marks_take_a_face_that_draws_them() {
     let cluster = ['Z', '\u{0334}', '\u{0321}', '\u{031B}'];
     let run_face = db.face("Inter", "Regular");
     let f = db.cascade(&cluster, std::slice::from_ref(&run_face), "Regular");
-    if !deckcraft_fonts::covers_cluster(&run_face, &cluster) && ["DejaVu Sans", "Segoe UI"].iter().any(|fam| db.has_family(fam)) {
+    if !iridium_decks_fonts::covers_cluster(&run_face, &cluster) && ["DejaVu Sans", "Segoe UI"].iter().any(|fam| db.has_family(fam)) {
         // Make sure a face with the marks is loaded, then the cluster must take one.
         for fam in ["DejaVu Sans", "Segoe UI"] {
             if db.has_family(fam) {
@@ -1699,7 +1699,7 @@ fn stacked_combining_marks_take_a_face_that_draws_them() {
             }
         }
         let f = db.cascade(&cluster, std::slice::from_ref(&run_face), "Regular");
-        assert!(deckcraft_fonts::covers_cluster(&f, &cluster), "{} lacks the marks", f.family);
+        assert!(iridium_decks_fonts::covers_cluster(&f, &cluster), "{} lacks the marks", f.family);
     }
     let _ = f;
 }
@@ -1786,7 +1786,7 @@ fn empty_bullets_reserve_the_typed_indent_without_becoming_content() {
             let caret = empty.caret(Pos { para: 1, ch: 0 }).unwrap();
             let bx = empty.empty_bullets[0].glyphs[0].1;
             assert!(if rtl { bx >= caret.0 } else { bx < caret.0 });
-            deckcraft_model::edit::insert(sh.text.as_mut().unwrap(), (1, 0), if rtl { "אבג" } else { "Next" }, None);
+            iridium_decks_model::edit::insert(sh.text.as_mut().unwrap(), (1, 0), if rtl { "אבג" } else { "Next" }, None);
             let typed = lay(&p, &sh, 600.0, 300.0);
             assert!(typed.empty_bullets.is_empty());
             let after = typed.caret(Pos { para: 1, ch: 0 }).unwrap();
@@ -1820,7 +1820,7 @@ fn empty_plain_paragraphs_and_soft_breaks_have_no_bullet_preview() {
     sh.text.as_mut().unwrap().paragraphs[0].props.bullet = Some(Bullet::None);
     assert!(lay(&p, &sh, 600.0, 300.0).empty_bullets.is_empty());
     sh.text = Some(TextBody::from_text("First"));
-    deckcraft_model::edit::insert(sh.text.as_mut().unwrap(), (0, 5), "\u{b}", None);
+    iridium_decks_model::edit::insert(sh.text.as_mut().unwrap(), (0, 5), "\u{b}", None);
     let l = lay(&p, &sh, 600.0, 300.0);
     assert_eq!(l.lines.len(), 2);
     assert!(l.empty_bullets.is_empty(), "a soft line break is not a new list item");
@@ -1835,7 +1835,7 @@ fn sized_run(text: &str, size: f64) -> Run {
 
 /// A line break whose own run properties are `size` points.
 fn sized_break(size: f64) -> Run {
-    let mut r = Run { text: String::new(), props: Default::default(), kind: deckcraft_model::text::RunKind::Break };
+    let mut r = Run { text: String::new(), props: Default::default(), kind: iridium_decks_model::text::RunKind::Break };
     r.props.size = Some(size);
     r
 }
@@ -1959,7 +1959,7 @@ fn insets_wider_than_the_shape_scale_down_within_the_shape_bounds() {
     bp.inset_r = Some(11.33);
     bp.inset_t = Some(11.33);
     bp.inset_b = Some(11.33);
-    sh.text.as_mut().unwrap().paragraphs[0].props = deckcraft_model::text::ParaProps { align: Some(Align::Center), ..Default::default() };
+    sh.text.as_mut().unwrap().paragraphs[0].props = iridium_decks_model::text::ParaProps { align: Some(Align::Center), ..Default::default() };
     let l = lay(&p, &sh, 14.17, 14.17);
     assert_eq!(l.lines.len(), 1);
     let line = &l.lines[0];
@@ -1977,7 +1977,7 @@ fn signed_insets_are_preserved_when_they_fit() {
     let bp = &mut sh.text.as_mut().unwrap().body;
     bp.inset_l = Some(-10.0);
     bp.inset_r = Some(10.0);
-    sh.text.as_mut().unwrap().paragraphs[0].props = deckcraft_model::text::ParaProps { align: Some(Align::Left), ..Default::default() };
+    sh.text.as_mut().unwrap().paragraphs[0].props = iridium_decks_model::text::ParaProps { align: Some(Align::Left), ..Default::default() };
     let l = lay(&p, &sh, 100.0, 50.0);
     assert_eq!(l.lines.len(), 1);
     assert_eq!(l.inner.x0, -10.0);

@@ -1,5 +1,5 @@
-use deckcraft_model::ShapeKind;
-use deckcraft_model::style::LineJoin;
+use iridium_decks_model::ShapeKind;
+use iridium_decks_model::style::LineJoin;
 
 use super::*;
 
@@ -20,7 +20,7 @@ fn n_slides(s: &Session) -> usize {
     s.active().map(|d| d.doc.slides.len()).unwrap_or(0)
 }
 
-fn pictures(s: &Session, index: usize) -> Vec<deckcraft_model::Shape> {
+fn pictures(s: &Session, index: usize) -> Vec<iridium_decks_model::Shape> {
     s.active()
         .and_then(|d| d.doc.slides.get(index))
         .map(|sl| sl.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).cloned().collect())
@@ -153,7 +153,7 @@ fn fit_is_larger_than_one_picture_and_four_up_is_one_slide() {
     assert_eq!(pictures(&s, 1).len(), 4);
 }
 
-fn adjust(s: &Session, index: usize) -> deckcraft_model::style::PictureAdjust {
+fn adjust(s: &Session, index: usize) -> iridium_decks_model::style::PictureAdjust {
     match &pictures(s, index)[0].kind {
         ShapeKind::Picture { fill } => fill.adjust.clone(),
         _ => panic!("picture"),
@@ -224,7 +224,7 @@ fn picture_options_and_theme_are_one_step() {
     assert!(mark.contains("theme=Harbor"), "{mark}");
     assert_eq!(s.active().unwrap().doc.slides[1].name, "Photo Album");
     s.execute("edit.undo", &json!({})).unwrap();
-    assert_eq!(theme_name(&s), "Iridium Decks");
+    assert_eq!(theme_name(&s), "Decks");
     assert_eq!(n_slides(&s), 1);
 }
 
@@ -243,7 +243,7 @@ fn unknown_theme_and_a_plain_slide_change_nothing() {
     assert!(s.execute("insert.photoAlbumEdit", &json!({"pictures": [pic("b.png")], "layout": "2"})).is_err());
     assert_eq!(n_slides(&s), before + 1);
     assert_eq!(pictures(&s, 1).len(), 1);
-    assert_eq!(theme_name(&s), "Iridium Decks");
+    assert_eq!(theme_name(&s), "Decks");
 }
 
 #[test]
@@ -261,8 +261,8 @@ fn two_albums_stay_independent() {
     assert_eq!(pictures(&s, 3).len(), 2);
     let first = s.active().unwrap().doc.slides[1].raw_ext.clone().unwrap_or_default();
     let second = s.active().unwrap().doc.slides[3].raw_ext.clone().unwrap_or_default();
-    assert!(first.starts_with("deckcraft-album:"));
-    assert!(second.starts_with("deckcraft-album:"));
+    assert!(first.starts_with("iridium-decks-album:"));
+    assert!(second.starts_with("iridium-decks-album:"));
     assert_ne!(first.split(';').next(), second.split(';').next());
 }
 
@@ -280,5 +280,5 @@ fn a_named_run_without_a_marker_still_reflows() {
     assert_eq!(n_slides(&s), 2);
     assert_eq!(pictures(&s, 1).len(), 2);
     let mark = s.active().unwrap().doc.slides[1].raw_ext.clone().unwrap_or_default();
-    assert!(mark.starts_with("deckcraft-album:"), "{mark}");
+    assert!(mark.starts_with("iridium-decks-album:"), "{mark}");
 }

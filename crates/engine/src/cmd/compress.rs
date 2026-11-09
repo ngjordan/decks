@@ -4,8 +4,8 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use deckcraft_model::style::PictureFill;
-use deckcraft_model::{MediaId, Shape, ShapeId, ShapeKind};
+use iridium_decks_model::style::PictureFill;
+use iridium_decks_model::{MediaId, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, bool_or, cmd, f64_param, has_doc, targets};
@@ -121,7 +121,7 @@ fn pictures_mut<'a>(
     shapes: &'a mut [Shape],
     want: &dyn Fn(ShapeId) -> bool,
     out: &mut Vec<(&'a mut Shape, f64, f64)>,
-    to_slide: deckcraft_geom::Affine,
+    to_slide: iridium_decks_geom::Affine,
     depth: usize,
 ) {
     if depth > 64 {
@@ -131,15 +131,15 @@ fn pictures_mut<'a>(
         let Some(xfrm) = sh.xfrm else { continue };
         let local_to_slide = to_slide * xfrm.affine();
         if matches!(&sh.kind, ShapeKind::Picture { .. }) && want(sh.id) {
-            let origin = local_to_slide * deckcraft_geom::Point::ZERO;
-            let across = local_to_slide * deckcraft_geom::Point::new(xfrm.w, 0.0);
-            let down = local_to_slide * deckcraft_geom::Point::new(0.0, xfrm.h);
+            let origin = local_to_slide * iridium_decks_geom::Point::ZERO;
+            let across = local_to_slide * iridium_decks_geom::Point::new(xfrm.w, 0.0);
+            let down = local_to_slide * iridium_decks_geom::Point::new(0.0, xfrm.h);
             out.push((sh, (across - origin).hypot(), (down - origin).hypot()));
             continue;
         }
         if let ShapeKind::Group { children, child } = &mut sh.kind {
-            let child_rect = deckcraft_geom::Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
-            let child_to_slide = to_slide * deckcraft_geom::group_child_affine(&xfrm, child_rect);
+            let child_rect = iridium_decks_geom::Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
+            let child_to_slide = to_slide * iridium_decks_geom::group_child_affine(&xfrm, child_rect);
             pictures_mut(children, want, out, child_to_slide, depth + 1);
         }
     }
@@ -170,7 +170,7 @@ fn compress(s: &mut Session, p: &Value) -> Result<Value> {
             let Some(slide) = doc.slides.get(i).cloned() else { continue };
             let mut slide = slide.as_ref().clone();
             let mut pics = vec![];
-            pictures_mut(&mut slide.shapes, &want, &mut pics, deckcraft_geom::Affine::IDENTITY, 0);
+            pictures_mut(&mut slide.shapes, &want, &mut pics, iridium_decks_geom::Affine::IDENTITY, 0);
             let mut touched = false;
             for (sh, w, h) in pics {
                 let ShapeKind::Picture { fill } = &mut sh.kind else { continue };
@@ -254,20 +254,20 @@ mod tests {
             let media = doc.add_media("grouped.png", "image/png", original.clone()).ok_or_else(|| bad("test", "media"))?;
             let picture = Shape {
                 id: ShapeId(70_101),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
                 kind: ShapeKind::Picture { fill: PictureFill { media, ..Default::default() } },
                 ..Default::default()
             };
             let nested = Shape {
                 id: ShapeId(70_102),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
-                kind: ShapeKind::Group { children: vec![picture], child: deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
+                kind: ShapeKind::Group { children: vec![picture], child: iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
                 ..Default::default()
             };
             let group = Shape {
                 id: ShapeId(70_103),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 720.0, 720.0)),
-                kind: ShapeKind::Group { children: vec![nested], child: deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 720.0, 720.0)),
+                kind: ShapeKind::Group { children: vec![nested], child: iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
                 ..Default::default()
             };
             let slide = doc.slides.first_mut().ok_or_else(|| bad("test", "slide"))?;
@@ -292,20 +292,20 @@ mod tests {
             let media = doc.add_media("scaled-group.png", "image/png", original).ok_or_else(|| bad("test", "media"))?;
             let picture = Shape {
                 id: ShapeId(70_111),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
                 kind: ShapeKind::Picture { fill: PictureFill { media, ..Default::default() } },
                 ..Default::default()
             };
             let nested = Shape {
                 id: ShapeId(70_112),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
-                kind: ShapeKind::Group { children: vec![picture], child: deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
+                kind: ShapeKind::Group { children: vec![picture], child: iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
                 ..Default::default()
             };
             let group = Shape {
                 id: ShapeId(70_113),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 720.0, 360.0)),
-                kind: ShapeKind::Group { children: vec![nested], child: deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 720.0, 360.0)),
+                kind: ShapeKind::Group { children: vec![nested], child: iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0) },
                 ..Default::default()
             };
             let slide = doc.slides.first_mut().ok_or_else(|| bad("test", "slide"))?;
@@ -335,7 +335,7 @@ mod tests {
             let slide = doc.slides.first_mut().ok_or_else(|| bad("test", "slide"))?;
             Arc::make_mut(slide).shapes.push(Shape {
                 id: ShapeId(70_104),
-                xfrm: Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
+                xfrm: Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 72.0)),
                 kind: ShapeKind::Picture { fill: PictureFill { media, crop: [0.5, 0.0, 0.0, 0.0], ..Default::default() } },
                 ..Default::default()
             });
@@ -413,7 +413,7 @@ mod tests {
     /// keep that media: the effect needs it to be changed or removed.
     #[test]
     fn media_still_used_as_an_artistic_original_is_kept() {
-        use deckcraft_model::style::Artistic;
+        use iridium_decks_model::style::Artistic;
         let mut s = Session::with_new();
         let big = png(1200, 600);
         let processed = png(1100, 600);
@@ -421,7 +421,7 @@ mod tests {
             let original = doc.add_media("original.png", "image/png", big.clone()).expect("media");
             let shown = doc.add_media("processed.png", "image/png", processed.clone()).expect("media");
             let slide = Arc::make_mut(doc.slides.first_mut().ok_or_else(|| bad("test", "no slide"))?);
-            let xfrm = Some(deckcraft_geom::Xfrm::new(0.0, 0.0, 72.0, 36.0));
+            let xfrm = Some(iridium_decks_geom::Xfrm::new(0.0, 0.0, 72.0, 36.0));
             let with_effect =
                 PictureFill { media: shown, artistic: Some(Artistic { effect: "artisticBlur".into(), original }), ..Default::default() };
             slide.shapes.push(Shape { id: ShapeId(70_001), xfrm, kind: ShapeKind::Picture { fill: with_effect }, ..Default::default() });

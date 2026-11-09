@@ -1,9 +1,9 @@
 //! The Spelling dialog with a dictionary: suggestions change the word, Ignore All hides it.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use deckcraft_engine::Session;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
@@ -13,7 +13,7 @@ fn spelling_dialog_changes_and_ignores_words() {
     let _gpu = crate::gpu_lock::gpu_lock();
     let aff = "SET UTF-8\nTRY esianrtolcdugmphbyfvkwzxjq\nSFX S Y 1\nSFX S 0 s .\n";
     let dic = "6\nthe/S\nslide/S\nquarter/S\nplan/S\nour\nfor\n";
-    deckcraft_engine::spell::install("en-US", deckcraft_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
+    iridium_decks_engine::spell::install("en-US", iridium_decks_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
     let mut app = SlideApp::new(Session::with_new(), Services::default());
     app.session.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 500, 120], "text": "Our plna for teh quarter"})).unwrap();
     app.dialog = Some(crate::dialogs::Dialog::new("spelling"));
@@ -25,7 +25,7 @@ fn spelling_dialog_changes_and_ignores_words() {
         app,
     );
     h.run_steps(3);
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT"), h.render()) {
         let _ = img.save(path);
     }
     h.get_by_label("plan").click();
@@ -33,7 +33,7 @@ fn spelling_dialog_changes_and_ignores_words() {
     let text = |h: &Harness<'_, SlideApp>| {
         let st = h.state().session.active().unwrap();
         let mut out = String::new();
-        deckcraft_model::walk(&st.doc.slides[0].shapes, &mut |s, _| {
+        iridium_decks_model::walk(&st.doc.slides[0].shapes, &mut |s, _| {
             if let Some(t) = &s.text {
                 out += &t.text();
             }
@@ -53,10 +53,10 @@ fn squiggles_mark_misspelt_words_in_the_background() {
     let _gpu = crate::gpu_lock::gpu_lock();
     let aff = "SET UTF-8\nTRY esianrtolcdugmphbyfvkwzxjq\nSFX S Y 1\nSFX S 0 s .\n";
     let dic = "7\nthe/S\nslide/S\nquarter/S\nplan/S\nour\nfor\nreview\n";
-    deckcraft_engine::spell::install("xx-SQ", deckcraft_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
-    let dir = std::env::temp_dir().join(format!("deckcraft-ui-userdic-{}", std::process::id()));
+    iridium_decks_engine::spell::install("xx-SQ", iridium_decks_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-ui-userdic-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
-    deckcraft_engine::spell::set_user_dictionary_path(dir.join("user.dic"));
+    iridium_decks_engine::spell::set_user_dictionary_path(dir.join("user.dic"));
     let mut app = SlideApp::new(Session::with_new(), Services::default());
     app.session.execute("slide.layout", &json!({"layout": "blank"})).ok();
     let id = app
@@ -67,11 +67,11 @@ fn squiggles_mark_misspelt_words_in_the_background() {
         .unwrap();
     app.session.execute("format.size", &json!({"size": 40})).unwrap();
     // Mark the runs' language directly (what a PPTX run's `lang` gives).
-    let sid = deckcraft_model::ShapeId(id as u32);
+    let sid = iridium_decks_model::ShapeId(id as u32);
     app.session
         .edit(|doc, _| {
             let sl = std::sync::Arc::make_mut(&mut doc.slides[0]);
-            let sh = deckcraft_model::find_shape_mut(&mut sl.shapes, sid).unwrap();
+            let sh = iridium_decks_model::find_shape_mut(&mut sl.shapes, sid).unwrap();
             for r in sh.text.as_mut().unwrap().paragraphs.iter_mut().flat_map(|p| p.runs.iter_mut()) {
                 r.props.lang = Some("xx-SQ".into());
             }
@@ -90,13 +90,13 @@ fn squiggles_mark_misspelt_words_in_the_background() {
         app,
     );
     h.run_steps(4);
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT_SQUIGGLES"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT_SQUIGGLES"), h.render()) {
         let _ = img.save(path);
     }
     // The context menu's word under the first squiggle, and its correction.
     let st = h.state().session.active().unwrap().clone();
     let (a, _) = lines[0];
-    let w = h.state().squiggles.word_at(&st, deckcraft_geom::Point::new(a.x + 5.0, a.y - 5.0), 2.0).unwrap();
+    let w = h.state().squiggles.word_at(&st, iridium_decks_geom::Point::new(a.x + 5.0, a.y - 5.0), 2.0).unwrap();
     assert_eq!(w.word, "plna");
     assert_eq!(w.suggestions.first().map(String::as_str), Some("plan"));
     h.state_mut().session.execute("review.spellingChange", &json!({"shape": id, "para": 0, "start": w.start, "word": w.word, "to": "plan"})).unwrap();
@@ -120,28 +120,28 @@ fn squiggles_in_table_cells_and_notes_and_on_the_ui_thread() {
     let _gpu = crate::gpu_lock::gpu_lock();
     let aff = "SET UTF-8\nTRY esianrtolcdugmphbyfvkwzxjq\nSFX S Y 1\nSFX S 0 s .\n";
     let dic = "10\nthe/S\nplan/S\nsales\nregion/S\ntotal/S\nnorth\nsouth\nremember\nto\nshow\n";
-    deckcraft_engine::spell::install("xx-TB", deckcraft_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
+    iridium_decks_engine::spell::install("xx-TB", iridium_decks_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
     let mut app = SlideApp::new(Session::with_new(), Services::default());
     app.squiggles.force_inline = true;
     app.session.execute("slide.layout", &json!({"layout": "blank"})).ok();
     let id = app.session.execute("insert.table", &json!({"rows": 2, "cols": 2, "rect": [80, 80, 600, 160]})).unwrap()["id"].as_u64().unwrap();
-    let sid = deckcraft_model::ShapeId(id as u32);
-    let lang = deckcraft_model::RunProps { lang: Some("xx-TB".into()), size: Some(28.0), ..Default::default() };
+    let sid = iridium_decks_model::ShapeId(id as u32);
+    let lang = iridium_decks_model::RunProps { lang: Some("xx-TB".into()), size: Some(28.0), ..Default::default() };
     app.session
         .edit(|doc, _| {
             let sl = std::sync::Arc::make_mut(&mut doc.slides[0]);
-            sl.notes = deckcraft_model::TextBody {
-                paragraphs: vec![deckcraft_model::Paragraph {
-                    runs: vec![deckcraft_model::Run::with("Remmeber to show the totl", lang.clone())],
+            sl.notes = iridium_decks_model::TextBody {
+                paragraphs: vec![iridium_decks_model::Paragraph {
+                    runs: vec![iridium_decks_model::Run::with("Remmeber to show the totl", lang.clone())],
                     ..Default::default()
                 }],
                 ..Default::default()
             };
-            let sh = deckcraft_model::find_shape_mut(&mut sl.shapes, sid).unwrap();
-            let deckcraft_model::ShapeKind::Table(tb) = &mut sh.kind else { panic!("not a table") };
+            let sh = iridium_decks_model::find_shape_mut(&mut sl.shapes, sid).unwrap();
+            let iridium_decks_model::ShapeKind::Table(tb) = &mut sh.kind else { panic!("not a table") };
             for (r, c, t) in [(0, 0, "Regoin"), (0, 1, "Sales"), (1, 0, "North"), (1, 1, "Soth totals")] {
                 tb.cell_mut(r, c).unwrap().text.paragraphs =
-                    vec![deckcraft_model::Paragraph { runs: vec![deckcraft_model::Run::with(t, lang.clone())], ..Default::default() }];
+                    vec![iridium_decks_model::Paragraph { runs: vec![iridium_decks_model::Run::with(t, lang.clone())], ..Default::default() }];
             }
             Ok(())
         })
@@ -161,7 +161,7 @@ fn squiggles_in_table_cells_and_notes_and_on_the_ui_thread() {
         app,
     );
     h.run_steps(6);
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT_TABLE"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT_TABLE"), h.render()) {
         let _ = img.save(path);
     }
     // Correcting a cell's word through the context menu's command (settled again: frames may
@@ -169,7 +169,7 @@ fn squiggles_in_table_cells_and_notes_and_on_the_ui_thread() {
     let st = h.state().session.active().unwrap().clone();
     let lines = h.state_mut().squiggles.settle(&st);
     let (a, _) = lines[0];
-    let w = h.state().squiggles.word_at(&st, deckcraft_geom::Point::new(a.x + 3.0, a.y - 5.0), 2.0).unwrap();
+    let w = h.state().squiggles.word_at(&st, iridium_decks_geom::Point::new(a.x + 3.0, a.y - 5.0), 2.0).unwrap();
     assert_eq!((w.word.as_str(), w.suggestions.first().map(String::as_str)), ("Regoin", Some("Region")));
     h.state_mut()
         .session
@@ -199,7 +199,7 @@ fn notes_menu_language_dialog_and_repeated_words() {
     use egui::accesskit::Role;
     let aff = "SET UTF-8\nTRY esianrtolcdugmphbyfvkwzxjq\n";
     let dic = "6\nthe\nplan\nremember\nis\ngood\nwork\n";
-    deckcraft_engine::spell::install("xx-NM", deckcraft_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
+    iridium_decks_engine::spell::install("xx-NM", iridium_decks_engine::spell::Dictionary::parse(aff.as_bytes(), dic.as_bytes()));
     let mut app = SlideApp::new(Session::with_new(), Services::default());
     app.session.execute("slide.layout", &json!({"layout": "blank"})).ok();
     let id = app
@@ -210,12 +210,12 @@ fn notes_menu_language_dialog_and_repeated_words() {
         .unwrap();
     app.session.execute("format.size", &json!({"size": 40})).unwrap();
     app.session.execute("format.language", &json!({"lang": "xx-NM"})).unwrap();
-    let lang = deckcraft_model::RunProps { lang: Some("xx-NM".into()), ..Default::default() };
+    let lang = iridium_decks_model::RunProps { lang: Some("xx-NM".into()), ..Default::default() };
     app.session
         .edit(|doc, _| {
-            std::sync::Arc::make_mut(&mut doc.slides[0]).notes = deckcraft_model::TextBody {
-                paragraphs: vec![deckcraft_model::Paragraph {
-                    runs: vec![deckcraft_model::Run::with("Remmeber the the plan", lang.clone())],
+            std::sync::Arc::make_mut(&mut doc.slides[0]).notes = iridium_decks_model::TextBody {
+                paragraphs: vec![iridium_decks_model::Paragraph {
+                    runs: vec![iridium_decks_model::Run::with("Remmeber the the plan", lang.clone())],
                     ..Default::default()
                 }],
                 ..Default::default()
@@ -234,7 +234,7 @@ fn notes_menu_language_dialog_and_repeated_words() {
         app,
     );
     h.run_steps(8);
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT_NOTES"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT_NOTES"), h.render()) {
         let _ = img.save(path);
     }
     // Right-click the notes' first word, once the (background) notes check is in.
@@ -242,7 +242,7 @@ fn notes_menu_language_dialog_and_repeated_words() {
     h.run_steps(2);
     let notes = h.query_all_by_role(Role::MultilineTextInput).next().map(|n| n.rect()).unwrap();
     right_click(&mut h, egui::pos2(notes.left() + 14.0, notes.top() + 8.0));
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT_NOTES_MENU"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT_NOTES_MENU"), h.render()) {
         let _ = img.save(path);
     }
     assert_eq!(h.state().squiggles.notes_menu.as_ref().map(|w| w.word.as_str()), Some("Remmeber"));
@@ -272,7 +272,7 @@ fn notes_menu_language_dialog_and_repeated_words() {
     h.state_mut().session.execute("edit.select", &json!({"ids": [id]})).unwrap();
     h.state_mut().dialog = Some(crate::dialogs::Dialog::new("language"));
     h.run_steps(4);
-    if let (Ok(path), Ok(img)) = (std::env::var("DECKCRAFT_PNG_OUT_LANG"), h.render()) {
+    if let (Ok(path), Ok(img)) = (std::env::var("IRIDIUM_DECKS_PNG_OUT_LANG"), h.render()) {
         let _ = img.save(path);
     }
     assert_eq!(crate::dialogs::selected_language(h.state()).0, "xx-NM");

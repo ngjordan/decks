@@ -3,9 +3,11 @@
 
 use std::collections::HashMap;
 
-use deckcraft_color::{ColorTransform, Rgba, SchemeSlot};
-use deckcraft_model::style::{Dash, Glow, Gradient, GradientShape, GradientStop, LineEnd, PatternFill, PictureFill, PictureMode, Reflection, Shadow};
-use deckcraft_model::{ColorRef, Effects, Fill, Geom, Line, ShapeId, ShapeStyle};
+use iridium_decks_color::{ColorTransform, Rgba, SchemeSlot};
+use iridium_decks_model::style::{
+    Dash, Glow, Gradient, GradientShape, GradientStop, LineEnd, PatternFill, PictureFill, PictureMode, Reflection, Shadow,
+};
+use iridium_decks_model::{ColorRef, Effects, Fill, Geom, Line, ShapeId, ShapeStyle};
 use serde_json::{Value, json};
 
 use super::{
@@ -294,9 +296,9 @@ fn inherited_fills(s: &Session, p: &Value) -> Result<HashMap<ShapeId, Option<Fil
     let mut fills = HashMap::new();
     for id in targets(s, p)? {
         if let Some(sh) = st.shape(id) {
-            deckcraft_model::walk(std::slice::from_ref(sh), &mut |sh, _| {
+            iridium_decks_model::walk(std::slice::from_ref(sh), &mut |sh, _| {
                 let fill = ctx.as_ref().and_then(|c| {
-                    let (f, ph) = deckcraft_model::resolve::fill(c, sh);
+                    let (f, ph) = iridium_decks_model::resolve::fill(c, sh);
                     f.map(|f| match f {
                         Fill::Solid { color } => Fill::solid(ColorRef::rgb(c.color(&color, ph))),
                         other => other,
@@ -311,7 +313,7 @@ fn inherited_fills(s: &Session, p: &Value) -> Result<HashMap<ShapeId, Option<Fil
 
 /// Applies a `shape.fill` request to one shape: the fill, then its picture options, then transparency.
 fn apply_fill(
-    sh: &mut deckcraft_model::Shape,
+    sh: &mut iridium_decks_model::Shape,
     new_fill: Option<&Option<Fill>>,
     pic_props: Option<&Value>,
     transparency: Option<f64>,
@@ -381,7 +383,7 @@ fn lock(s: &mut Session, p: &Value) -> Result<Value> {
     })
 }
 
-fn set_locked(sh: &mut deckcraft_model::Shape, to: bool, depth: usize) {
+fn set_locked(sh: &mut iridium_decks_model::Shape, to: bool, depth: usize) {
     sh.locked = to;
     if depth > 64 {
         return;
@@ -412,7 +414,7 @@ fn set_default(s: &mut Session, _p: &Value) -> Result<Value> {
 mod tests {
     #![allow(clippy::unwrap_used)]
 
-    use deckcraft_model::ShapeId;
+    use iridium_decks_model::ShapeId;
 
     use super::*;
     use serde_json::json;
@@ -492,7 +494,7 @@ mod tests {
             members
                 .iter()
                 .map(|id| {
-                    let (fill, ph) = deckcraft_model::resolve::fill(&ctx, st.shape(*id).unwrap());
+                    let (fill, ph) = iridium_decks_model::resolve::fill(&ctx, st.shape(*id).unwrap());
                     let Some(Fill::Solid { color }) = fill else { panic!("solid theme fill") };
                     ctx.color(&color, ph)
                 })
@@ -524,8 +526,8 @@ mod tests {
         s.execute("shape.fill", &json!({"transparency": 0.5})).unwrap();
         assert_eq!(s.doc().unwrap().shape(id).unwrap().fill, Some(Fill::Background));
 
-        let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
-        let back = deckcraft_pptx::import(&bytes).unwrap();
+        let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
+        let back = iridium_decks_pptx::import(&bytes).unwrap();
         let filled = back.slides.iter().flat_map(|sl| sl.shapes.iter()).filter(|sh| sh.fill == Some(Fill::Background)).count();
         assert_eq!(filled, 1, "the shape keeps the background fill after a save and reopen");
     }
@@ -536,7 +538,7 @@ mod tests {
         let mut s = Session::with_new();
         s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
         let shape = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100]})).unwrap()["id"].as_u64().unwrap();
-        let png = deckcraft_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
+        let png = iridium_decks_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
         let pic = s
             .execute("insert.picture", &json!({"data": crate::cmd::base64_encode(&png), "name": "red.png", "rect": [400, 100, 100, 100]}))
             .unwrap()["id"]
@@ -554,11 +556,11 @@ mod tests {
         assert_eq!(fill(&s, shape), Some(Fill::Background));
         assert!(matches!(fill(&s, pic), Some(Fill::Solid { .. })), "the picture keeps its fill");
         assert_eq!(fill(&s, group), None, "the group's own fill is cleared");
-        let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
-        let back = deckcraft_pptx::import(&bytes).unwrap();
+        let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
+        let back = iridium_decks_pptx::import(&bytes).unwrap();
         let mut filled = 0;
         for slide in &back.slides {
-            deckcraft_model::walk(&slide.shapes, &mut |sh, _| filled += usize::from(sh.fill == Some(Fill::Background)));
+            iridium_decks_model::walk(&slide.shapes, &mut |sh, _| filled += usize::from(sh.fill == Some(Fill::Background)));
         }
         assert_eq!(filled, 1, "the shape keeps the background fill after a save and reopen");
     }
@@ -570,7 +572,7 @@ mod tests {
         let mut s = Session::with_new();
         s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
         let shape = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100]})).unwrap()["id"].as_u64().unwrap();
-        let png = deckcraft_render::Image { width: 2, height: 2, pixels: [0, 0, 0, 0].repeat(4) }.to_png();
+        let png = iridium_decks_render::Image { width: 2, height: 2, pixels: [0, 0, 0, 0].repeat(4) }.to_png();
         let pic = s
             .execute("insert.picture", &json!({"data": crate::cmd::base64_encode(&png), "name": "clear.png", "rect": [400, 100, 100, 100]}))
             .unwrap()["id"]

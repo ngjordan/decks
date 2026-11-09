@@ -4,7 +4,7 @@ use super::{Icon, SlideApp, Ui, Value, big_button, group, json, rows, run, small
 
 /// SmartArt Design: Create Graphic (Text Pane, Add Shape, Promote, Demote, Remove) and Layouts.
 pub(super) fn smartart_design(app: &mut SlideApp, ui: &mut Ui) {
-    let sel = app.session.active().and_then(deckcraft_engine::cmd::smartart::selected);
+    let sel = app.session.active().and_then(iridium_decks_engine::cmd::smartart::selected);
     let row = app.ui.smartart_row;
     let (gid, n, kind, style, colors) = match &sel {
         Some((id, d)) => (Some(id.0), d.nodes.len(), d.kind.clone(), d.style.clone(), d.colors.clone()),
@@ -72,7 +72,7 @@ pub(super) fn smartart_design(app: &mut SlideApp, ui: &mut Ui) {
         let (main, arrow) = small_button_ex(ui, Icon::ChangeChartType, "Change Colors", gid.is_some(), false, true);
         if let Some(arrow) = arrow {
             widgets::split_menu(&main, &arrow, |ui| {
-                for (k, label) in deckcraft_engine::cmd::smartart::COLORS {
+                for (k, label) in iridium_decks_engine::cmd::smartart::COLORS {
                     if matches!(k, "range23" | "accent1" | "accent1Grad") {
                         ui.separator();
                     }
@@ -86,7 +86,7 @@ pub(super) fn smartart_design(app: &mut SlideApp, ui: &mut Ui) {
         let (main, arrow) = small_button_ex(ui, Icon::SmartArt, "SmartArt Styles", gid.is_some(), false, true);
         if let Some(arrow) = arrow {
             widgets::split_menu(&main, &arrow, |ui| {
-                for (k, label) in deckcraft_engine::cmd::smartart::STYLES {
+                for (k, label) in iridium_decks_engine::cmd::smartart::STYLES {
                     if k == "polished" {
                         ui.separator();
                         ui.label("3-D");

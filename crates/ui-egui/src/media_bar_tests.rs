@@ -2,10 +2,10 @@
 //! mouse: a press on it used to reach the canvas, start a selection marquee there and hide the bar
 //! before the click landed, so Play only worked in the slide show.
 
-use deckcraft_engine::Session;
-use deckcraft_model::ShapeId;
 use egui::{Modifiers, PointerButton, Pos2, pos2, vec2};
 use egui_kittest::Harness;
+use iridium_decks_engine::Session;
+use iridium_decks_model::ShapeId;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
@@ -39,7 +39,7 @@ fn click(h: &mut Harness<'_, SlideApp>, p: Pos2) {
 fn play_on_the_editor_media_bar_plays_the_selected_clip() {
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
-    let r = s.execute("insert.audio", &json!({"name": "tone.wav", "data": deckcraft_engine::cmd::base64_encode(&wav(2.0))})).unwrap();
+    let r = s.execute("insert.audio", &json!({"name": "tone.wav", "data": iridium_decks_engine::cmd::base64_encode(&wav(2.0))})).unwrap();
     let id = ShapeId(r["id"].as_u64().unwrap() as u32);
     let app = SlideApp::new(s, Services::default());
     let mut h = Harness::builder().with_size(vec2(1400.0, 900.0)).with_step_dt(1.0 / 60.0).build_ui_state(

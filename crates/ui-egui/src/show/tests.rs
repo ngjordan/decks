@@ -6,7 +6,7 @@ use super::*;
 /// is below it and other videos stay out of that overlay.
 #[test]
 fn shapes_above_a_playing_video_are_the_overlay() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     for _ in 0..3 {
         session.execute("shape.insert", &json!({"preset": "rect", "rect": [0.0, 0.0, 100.0, 100.0]})).unwrap();
     }
@@ -16,7 +16,7 @@ fn shapes_above_a_playing_video_are_the_overlay() {
     let keep = slide.shapes.len() - 3;
     slide.shapes.drain(..keep);
     let ids: Vec<ShapeId> = slide.shapes.iter().map(|s| s.id).collect();
-    slide.shapes[1].kind = deckcraft_model::ShapeKind::Media(deckcraft_model::MediaClip { video: true, ..Default::default() });
+    slide.shapes[1].kind = iridium_decks_model::ShapeKind::Media(iridium_decks_model::MediaClip { video: true, ..Default::default() });
     // Video in the middle: the shape above it is drawn over it.
     assert_eq!(below_playing_video(&doc, 0, &[ids[1]]), vec![ids[0], ids[1]]);
     // Video on top: nothing above it, the frame is painted last as before.
@@ -30,7 +30,7 @@ fn shapes_above_a_playing_video_are_the_overlay() {
 /// never gave way to the idle hide, so a still pointer stayed on the playing video.
 #[test]
 fn a_still_cursor_hides_over_a_clickable_shape() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     let size = session.active().unwrap().doc.slide_size;
     let r = session.execute("shape.insert", &json!({"preset": "rect", "rect": [0.0, 0.0, size.width, size.height]})).unwrap();
     session.execute("insert.hyperlink", &json!({"url": "https://example.org", "ids": [r["id"]]})).unwrap();
@@ -56,7 +56,7 @@ fn a_still_cursor_hides_over_a_clickable_shape() {
 /// deck's choices stay targetable; the setting outlives the show and the link still follows.
 #[test]
 fn keep_cursor_visible_leaves_a_still_cursor_over_a_link() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     let size = session.active().unwrap().doc.slide_size;
     session.execute("slide.new", &json!({})).unwrap();
     session.execute("slide.go", &json!({"index": 0})).unwrap();
@@ -89,7 +89,7 @@ fn keep_cursor_visible_leaves_a_still_cursor_over_a_link() {
 fn set_up_slide_show_keeps_the_cursor_visible() {
     use egui_kittest::kittest::Queryable;
 
-    let app = SlideApp::new(deckcraft_engine::Session::with_new(), crate::Services::default());
+    let app = SlideApp::new(iridium_decks_engine::Session::with_new(), crate::Services::default());
     let mut harness = egui_kittest::Harness::builder().with_size(vec2(1200.0, 800.0)).build_ui_state(
         |ui, app: &mut SlideApp| {
             app.logic(ui.ctx());
@@ -112,7 +112,7 @@ fn set_up_slide_show_keeps_the_cursor_visible() {
 /// #1445: the idle hide follows the pointer's last move, Reading View and Keep mouse cursor visible.
 #[test]
 fn the_idle_cursor_hides_only_when_asked() {
-    let session = deckcraft_engine::Session::with_new();
+    let session = iridium_decks_engine::Session::with_new();
     let doc = session.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, false);
     show.last_move = 10.0;
@@ -130,7 +130,7 @@ fn the_idle_cursor_hides_only_when_asked() {
 fn presenter_all_slides_does_not_cover_the_audience_screen() {
     use egui_kittest::kittest::Queryable;
 
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     let doc = session.active().unwrap().doc.clone();
     let show = Show::new(&doc, 0, false, true);
@@ -184,16 +184,21 @@ fn silent_wav(secs: u32) -> Vec<u8> {
 /// bar's seek track, and what `pointer_on_media_bar` said on the last frame.
 fn show_with_clip() -> (egui_kittest::Harness<'static, SlideApp>, ShapeId, Pos2, std::rc::Rc<std::cell::Cell<bool>>) {
     let size = vec2(1000.0, 700.0);
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     let id = ShapeId(4000);
     session
         .edit(|doc, _| {
             let media = doc.add_media("clip.wav", "audio/wav", silent_wav(10)).unwrap();
             let (w, h) = (doc.slide_size.width, doc.slide_size.height);
-            let clip = deckcraft_model::MediaClip { media, video: true, volume: 1.0, duration_ms: 10_000, ..Default::default() };
-            let xfrm = deckcraft_geom::Xfrm::new(w * 0.2, h * 0.2, w * 0.6, h * 0.6);
+            let clip = iridium_decks_model::MediaClip { media, video: true, volume: 1.0, duration_ms: 10_000, ..Default::default() };
+            let xfrm = iridium_decks_geom::Xfrm::new(w * 0.2, h * 0.2, w * 0.6, h * 0.6);
             let slide = std::sync::Arc::make_mut(&mut doc.slides[0]);
-            slide.shapes.push(deckcraft_model::Shape { id, xfrm: Some(xfrm), kind: deckcraft_model::ShapeKind::Media(clip), ..Default::default() });
+            slide.shapes.push(iridium_decks_model::Shape {
+                id,
+                xfrm: Some(xfrm),
+                kind: iridium_decks_model::ShapeKind::Media(clip),
+                ..Default::default()
+            });
             Ok(())
         })
         .unwrap();
@@ -280,7 +285,7 @@ fn two_frame_gif() -> Vec<u8> {
 /// A running show on the first of two slides; slide 1 holds a large animated GIF. Returns the
 /// harness, the GIF, and its play/pause button's centre.
 fn show_with_gif() -> (egui_kittest::Harness<'static, SlideApp>, ShapeId, Pos2) {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     // The GIF is on slide 1, the slide the editor has selected, with a slide after it.
     session.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     session.execute("slide.new", &json!({"layout": "blank"})).unwrap();
@@ -291,10 +296,10 @@ fn show_with_gif() -> (egui_kittest::Harness<'static, SlideApp>, ShapeId, Pos2) 
             let media = doc.add_media("a.gif", "image/gif", two_frame_gif()).unwrap();
             let (w, h) = (doc.slide_size.width, doc.slide_size.height);
             let slide = std::sync::Arc::make_mut(&mut doc.slides[1]);
-            slide.shapes.push(deckcraft_model::Shape {
+            slide.shapes.push(iridium_decks_model::Shape {
                 id,
-                xfrm: Some(deckcraft_geom::Xfrm::new(w * 0.2, h * 0.2, w * 0.6, h * 0.6)),
-                kind: deckcraft_model::ShapeKind::Picture { fill: deckcraft_model::style::PictureFill { media, ..Default::default() } },
+                xfrm: Some(iridium_decks_geom::Xfrm::new(w * 0.2, h * 0.2, w * 0.6, h * 0.6)),
+                kind: iridium_decks_model::ShapeKind::Picture { fill: iridium_decks_model::style::PictureFill { media, ..Default::default() } },
                 ..Default::default()
             });
             Ok(())
@@ -353,7 +358,7 @@ fn gif_button_click_needs_an_awake_pointer() {
 fn presenter_navigation_uses_its_own_keyboard_events() {
     use egui_kittest::kittest::Queryable;
 
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     session.execute("slide.new", &json!({})).unwrap();
     let doc = session.active().unwrap().doc.clone();
@@ -410,7 +415,7 @@ fn presenter_navigation_uses_its_own_keyboard_events() {
 fn slideshow_navigation_advances_once_with_presenter_view() {
     use egui_kittest::kittest::Queryable;
 
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     session.execute("slide.new", &json!({})).unwrap();
     let mut app = SlideApp::new(session, crate::Services::default());
@@ -441,7 +446,7 @@ fn slideshow_navigation_advances_once_with_presenter_view() {
 
 #[test]
 fn the_prefetched_frame_is_the_frame_shown_on_entry() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({"title": "Second"})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let size = (96, 54);
@@ -458,17 +463,17 @@ fn the_prefetched_frame_is_the_frame_shown_on_entry() {
 /// backdrop, and must look the same as a whole-slide render.
 #[test]
 fn an_animation_frame_over_the_kept_backdrop_matches_a_full_render() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     let r = s.execute("shape.insert", &json!({"preset": "star5", "rect": [100.0, 100.0, 300.0, 200.0]})).unwrap();
     s.execute("animation.set", &json!({"effect": "fade", "ids": [r["id"]]})).unwrap();
     let mut doc = (*s.active().unwrap().doc).clone();
     // A glowing master graphic under the animated star.
     let mut deco = doc.slides[0].shapes.last().unwrap().clone();
     deco.id = ShapeId(9000);
-    deco.xfrm = deco.xfrm.map(|x| deckcraft_geom::Xfrm { x: x.x - 60.0, y: x.y + 40.0, ..x });
-    deco.effects = Some(deckcraft_model::Effects {
-        glow: Some(deckcraft_model::style::Glow {
-            color: deckcraft_model::style::ColorRef::rgb(deckcraft_color::Rgba::rgb(0, 120, 255)),
+    deco.xfrm = deco.xfrm.map(|x| iridium_decks_geom::Xfrm { x: x.x - 60.0, y: x.y + 40.0, ..x });
+    deco.effects = Some(iridium_decks_model::Effects {
+        glow: Some(iridium_decks_model::style::Glow {
+            color: iridium_decks_model::style::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0, 120, 255)),
             radius: 12.0,
         }),
         ..Default::default()
@@ -501,7 +506,7 @@ fn an_animation_frame_over_the_kept_backdrop_matches_a_full_render() {
 fn a_transition_keeps_the_old_slide_in_its_own_texture() {
     // #33: the old slide's handle was cloned, so the new slide was rendered into the same
     // texture and every transition blended the new slide with itself.
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     s.execute("transition.set", &json!({"kind": "fade", "index": 1})).unwrap();
     let doc = s.active().unwrap().doc.clone();
@@ -520,7 +525,7 @@ fn a_transition_keeps_the_old_slide_in_its_own_texture() {
 fn going_back_plays_the_left_slides_transition_reversed() {
     // #1531: Back from B to A played A's own entrance transition. PowerPoint plays the one B came
     // in with, backwards.
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     s.execute("transition.set", &json!({"kind": "fade", "index": 0})).unwrap();
     s.execute("transition.set", &json!({"kind": "push", "index": 1})).unwrap();
@@ -575,12 +580,12 @@ fn a_reversed_transition_starts_on_the_slide_left_and_ends_on_the_one_come_back_
 #[test]
 fn media_in_the_click_sequence_plays_with_its_step() {
     // #116: media set to play in the click sequence never started; only a click on it did.
-    let s = deckcraft_engine::Session::with_new();
+    let s = iridium_decks_engine::Session::with_new();
     let mut doc = s.active().unwrap().doc.clone();
     let id = doc.slides[0].shapes[0].id;
-    let play = |delay_ms| deckcraft_model::Animation {
+    let play = |delay_ms| iridium_decks_model::Animation {
         shape: id,
-        class: deckcraft_model::AnimClass::Media,
+        class: iridium_decks_model::AnimClass::Media,
         effect: "play".into(),
         duration_ms: 5000,
         delay_ms,
@@ -619,7 +624,7 @@ fn media_in_the_click_sequence_plays_with_its_step() {
 
 #[test]
 fn the_laser_and_the_pen_are_not_on_together() {
-    let doc = deckcraft_model::Presentation::default();
+    let doc = iridium_decks_model::Presentation::default();
     let mut show = Show::new(&doc, 0, false, false);
     show.set_laser(true);
     assert!(show.laser && !show.pen);
@@ -632,13 +637,13 @@ fn the_laser_and_the_pen_are_not_on_together() {
     assert!(!show.laser);
 }
 
-fn deck_with_first_animation(start: deckcraft_model::anim::AnimStart) -> Presentation {
-    let mut s = deckcraft_engine::Session::with_new();
+fn deck_with_first_animation(start: iridium_decks_model::anim::AnimStart) -> Presentation {
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let mut doc = Presentation::clone(&s.active().unwrap().doc);
     let slide = std::sync::Arc::make_mut(&mut doc.slides[1]);
     let shape = slide.shapes[0].id;
-    slide.animations = vec![deckcraft_model::anim::Animation { shape, start, duration_ms: 3000, ..Default::default() }];
+    slide.animations = vec![iridium_decks_model::anim::Animation { shape, start, duration_ms: 3000, ..Default::default() }];
     doc
 }
 
@@ -646,7 +651,7 @@ fn deck_with_first_animation(start: deckcraft_model::anim::AnimStart) -> Present
 fn a_first_animation_after_or_with_previous_plays_when_the_slide_appears() {
     // #631: it was started twice and the second start finished it, so the slide appeared
     // fully built.
-    use deckcraft_model::anim::AnimStart;
+    use iridium_decks_model::anim::AnimStart;
     for start in [AnimStart::AfterPrevious, AnimStart::WithPrevious] {
         let doc = deck_with_first_animation(start);
         // Starting the show on the slide.
@@ -705,7 +710,7 @@ fn near(a: f32, b: f32) -> bool {
 /// PowerPoint's magnifier goes); zooming back to the whole slide leaves the zoom.
 #[test]
 fn wheel_zoom_keeps_the_point_under_the_pointer_and_stops_at_4x() {
-    let doc = deckcraft_model::Presentation::default();
+    let doc = iridium_decks_model::Presentation::default();
     let mut show = Show::new(&doc, 0, false, false);
     // A 16:9 slide, not at the origin, and a pointer off its centre.
     let srect = Rect::from_min_size(pos2(40.0, 30.0), vec2(320.0, 180.0));
@@ -770,7 +775,7 @@ fn wheel_zoom_reads_only_the_wheel_with_ctrl_or_cmd() {
 
 /// A running show on the first of three slides, with presenter view off.
 fn show_of_three() -> egui_kittest::Harness<'static, SlideApp> {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     session.execute("slide.new", &json!({})).unwrap();
     let mut app = SlideApp::new(session, crate::Services::default());
@@ -825,7 +830,7 @@ fn ctrl_wheel_zooms_the_show_and_the_plain_wheel_turns_the_page() {
 
 #[test]
 fn escape_only_closes_the_grid_of_its_own_window() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, true);
@@ -843,7 +848,7 @@ fn escape_only_closes_the_grid_of_its_own_window() {
 
 #[test]
 fn escape_leaves_the_grid_then_the_zoom_and_blank_toggles() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, true);
@@ -874,7 +879,7 @@ fn escape_leaves_the_grid_then_the_zoom_and_blank_toggles() {
 /// although the notes pane shows them; the notes stay selectable.
 #[test]
 fn presenter_notes_keep_bullets_numbers_and_bold() {
-    use deckcraft_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
+    use iridium_decks_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
     let point = |text: &str, bullet: Bullet| Paragraph {
         level: 1,
         props: ParaProps { bullet: Some(bullet), ..Default::default() },
@@ -923,7 +928,7 @@ fn presenter_notes_keep_bullets_numbers_and_bold() {
 /// time at the last visible frame. A visible pass re-anchors instead of shifting a pause.
 #[test]
 fn hidden_logic_advances_the_show_and_visible_frames_reanchor() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, true);
@@ -971,7 +976,7 @@ fn presenter_timer_pauses_resets_and_notes_size_clamps() {
     let clock = wall_clock();
     assert!(clock == "--:--" || (clock.len() == 5 && clock.as_bytes().get(2) == Some(&b':')));
 
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, true);
@@ -991,7 +996,7 @@ fn presenter_timer_pauses_resets_and_notes_size_clamps() {
 
 #[test]
 fn a_typed_slide_number_jumps_and_then_expires() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, false, false);
@@ -1029,7 +1034,7 @@ fn browsed_by_an_individual_stays_in_a_window() {
 #[test]
 fn the_next_preview_fits_its_column_whatever_the_slide_shape() {
     let right = Rect::from_min_size(pos2(700.0, 100.0), vec2(400.0, 600.0));
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     for (w, h) in [(72, 4032), (4032, 72), (960, 540)] {
         s.execute("design.slideSize", &json!({"w": w, "h": h})).unwrap();
         let doc = s.active().unwrap().doc.clone();
@@ -1047,7 +1052,7 @@ fn the_next_preview_fits_its_column_whatever_the_slide_shape() {
 fn back_leaves_a_slide_whose_first_animation_is_with_previous() {
     // #844: Back on such a slide undid its first step, and the next frame played that step
     // again by itself, so Back never reached the slide before.
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     let id = session.active().unwrap().doc.slides[1].shapes[0].id;
     session
@@ -1081,7 +1086,7 @@ fn back_leaves_a_slide_whose_first_animation_is_with_previous() {
 /// changes instead of retaining a stale target.
 #[test]
 fn input_state_tracks_the_modes_that_move_show_click_targets() {
-    let session = deckcraft_engine::Session::with_new();
+    let session = iridium_decks_engine::Session::with_new();
     let doc = &session.active().unwrap().doc;
     let mut show = Show::new(doc, 0, false, false);
     let base = show.input_state();
@@ -1151,7 +1156,7 @@ fn remote_presenter_uses_the_audience_state_and_closes_with_the_show() {
         }
     }
     let bridge = Rc::new(RefCell::new(Bridge::default()));
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     session.execute("slide.new", &json!({})).unwrap();
     let services = crate::Services { presenter: Some(Box::new(Mock(bridge.clone()))), ..Default::default() };
@@ -1187,7 +1192,7 @@ fn remote_presenter_uses_the_audience_state_and_closes_with_the_show() {
 /// it doesn't wait, and the preview arrives on a later frame.
 #[test]
 fn the_presenter_next_preview_arrives_without_blocking_the_frame() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     let doc = session.active().unwrap().doc.clone();
     // One frame on its own (a harness runs frames until the preview lands): it asks for the
@@ -1221,7 +1226,7 @@ fn the_presenter_next_preview_arrives_without_blocking_the_frame() {
 /// newest one asked for.
 #[test]
 fn paging_quickly_renders_one_preview_at_a_time_and_lands_on_the_newest() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     for _ in 0..7 {
         session.execute("slide.new", &json!({})).unwrap();
     }
@@ -1274,7 +1279,7 @@ fn paging_quickly_renders_one_preview_at_a_time_and_lands_on_the_newest() {
 /// and the preview is rendered again from the new one.
 #[test]
 fn a_preview_of_an_edited_presentation_is_rendered_again() {
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     let doc = session.active().unwrap().doc.clone();
     let show = Show::new(&doc, 0, false, true);
@@ -1303,7 +1308,7 @@ fn a_preview_of_an_edited_presentation_is_rendered_again() {
 /// previous slide into the current slide, and exits when finished.
 #[test]
 fn transition_preview_plays_from_the_previous_slide() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     s.execute("transition.set", &json!({"kind": "push", "index": 1, "duration": 1000})).unwrap();
     let doc = s.active().unwrap().doc.clone();
@@ -1321,7 +1326,7 @@ fn transition_preview_plays_from_the_previous_slide() {
 /// #1654: Transition preview for slide 0 plays with from = None (transitioning from black).
 #[test]
 fn transition_preview_for_first_slide_transitions_from_black() {
-    let mut s = deckcraft_engine::Session::with_new();
+    let mut s = iridium_decks_engine::Session::with_new();
     s.execute("transition.set", &json!({"kind": "fade", "index": 0, "duration": 500})).unwrap();
     let doc = s.active().unwrap().doc.clone();
     let mut show = Show::new(&doc, 0, true, false);

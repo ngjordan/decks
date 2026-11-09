@@ -128,7 +128,7 @@ pub(super) fn size_group(app: &mut SlideApp, ui: &mut Ui) {
     let bx = app
         .session
         .active()
-        .and_then(|d| d.selection.shapes.first().and_then(|id| d.shape(*id).map(|s| deckcraft_engine::cmd::xfrm_of(&d.doc, &d.selection, s))));
+        .and_then(|d| d.selection.shapes.first().and_then(|id| d.shape(*id).map(|s| iridium_decks_engine::cmd::xfrm_of(&d.doc, &d.selection, s))));
     group(ui, |ui| {
         rows(ui, |ui| {
             let Some(x) = bx else {
@@ -139,7 +139,7 @@ pub(super) fn size_group(app: &mut SlideApp, ui: &mut Ui) {
             let len = app.session.prefs.units;
             let (ppu, suffix) = (len.points_per_unit(), len.suffix());
             // " cm" needs more room than the inch mark.
-            let width = if len == deckcraft_geom::Unit::Inches { 54.0 } else { 66.0 };
+            let width = if len == iridium_decks_geom::Unit::Inches { 54.0 } else { 66.0 };
             ui.horizontal(|ui| {
                 ui.label("Height:");
                 if let Some(v) = widgets::spinner(ui, "sh", "Height", x.h / ppu, 0.1, suffix, width) {

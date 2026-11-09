@@ -4,8 +4,8 @@ use super::{
 
 pub(super) fn text_shadow(s: &mut Session, p: &Value) -> Result<Value> {
     let v = on_param(p, Some(current_run(s).shadow.is_some()));
-    let sh = deckcraft_model::style::Shadow {
-        color: deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::BLACK).with(deckcraft_color::ColorTransform::Alpha(43000)),
+    let sh = iridium_decks_model::style::Shadow {
+        color: iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::BLACK).with(iridium_decks_color::ColorTransform::Alpha(43000)),
         blur: 3.0,
         dist: 2.0,
         dir: 45.0,
@@ -29,7 +29,7 @@ pub(super) fn text_outline(s: &mut Session, p: &Value) -> Result<Value> {
 pub(super) fn text_warp(s: &mut Session, p: &Value) -> Result<Value> {
     let preset = str_param(p, "preset").ok_or_else(|| bad("format.textWarp", "missing `preset`"))?;
     let clear = preset == "none" || preset == "textNoShape";
-    if !clear && !deckcraft_geom::warp::is_supported(preset) {
+    if !clear && !iridium_decks_geom::warp::is_supported(preset) {
         return Err(bad("format.textWarp", format!("unknown text transform `{preset}`")));
     }
     let adj = match p.get("adj") {
@@ -98,7 +98,7 @@ pub(super) fn case(s: &mut Session, p: &Value) -> Result<Value> {
                     .collect();
                 let changed = ed::change_case_parts(&mids.iter().map(String::as_str).collect::<Vec<_>>(), &m);
                 for (&(ri, rs, re), new) in pieces.iter().zip(changed) {
-                    let Some(r) = para.runs.get_mut(ri).filter(|r| r.kind == deckcraft_model::text::RunKind::Text) else { continue };
+                    let Some(r) = para.runs.get_mut(ri).filter(|r| r.kind == iridium_decks_model::text::RunKind::Text) else { continue };
                     let pre: String = r.text.chars().take(rs).collect();
                     let post: String = r.text.chars().skip(re).collect();
                     r.text = format!("{pre}{new}{post}");
@@ -128,7 +128,7 @@ pub(super) fn case(s: &mut Session, p: &Value) -> Result<Value> {
                 let texts: Vec<&str> = para.runs.iter().map(|r| r.content()).collect();
                 let changed = ed::change_case_parts(&texts, &mode);
                 for (r, new) in para.runs.iter_mut().zip(changed) {
-                    if r.kind == deckcraft_model::text::RunKind::Text {
+                    if r.kind == iridium_decks_model::text::RunKind::Text {
                         r.text = new;
                     }
                 }

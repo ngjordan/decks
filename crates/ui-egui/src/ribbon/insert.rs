@@ -52,7 +52,7 @@ pub(super) fn insert(app: &mut SlideApp, ui: &mut Ui) {
                 ui.close();
             }
             if ui.button("Draw Table").clicked() {
-                app.session.set_tool(deckcraft_engine::ToolKind::Shape { preset: deckcraft_engine::tools::DRAW_TABLE.into() });
+                app.session.set_tool(iridium_decks_engine::ToolKind::Shape { preset: iridium_decks_engine::tools::DRAW_TABLE.into() });
                 ui.close();
             }
         });
@@ -67,7 +67,7 @@ pub(super) fn insert(app: &mut SlideApp, ui: &mut Ui) {
         let r = big_button(ui, Icon::Shapes, "Shapes", enabled(app, "shape.insert"));
         egui::Popup::menu(&r).show(|ui| {
             if let Some(p) = shapes_gallery(ui) {
-                app.session.set_tool(deckcraft_engine::ToolKind::Shape { preset: p.to_string() });
+                app.session.set_tool(iridium_decks_engine::ToolKind::Shape { preset: p.to_string() });
             }
         });
         let r = big_button(ui, Icon::Icons, "Icons", enabled(app, "insert.icon"));
@@ -163,7 +163,7 @@ pub fn table_grid_picker(ui: &mut Ui) -> Option<(usize, usize)> {
     if resp.clicked() && hover.0 > 0 { Some(hover) } else { None }
 }
 
-fn render_icon_categories(app: &mut SlideApp, ui: &mut Ui, icons: &[deckcraft_engine::icons::Icon], color: Color32, hover: Color32) {
+fn render_icon_categories(app: &mut SlideApp, ui: &mut Ui, icons: &[iridium_decks_engine::icons::Icon], color: Color32, hover: Color32) {
     let mut cats: Vec<&str> = Vec::new();
     for icon in icons {
         if !cats.contains(&icon.category) {
@@ -180,7 +180,7 @@ fn render_icon_categories(app: &mut SlideApp, ui: &mut Ui, icons: &[deckcraft_en
     }
 }
 
-fn render_filtered_icons(app: &mut SlideApp, ui: &mut Ui, icons: &[deckcraft_engine::icons::Icon], q: &str, color: Color32, hover: Color32) {
+fn render_filtered_icons(app: &mut SlideApp, ui: &mut Ui, icons: &[iridium_decks_engine::icons::Icon], q: &str, color: Color32, hover: Color32) {
     let mut n = 0;
     ui.horizontal_wrapped(|ui| {
         for icon in icons {
@@ -204,7 +204,7 @@ fn icon_library(app: &mut SlideApp, ui: &mut Ui) {
     ui.add(egui::TextEdit::singleline(&mut query).hint_text("Search icons").desired_width(ui.available_width()));
     let q = query.trim().to_lowercase();
     ui.data_mut(|d| d.insert_temp(id, query));
-    let icons = deckcraft_engine::icons::icons();
+    let icons = iridium_decks_engine::icons::icons();
     egui::ScrollArea::vertical().id_salt("icon-scroll").max_height(420.0).show(ui, |ui| {
         if q.is_empty() {
             render_icon_categories(app, ui, icons, color, hover);
@@ -214,7 +214,7 @@ fn icon_library(app: &mut SlideApp, ui: &mut Ui) {
     });
 }
 
-fn icon_cell(app: &mut SlideApp, ui: &mut Ui, icon: &deckcraft_engine::icons::Icon, color: Color32, hover: Color32) {
+fn icon_cell(app: &mut SlideApp, ui: &mut Ui, icon: &iridium_decks_engine::icons::Icon, color: Color32, hover: Color32) {
     let (r, resp) = ui.allocate_exact_size(vec2(36.0, 36.0), Sense::click());
     if resp.hovered() {
         ui.painter().rect_filled(r, CornerRadius::same(4), hover);
@@ -227,12 +227,12 @@ fn icon_cell(app: &mut SlideApp, ui: &mut Ui, icon: &deckcraft_engine::icons::Ic
 }
 
 /// Stroke a Lucide outline into a gallery cell. The line is the design stroke scaled to the cell.
-fn paint_icon(p: &egui::Painter, r: Rect, icon: &deckcraft_engine::icons::Icon, color: Color32) {
-    let Some(src) = deckcraft_engine::icons::outline(icon.name) else { return };
+fn paint_icon(p: &egui::Painter, r: Rect, icon: &iridium_decks_engine::icons::Icon, color: Color32) {
+    let Some(src) = iridium_decks_engine::icons::outline(icon.name) else { return };
     let mut bp = src.clone();
     let (w, h) = (r.width().max(1.0) as f64, r.height().max(1.0) as f64);
-    bp.apply_affine(deckcraft_geom::Affine::scale_non_uniform(w / deckcraft_engine::icons::VIEW, h / deckcraft_engine::icons::VIEW));
-    let sw = ((r.width() * icon.stroke as f32) / deckcraft_engine::icons::VIEW as f32).clamp(1.0, 3.5);
+    bp.apply_affine(iridium_decks_geom::Affine::scale_non_uniform(w / iridium_decks_engine::icons::VIEW, h / iridium_decks_engine::icons::VIEW));
+    let sw = ((r.width() * icon.stroke as f32) / iridium_decks_engine::icons::VIEW as f32).clamp(1.0, 3.5);
     let mut pts: Vec<egui::Pos2> = vec![];
     let mut polys: Vec<(Vec<egui::Pos2>, bool)> = vec![];
     kurbo_flatten(&bp, |el| match el {
@@ -265,8 +265,8 @@ fn paint_icon(p: &egui::Painter, r: Rect, icon: &deckcraft_engine::icons::Icon, 
 
 /// The chart types in the Insert Chart and Change Chart Type menus: the main ones, a separator
 /// (`None`), then the Office 2016 types not already listed.
-pub(super) fn chart_menu_types() -> Vec<Option<deckcraft_model::chart::ChartType>> {
-    use deckcraft_model::chart::ChartType;
+pub(super) fn chart_menu_types() -> Vec<Option<iridium_decks_model::chart::ChartType>> {
+    use iridium_decks_model::chart::ChartType;
     let mut v: Vec<Option<ChartType>> = ChartType::MAIN.iter().copied().map(Some).collect();
     v.push(None);
     v.extend(ChartType::OFFICE_2016.iter().copied().filter(|k| !ChartType::MAIN.contains(k)).map(Some));

@@ -4,7 +4,7 @@
 
 use super::chart::rich_text;
 use crate::xml::El;
-use deckcraft_model::chart::{Chart, ChartType, Series};
+use iridium_decks_model::chart::{Chart, ChartType, Series};
 use std::collections::HashMap;
 
 /// Points per level and levels per dimension we keep (guards against hostile parts).
@@ -63,7 +63,7 @@ fn data(d: &El, budget: &mut usize) -> Data {
             if ty == "cat" || out.categories.is_empty() {
                 out.categories = points(lvl, budget);
                 // Further levels are the hierarchy's parents, innermost first.
-                out.levels = dim.children_named("lvl").skip(1).take(deckcraft_model::chart::MAX_LEVELS).map(|l| points(l, budget)).collect();
+                out.levels = dim.children_named("lvl").skip(1).take(iridium_decks_model::chart::MAX_LEVELS).map(|l| points(l, budget)).collect();
             }
         } else if dim.is("numDim") {
             let vals = points(lvl, budget).into_iter().map(|s| s.trim().parse::<f64>().ok().filter(|v| v.is_finite())).collect();
@@ -86,7 +86,7 @@ fn kind_of(layout: &str) -> Option<ChartType> {
     })
 }
 
-/// Parse a `chartEx` part. `None` for anything else, and for layouts Iridium Decks has no type for.
+/// Parse a `chartEx` part. `None` for anything else, and for layouts Decks has no type for.
 pub fn read_chartex_xml(bytes: &[u8]) -> Option<Chart> {
     let doc = crate::xml::parse(bytes).ok()?;
     let mut root = doc.root;

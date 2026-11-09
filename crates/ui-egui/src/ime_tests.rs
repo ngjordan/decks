@@ -7,7 +7,7 @@ use egui::{Event, FontId, ImeEvent};
 use serde_json::json;
 
 use crate::{Services, SlideApp};
-use deckcraft_engine::Session;
+use iridium_decks_engine::Session;
 
 /// Build the standard 1280×800 UI harness around a supplied session and run three frames.
 fn harness(session: Session) -> egui_kittest::Harness<'static, SlideApp> {
@@ -60,7 +60,7 @@ fn korean_composes_in_a_slide_text_box() {
         assert_eq!(title_text(h.state()), pre, "the preedit is shown in place, replacing the last");
         assert_eq!(undo_len(h.state()), undo0, "no undo step while composing");
         let st = h.state().session.active().unwrap();
-        assert!(!deckcraft_engine::cmd::text::composition_underlines(st).is_empty(), "underlined while composing");
+        assert!(!iridium_decks_engine::cmd::text::composition_underlines(st).is_empty(), "underlined while composing");
     }
     h.run_steps(1);
     let ime = h.output().platform_output.ime.as_ref().unwrap();
@@ -69,7 +69,7 @@ fn korean_composes_in_a_slide_text_box() {
     h.run_steps(2);
     assert_eq!(title_text(h.state()), "한글");
     assert!(h.state().session.active().unwrap().composition.is_none());
-    assert!(deckcraft_engine::cmd::text::composition_underlines(h.state().session.active().unwrap()).is_empty());
+    assert!(iridium_decks_engine::cmd::text::composition_underlines(h.state().session.active().unwrap()).is_empty());
     assert_eq!(undo_len(h.state()), undo0 + 1, "the composition is one undo step");
 
     // Escape cancels a composition: an empty preedit, and the text is as it was.
@@ -93,7 +93,7 @@ fn japanese_conversion_shows_the_active_part() {
     h.state_mut().run("text.edit", json!({"id": title})).unwrap();
     h.event(Event::Ime(ImeEvent::Preedit { text: "日本ご".into(), active_range_chars: Some(2..3) }));
     h.run_steps(2);
-    let u = deckcraft_engine::cmd::text::composition_underlines(h.state().session.active().unwrap());
+    let u = iridium_decks_engine::cmd::text::composition_underlines(h.state().session.active().unwrap());
     assert_eq!(u.iter().filter(|x| x.2).count(), 1, "{u:?}");
     let undo0 = undo_len(h.state());
     // kittest runs one frame per queued event. Assert the key-down frame itself: the platform
@@ -375,7 +375,7 @@ fn korean_composes_in_the_notes_pane() {
 /// Does some font on this machine (embedded or installed) draw every letter of `s`? Machines
 /// without a Korean or Chinese font (a bare Linux runner) can't draw it in the interface either.
 fn system_has(s: &str) -> bool {
-    s.chars().filter(|c| !c.is_whitespace()).all(|c| deckcraft_fonts::FontDb::global().fallback_for(c, u32::MAX).is_some_and(|f| !f.is_color()))
+    s.chars().filter(|c| !c.is_whitespace()).all(|c| iridium_decks_fonts::FontDb::global().fallback_for(c, u32::MAX).is_some_and(|f| !f.is_color()))
 }
 
 /// Assert that both interface faces draw every non-space character of `text`; `painted` describes
@@ -400,7 +400,8 @@ fn cjk_text_in_the_interface_is_drawn_with_real_glyphs() {
     let japanese = "日本語のスライド";
     let chinese = "简体中文演示文稿";
     let notes = "발표자 노트입니다";
-    let require_all = option_env!("CRAFT_FONTS_REQUIRED").is_some() || deckcraft_fonts::CRAFT_FONTS.iter().any(|f| f.family == "LXGW WenKai Lite");
+    let require_all =
+        option_env!("CRAFT_FONTS_REQUIRED").is_some() || iridium_decks_fonts::CRAFT_FONTS.iter().any(|f| f.family == "LXGW WenKai Lite");
     // The title slide's title and subtitle are painted by the initial Normal view, under
     // kittest's strict missing-glyph policy. Pre-paint CJK only when this build is required to
     // carry it or this machine can draw every initial sample; an optional build without those
@@ -812,14 +813,15 @@ fn a_settling_batch_cannot_land_an_ime_event_in_the_next_target() {
 
     // A plain press on B settles the composition (PowerPoint does the same) and selects B. Its
     // queued pre-edit and commit travel in the same input batch as the settling pass.
-    let press = deckcraft_engine::tools::PointerEvent { kind: deckcraft_engine::tools::PointerKind::Down, x: 500.0, y: 450.0, ..Default::default() };
+    let press =
+        iridium_decks_engine::tools::PointerEvent { kind: iridium_decks_engine::tools::PointerKind::Down, x: 500.0, y: 450.0, ..Default::default() };
     h.state_mut().session.pointer(press).unwrap();
     h.input_mut().events.push(preedit("nihon"));
     h.input_mut().events.push(Event::Ime(ImeEvent::Commit("nihon".into())));
     h.run_steps(1);
     let st = h.state().session.active().unwrap();
     assert!(st.composition.is_none(), "the click settles the composition");
-    assert_eq!(st.selection.shapes, vec![deckcraft_model::ShapeId(b)], "B is the new target");
+    assert_eq!(st.selection.shapes, vec![iridium_decks_model::ShapeId(b)], "B is the new target");
     assert!(st.selection.text.is_none(), "the queued IME events did not start editing B");
     assert_eq!(text_of(&h, a), "Quarterly resultsnihon", "the settled pre-edit stays in A");
     assert_eq!(text_of(&h, b), "Confidential draft", "B's whole text is not replaced");
@@ -863,9 +865,9 @@ fn text_of(h: &egui_kittest::Harness<'static, SlideApp>, id: u32) -> String {
     h.state()
         .session
         .active()
-        .and_then(|d| d.shape(deckcraft_model::ShapeId(id)))
+        .and_then(|d| d.shape(iridium_decks_model::ShapeId(id)))
         .and_then(|sh| sh.text.as_ref())
-        .map(deckcraft_model::text::TextBody::text)
+        .map(iridium_decks_model::text::TextBody::text)
         .unwrap_or_default()
 }
 
@@ -1460,7 +1462,7 @@ fn full_logic_ui_passes_do_not_rearm_while_standalone_logic_suspends_once() {
 
     let ctx = h.ctx.clone();
     // A child viewport frame supplies the actual viewport stack for its logic callback.
-    let other = egui::ViewportId::from_hash_of("deckcraft test other viewport");
+    let other = egui::ViewportId::from_hash_of("iridium-decks test other viewport");
     ctx.run_ui(viewport_input(other), |ui| h.state_mut().logic(ui.ctx())).drop_without_applying_deltas();
     assert!(matches!(root_phase(&h), crate::ImeResetPhase::Awaiting { id, .. } if id == r1));
 
@@ -1716,7 +1718,7 @@ fn render_only_viewports_cannot_mutate_root_composition_or_bind_the_root_guard()
         Some(r1),
         "the root descriptor legitimately still carries the published R1"
     );
-    let child = egui::ViewportId::from_hash_of("deckcraft test child viewport");
+    let child = egui::ViewportId::from_hash_of("iridium-decks test child viewport");
     let ctx = h.ctx.clone();
     let child_logic = ctx.run_ui(viewport_input(child), |ui| h.state_mut().logic(ui.ctx()));
     assert!(child_logic.platform_output.ime.is_none(), "rejected child logic publishes no IME descriptor");
@@ -1745,7 +1747,7 @@ fn render_only_viewports_cannot_mutate_root_composition_or_bind_the_root_guard()
 fn a_suspended_guard_or_request_stamped_for_another_viewport_is_never_rebound() {
     let mut h = harness(Session::with_new());
     let _ = settled_title_reset(&mut h);
-    let child = egui::ViewportId::from_hash_of("deckcraft foreign suspended viewport");
+    let child = egui::ViewportId::from_hash_of("iridium-decks foreign suspended viewport");
     let child_request = h.ctx.request_ime_reset(child).expect("a real child request token");
     h.state_mut()
         .ime_reset

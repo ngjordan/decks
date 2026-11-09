@@ -217,7 +217,7 @@ pub(super) fn autocorrect(s: &mut Session, typing: bool) -> Result<()> {
 pub struct AutoList {
     sel: TextSel,
     typed: String,
-    props: deckcraft_model::text::ParaProps,
+    props: iridium_decks_model::text::ParaProps,
     revision: u64,
 }
 

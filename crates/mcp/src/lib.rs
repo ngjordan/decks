@@ -1,14 +1,14 @@
-//! Iridium Decks's MCP server.
+//! Decks's MCP server.
 //!
 //! [Model Context Protocol](https://modelcontextprotocol.io) over stdio: newline-delimited
-//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes Iridium Decks as a set of MCP
+//! JSON-RPC 2.0, hand-written (no async runtime). The server exposes Decks as a set of MCP
 //! tools and resources and forwards everything to a [`Backend`]:
 //!
 //! - [`Remote`] talks to a running desktop app through its loopback JSON-lines control channel
-//!   (`deckcraft --control 7979`): one `{"id","method","params"}` line in, one
+//!   (`iridium-decks --control 7979`): one `{"id","method","params"}` line in, one
 //!   `{"id","ok","result"|"error"}` line out (see `docs/control-protocol.md`).
-//! - [`Headless`] hosts an in-process [`deckcraft_engine::Session`] and implements the
-//!   engine-level control-channel methods itself (rendering pages with `deckcraft-render`), so
+//! - [`Headless`] hosts an in-process [`iridium_decks_engine::Session`] and implements the
+//!   engine-level control-channel methods itself (rendering pages with `iridium-decks-render`), so
 //!   agents can build layouts and look at them without a window.
 //!
 //! Entry points: [`Server::serve`] (stdio loop) and [`Server::handle_line`] (one message).

@@ -1,7 +1,7 @@
 //! Table Design and Table Layout tabs.
 
-use deckcraft_geom::{Affine, Point, Rect};
-use deckcraft_model::{Shape, ShapeKind, Table};
+use iridium_decks_geom::{Affine, Point, Rect};
+use iridium_decks_model::{Shape, ShapeKind, Table};
 use serde_json::{Value, json};
 
 use super::{
@@ -178,7 +178,7 @@ pub fn table_frame(st: &DocState, sh: &Shape) -> Option<TableFrame> {
     // The table is drawn in its own box; rows that grow past it don't move it.
     let x = sh.xfrm.unwrap_or_else(|| xfrm_of(&st.doc, &st.selection, sh));
     let heights = table_drawn_heights(&st.doc, &st.selection, t);
-    let cells = deckcraft_render::table_cell_rects(t, &heights);
+    let cells = iridium_decks_render::table_cell_rects(t, &heights);
     Some(TableFrame { affine: x.affine(), cols: t.cols.clone(), heights, cells })
 }
 
@@ -299,7 +299,7 @@ fn with_table(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut Table) -> R
     // The edited cell may have moved out of range.
     s.select(|doc, sel| {
         let dims = super::current_shapes(doc, sel)
-            .and_then(|v| deckcraft_model::find_shape(v, id))
+            .and_then(|v| iridium_decks_model::find_shape(v, id))
             .and_then(|x| if let ShapeKind::Table(t) = &x.kind { Some((t.n_rows(), t.n_cols())) } else { None });
         if let (Some(t), Some((nr, nc))) = (sel.text.as_mut(), dims)
             && let Some((r, c)) = t.cell
@@ -412,7 +412,8 @@ fn target_cells(s: &Session, p: &Value) -> Result<impl Fn(&Table) -> Vec<(usize,
 }
 
 fn cell_fill(s: &mut Session, p: &Value) -> Result<Value> {
-    let fill = if bool_or(p, "none", false) { Some(deckcraft_model::Fill::None) } else { color_param(p, "color").map(deckcraft_model::Fill::solid) };
+    let fill =
+        if bool_or(p, "none", false) { Some(iridium_decks_model::Fill::None) } else { color_param(p, "color").map(iridium_decks_model::Fill::solid) };
     let targets = target_cells(s, p)?;
     with_table(s, p, "table.cellFill", move |t| {
         for (r, c) in targets(t) {
@@ -430,20 +431,20 @@ const TOP: usize = 2;
 const BOTTOM: usize = 3;
 
 fn borders(s: &mut Session, p: &Value) -> Result<Value> {
-    use deckcraft_model::Line;
+    use iridium_decks_model::Line;
     let which = str_param(p, "which").unwrap_or("all").to_string();
     const WHICH: [&str; 12] = ["all", "outside", "inside", "insideH", "insideV", "top", "bottom", "left", "right", "diagDown", "diagUp", "none"];
     if !WHICH.contains(&which.as_str()) {
         return Err(bad("table.borders", format!("unknown `which` {which:?}; one of {}", WHICH.join(", "))));
     }
-    let color = color_param(p, "color").unwrap_or_else(|| deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0, 0, 0)));
+    let color = color_param(p, "color").unwrap_or_else(|| iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0, 0, 0)));
     let width = f64_param(p, "width").filter(|w| w.is_finite()).unwrap_or(1.0).clamp(0.0, 100.0);
     let mut line = Line::solid(color, width);
     if let Some(d) = str_param(p, "dash").filter(|d| *d != "solid") {
-        if !deckcraft_model::style::Dash::PRESETS.contains(&d) {
-            return Err(bad("table.borders", format!("unknown dash {d:?}; one of {}", deckcraft_model::style::Dash::PRESETS.join(", "))));
+        if !iridium_decks_model::style::Dash::PRESETS.contains(&d) {
+            return Err(bad("table.borders", format!("unknown dash {d:?}; one of {}", iridium_decks_model::style::Dash::PRESETS.join(", "))));
         }
-        line.dash = Some(deckcraft_model::style::Dash::Preset { name: d.to_string() });
+        line.dash = Some(iridium_decks_model::style::Dash::Preset { name: d.to_string() });
     }
     // "none" clears to no line, so the table style's own lines don't show through either.
     let line = if which == "none" { Line::none() } else { line };
@@ -535,7 +536,7 @@ fn cell_margins(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn cell_align(s: &mut Session, p: &Value) -> Result<Value> {
-    use deckcraft_model::text::{Align, Anchor};
+    use iridium_decks_model::text::{Align, Anchor};
     // A value that is not a string is refused, not taken as absent.
     for k in ["align", "anchor"] {
         if p.get(k).is_some_and(|v| !v.is_null() && !v.is_string()) {
@@ -684,8 +685,8 @@ pub fn cell_block(t: &Table, a: (usize, usize), b: (usize, usize)) -> ((usize, u
 /// The selected cell range of table `id` (`t`), grown over merged cells, as its top-left and
 /// bottom-right cells. `None` when no range of that table is selected.
 pub fn selected_range(
-    cells: Option<(deckcraft_model::ShapeId, (usize, usize), (usize, usize))>,
-    id: deckcraft_model::ShapeId,
+    cells: Option<(iridium_decks_model::ShapeId, (usize, usize), (usize, usize))>,
+    id: iridium_decks_model::ShapeId,
     t: &Table,
 ) -> Option<((usize, usize), (usize, usize))> {
     let (_, a, b) = cells.filter(|c| c.0 == id)?;
@@ -742,7 +743,7 @@ pub(crate) fn clear_selected_cells(s: &mut Session) -> Result<Value> {
         for (r, row) in t.rows.iter_mut().enumerate() {
             for (c, cell) in row.cells.iter_mut().enumerate() {
                 if in_range(range, r, c) {
-                    deckcraft_model::edit::delete(&mut cell.text, (0, 0), (usize::MAX, usize::MAX));
+                    iridium_decks_model::edit::delete(&mut cell.text, (0, 0), (usize::MAX, usize::MAX));
                 }
             }
         }
@@ -757,7 +758,7 @@ fn point_param(p: &Value, key: &str) -> Option<(f64, f64)> {
 }
 
 /// The table under slide point `at` (frontmost), or the one named by `id`, with its origin.
-pub(crate) fn table_at(s: &Session, p: &Value, at: (f64, f64)) -> Option<(deckcraft_model::ShapeId, (f64, f64))> {
+pub(crate) fn table_at(s: &Session, p: &Value, at: (f64, f64)) -> Option<(iridium_decks_model::ShapeId, (f64, f64))> {
     let st = s.doc().ok()?;
     // A malformed id names no table (never the one under the pointer instead).
     let want = id_param(p, "id", "table.draw").ok()?;

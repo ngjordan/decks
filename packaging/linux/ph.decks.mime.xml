@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
+  <mime-type type="application/x-iridium-decks">
+    <comment>Decks presentation</comment>
+    <sub-class-of type="application/zip"/>
+    <glob pattern="*.iridium-decks"/>
+    <icon name="ph.decks"/>
+  </mime-type>
+</mime-info>

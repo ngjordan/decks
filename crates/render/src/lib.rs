@@ -1,4 +1,4 @@
-//! The Iridium Decks renderer: draws slides, layouts and masters with `vello_cpu`.
+//! The Decks renderer: draws slides, layouts and masters with `vello_cpu`.
 //!
 //! One code path serves the editor canvas, thumbnails, image/PDF-raster export and the slide show:
 //! [`render_slide`] draws the background, the master and layout graphics, then the slide's shapes
@@ -35,22 +35,22 @@ mod warp;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
-use deckcraft_fonts::FontDb;
-use deckcraft_geom::preset::{self, FillMode, Geometry, SubPath};
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::style::{Effects, Fill, Line};
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{Geom, PhType, Presentation, Shape, ShapeId, ShapeKind, Slide};
-use deckcraft_text::datetime::{self, DateTime};
-use deckcraft_text::{Fields, Opts};
+use iridium_decks_color::Rgba;
+use iridium_decks_fonts::FontDb;
+use iridium_decks_geom::preset::{self, FillMode, Geometry, SubPath};
+use iridium_decks_model::resolve::{self, Ctx};
+use iridium_decks_model::style::{Effects, Fill, Line};
+use iridium_decks_model::text::TextBody;
+use iridium_decks_model::{Geom, PhType, Presentation, Shape, ShapeId, ShapeKind, Slide};
+use iridium_decks_text::datetime::{self, DateTime};
+use iridium_decks_text::{Fields, Opts};
 use kurbo::{Affine, BezPath, PathEl, Point, Rect, Shape as _, Vec2};
 use vello_common::filter_effects::{EdgeMode, Filter, FilterPrimitive};
 use vello_cpu::{RenderContext, Resources, peniko};
 
-pub use deckcraft_anim::{transition_frame, transition_layers, uses_slide_parts};
 pub use extent::{Region, TILE, layout_extent, pasteboard_region, slide_extent};
 pub use images::{decode as decode_image, gif_frame};
+pub use iridium_decks_anim::{transition_frame, transition_layers, uses_slide_parts};
 pub use morph_path::PathMorph;
 pub use morph_text::TextMorph;
 pub use pattern::{is_fg as pattern_is_fg, presets as pattern_presets, tile as pattern_tile};
@@ -104,15 +104,15 @@ mod mt_tests {
     /// Regression: multithreaded rendering of a slide with shadows panicked inside vello_cpu.
     #[test]
     fn effects_render_with_threads_requested() {
-        let mut s = deckcraft_model::Presentation::default();
+        let mut s = iridium_decks_model::Presentation::default();
         let sl = std::sync::Arc::make_mut(&mut s.slides[0]);
-        let mut sh = deckcraft_model::Shape {
+        let mut sh = iridium_decks_model::Shape {
             id: ShapeId(900),
-            xfrm: Some(deckcraft_geom::Xfrm::new(10.0, 10.0, 100.0, 100.0)),
-            style: Some(deckcraft_model::ShapeStyle::accent(deckcraft_color::SchemeSlot::Accent1)),
+            xfrm: Some(iridium_decks_geom::Xfrm::new(10.0, 10.0, 100.0, 100.0)),
+            style: Some(iridium_decks_model::ShapeStyle::accent(iridium_decks_color::SchemeSlot::Accent1)),
             ..Default::default()
         };
-        sh.effects = Some(deckcraft_model::Effects { soft_edge: Some(5.0), ..Default::default() });
+        sh.effects = Some(iridium_decks_model::Effects { soft_edge: Some(5.0), ..Default::default() });
         sl.shapes.push(sh);
         assert!(needs_filters(&s, &s.slides[0]));
         let img = RENDERER.with(|r| r.borrow_mut().slide(&s, &s.slides[0], 0, &RenderOpts { scale: 0.5, threads: 4, ..Default::default() }));

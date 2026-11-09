@@ -12,7 +12,7 @@ use crate::picture::{Frame, FrameRef};
 use crate::slice::{NalHeader, SliceHeader, nal_type};
 use crate::slicedec::{F_INTRA, F_SKIP, PicState, SliceDecoder, SliceJob};
 use crate::{ColorInfo, Picture, Plane};
-use deckcraft_bitstream::{annexb_nals, length_prefixed_nals, unescape_rbsp};
+use iridium_decks_bitstream::{annexb_nals, length_prefixed_nals, unescape_rbsp};
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
@@ -88,7 +88,7 @@ pub struct Decoder {
     pool: Option<rayon::ThreadPool>,
     in_flight: VecDeque<FrameRef>,
     max_in_flight: usize,
-    /// Bytes the picture store may take ([`deckcraft_bitstream::budget`]).
+    /// Bytes the picture store may take ([`iridium_decks_bitstream::budget`]).
     memory_budget: u64,
     draft: bool,
 }
@@ -144,7 +144,7 @@ impl Decoder {
             pool,
             in_flight: VecDeque::new(),
             max_in_flight: threads.max(1) + 2,
-            memory_budget: deckcraft_bitstream::budget::DECODE_MEMORY_BUDGET,
+            memory_budget: iridium_decks_bitstream::budget::DECODE_MEMORY_BUDGET,
             draft: false,
         }
     }
@@ -396,7 +396,7 @@ impl Decoder {
     /// Refuse an SPS whose pictures would not fit the memory budget, before anything is allocated.
     fn check_budget(&self, sps: &Sps) -> Result<()> {
         let chroma = sps.chroma_array_type();
-        let shape = deckcraft_bitstream::budget::PictureShape {
+        let shape = iridium_decks_bitstream::budget::PictureShape {
             width: u64::from(sps.width),
             height: u64::from(sps.height),
             shift_x: u32::from(sps.sub_width_c() == 2),

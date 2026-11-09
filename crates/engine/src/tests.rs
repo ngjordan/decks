@@ -4,7 +4,7 @@ use crate::tools::{Mods, PointerEvent, PointerKind};
 use crate::{
     DocState, History, Presentation, Session, Target, TextSel, ToolKind, Value, cmd, command_specs, connect, find_command, model, sample, tools,
 };
-use deckcraft_model::ShapeId;
+use iridium_decks_model::ShapeId;
 
 fn session() -> Session {
     Session::with_new()
@@ -137,7 +137,7 @@ fn cut_with_only_a_caret_changes_nothing() {
 
 #[test]
 fn editing_text_refits_a_saved_shrink() {
-    use deckcraft_model::text::AutoFit;
+    use iridium_decks_model::text::AutoFit;
     let mut s = session();
     let title = s.doc().unwrap().current_slide().unwrap().shapes[0].id;
     s.execute("text.edit", &json!({"id": title.0})).unwrap();
@@ -145,7 +145,7 @@ fn editing_text_refits_a_saved_shrink() {
     // As if opened from a file PowerPoint saved shrunk.
     s.edit(|doc, sel| {
         let shapes = crate::shapes_mut(doc, sel).unwrap();
-        let sh = deckcraft_model::find_shape_mut(shapes, title).unwrap();
+        let sh = iridium_decks_model::find_shape_mut(shapes, title).unwrap();
         sh.text.as_mut().unwrap().body.autofit = Some(AutoFit::Shrink { font_scale: Some(0.5), line_reduction: 0.2 });
         Ok(())
     })
@@ -156,21 +156,21 @@ fn editing_text_refits_a_saved_shrink() {
 }
 
 /// After an edit, the shrink-on-overflow scale the layout computes is stored, so the saved file
-/// carries the scale Iridium Decks draws instead of a bare normAutofit (#724).
+/// carries the scale Decks draws instead of a bare normAutofit (#724).
 #[test]
 fn editing_shrink_text_stores_the_layout_scale() {
-    use deckcraft_model::text::AutoFit;
+    use iridium_decks_model::text::AutoFit;
     let mut s = session();
     let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [80.0, 80.0, 200.0, 40.0]})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     s.execute("format.autofit", &json!({"mode": "shrink"})).unwrap();
     let text = (0..12).map(|i| format!("Line {i}")).collect::<Vec<_>>().join("\n");
     s.execute("text.set", &json!({"id": id.0, "text": text})).unwrap();
     let sh = s.doc().unwrap().shape(id).cloned().unwrap();
     let Some(AutoFit::Shrink { font_scale, line_reduction }) = sh.text.unwrap().body.autofit else { panic!("shrink") };
     assert!(font_scale.is_some_and(|s| s < 1.0), "the computed fit is stored: {font_scale:?} / {line_reduction}");
-    // The saved file must carry the scale Iridium Decks draws, so PowerPoint opens it the same way.
-    let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
+    // The saved file must carry the scale Decks draws, so PowerPoint opens it the same way.
+    let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
     let mut z = zip::ZipArchive::new(std::io::Cursor::new(bytes)).unwrap();
     let mut xml = String::new();
     std::io::Read::read_to_string(&mut z.by_name("ppt/slides/slide1.xml").unwrap(), &mut xml).unwrap();
@@ -304,7 +304,7 @@ fn duplicating_a_group_does_not_repeat_the_names_of_its_members() {
     s.execute("edit.duplicate", &json!({"ids": [group]})).unwrap();
     let doc = s.doc().unwrap();
     let mut all = vec![];
-    deckcraft_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
+    iridium_decks_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
     let mut unique = all.clone();
     unique.sort();
     unique.dedup();
@@ -331,7 +331,7 @@ fn inserting_after_duplicating_a_group_does_not_repeat_a_member_name() {
     s.execute("edit.paste", &json!({})).unwrap();
     let doc = s.doc().unwrap();
     let mut all = vec![];
-    deckcraft_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
+    iridium_decks_model::walk(&doc.current_slide().unwrap().shapes, &mut |sh, _| all.push(sh.name.clone()));
     let mut unique = all.clone();
     unique.sort();
     unique.dedup();
@@ -374,7 +374,7 @@ fn pasting_after_a_deleted_shape_does_not_repeat_a_name() {
     }
     s.execute("edit.delete", &json!({"ids": [ids[1]]})).unwrap();
     s.execute("slide.go", &json!({"index": 0})).unwrap();
-    s.doc_mut().unwrap().selection.shapes = vec![deckcraft_model::ShapeId(ids[2])];
+    s.doc_mut().unwrap().selection.shapes = vec![iridium_decks_model::ShapeId(ids[2])];
     s.execute("edit.copy", &json!({})).unwrap();
     s.execute("edit.paste", &json!({})).unwrap();
     let all = names(&s);
@@ -402,7 +402,7 @@ fn pasting_on_another_slide_keeps_names_so_morph_still_pairs_them() {
     let an: Vec<_> = a.shapes.iter().map(|x| x.name.clone()).collect();
     let bn: Vec<_> = b.shapes.iter().map(|x| x.name.clone()).collect();
     assert_eq!(an, bn);
-    let pairs = deckcraft_anim::morph_pairs(a, b);
+    let pairs = iridium_decks_anim::morph_pairs(a, b);
     assert_eq!(pairs.len(), 2);
     for (ia, ib) in pairs {
         let na = &a.shapes.iter().find(|x| x.id == ia).unwrap().name;
@@ -426,7 +426,7 @@ fn bold_copy_is_html_and_pages_html_pastes_bold() {
     // The same plain words are our own clipboard, so a plainer HTML fragment is not reparsed.
     s.execute("text.select", &json!({"anchor": [0, 5], "caret": [0, 5]})).unwrap();
     s.execute("edit.paste", &json!({"text": "Hello", "html": "<p>Hello</p>"})).unwrap();
-    let body = s.doc().unwrap().shape(deckcraft_model::ShapeId(title)).unwrap().text.clone().unwrap();
+    let body = s.doc().unwrap().shape(iridium_decks_model::ShapeId(title)).unwrap().text.clone().unwrap();
     assert_eq!(body.text(), "HelloHello");
     assert!(body.paragraphs.iter().flat_map(|p| p.runs.iter()).all(|r| r.props.bold == Some(true)), "{body:?}");
     s.execute("text.select", &json!({"anchor": [0, 10], "caret": [0, 10]})).unwrap();
@@ -524,7 +524,7 @@ fn group_ungroup_roundtrip_positions() {
 }
 
 /// Grouping a group again and again stops at `MAX_GROUP_DEPTH`: past about 39 levels a saved
-/// .deckcraft file no longer opens, and past 64 commands such as format.languageAll miss the text.
+/// .iridium-decks file no longer opens, and past 64 commands such as format.languageAll miss the text.
 #[test]
 fn groups_nest_only_as_deep_as_a_saved_file_reopens() {
     let mut s = session();
@@ -543,11 +543,11 @@ fn groups_nest_only_as_deep_as_a_saved_file_reopens() {
     assert!(err.contains(&format!("nested at most {}", cmd::arrange::MAX_GROUP_DEPTH)), "{err}");
     assert_eq!(s.doc().unwrap().revision, before, "a refused group leaves the slide as it was");
     // The deepest deck the command allows saves and opens again.
-    let bytes = deckcraft_format::save(&s.doc().unwrap().doc).unwrap();
-    let back = deckcraft_format::load(&bytes).unwrap();
-    let depth = |shapes: &[deckcraft_model::Shape]| {
+    let bytes = iridium_decks_format::save(&s.doc().unwrap().doc).unwrap();
+    let back = iridium_decks_format::load(&bytes).unwrap();
+    let depth = |shapes: &[iridium_decks_model::Shape]| {
         let mut d = 0;
-        deckcraft_model::walk(shapes, &mut |sh, depth| d = d.max(depth + usize::from(sh.is_group())));
+        iridium_decks_model::walk(shapes, &mut |sh, depth| d = d.max(depth + usize::from(sh.is_group())));
         d
     };
     assert_eq!(depth(&back.slides.last().unwrap().shapes), cmd::arrange::MAX_GROUP_DEPTH);
@@ -634,7 +634,7 @@ fn sample_deck_builds_and_renders() {
     assert!(st.doc.validate().is_empty());
     assert!(!st.is_dirty());
     for i in 0..st.doc.slides.len() {
-        let img = deckcraft_render::render_slide(&st.doc, i, &deckcraft_render::RenderOpts { scale: 0.2, ..Default::default() });
+        let img = iridium_decks_render::render_slide(&st.doc, i, &iridium_decks_render::RenderOpts { scale: 0.2, ..Default::default() });
         assert_eq!(img.width, 192);
     }
     let v = s.execute("document.inspect", &json!({})).unwrap();
@@ -642,9 +642,9 @@ fn sample_deck_builds_and_renders() {
 }
 
 #[test]
-fn writable_format_for_path_rejects_formats_deckcraft_does_not_write() {
+fn writable_format_for_path_rejects_formats_iridium_decks_does_not_write() {
     use crate::cmd::file::writable_format_for_path as f;
-    assert_eq!(f("a.deckcraft"), Some("deckcraft"));
+    assert_eq!(f("a.iridium-decks"), Some("iridium-decks"));
     assert_eq!(f("dir/A.PPTX"), Some("pptx"));
     assert_eq!(f("a.pdf"), Some("pdf"));
     assert_eq!(f("a.jpg"), Some("jpeg"));
@@ -661,7 +661,7 @@ fn save_and_reopen_native() {
     sample::open_sample(&mut s).unwrap();
     let bytes = s.execute("file.saveBytes", &json!({})).unwrap()["data"].as_str().unwrap().to_string();
     let n = s.doc().unwrap().doc.slides.len();
-    s.execute("file.openBytes", &json!({"name": "x.deckcraft", "data": bytes})).unwrap();
+    s.execute("file.openBytes", &json!({"name": "x.iridium-decks", "data": bytes})).unwrap();
     assert_eq!(s.doc().unwrap().doc.slides.len(), n);
     assert_eq!(s.documents().len(), 2);
 }
@@ -707,7 +707,7 @@ fn new_slide_body_tabs_match_text_set() {
     s.execute("slide.new", &json!({"layout": "titleAndContent", "title": "Test Plan", "body": body})).unwrap();
     let levels = |s: &Session| {
         let slide = s.doc().unwrap().current_slide().unwrap();
-        let sh = slide.shapes.iter().find(|x| x.ph_type() == Some(deckcraft_model::PhType::Obj)).unwrap();
+        let sh = slide.shapes.iter().find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Obj)).unwrap();
         let rows: Vec<(u8, String)> = sh.text.as_ref().unwrap().paragraphs.iter().map(|p| (p.level, p.text())).collect();
         (sh.id.0, rows)
     };
@@ -756,9 +756,9 @@ fn themes_and_slide_size() {
     assert!(v["shapes"].as_array().unwrap().iter().any(|x| x["placeholder"] == "sldNum"));
 }
 
-fn line_ends(s: &Session, id: u64) -> (deckcraft_geom::Point, deckcraft_geom::Point) {
+fn line_ends(s: &Session, id: u64) -> (iridium_decks_geom::Point, iridium_decks_geom::Point) {
     let st = s.doc().unwrap();
-    let sh = st.shape(deckcraft_model::ShapeId(id as u32)).unwrap();
+    let sh = st.shape(iridium_decks_model::ShapeId(id as u32)).unwrap();
     connect::endpoints(&cmd::xfrm_of(&st.doc, &st.selection, sh))
 }
 
@@ -778,7 +778,7 @@ fn connectors_follow_glued_shapes() {
     s.execute("shape.move", &json!({"dx": 50, "dy": 20})).unwrap();
     let (q0, q1) = line_ends(&s, c);
     assert!((q0 - p0).hypot() < 1e-6);
-    assert!(((q1 - p1) - deckcraft_geom::Vec2::new(50.0, 20.0)).hypot() < 1e-6, "{p1:?} → {q1:?}");
+    assert!(((q1 - p1) - iridium_decks_geom::Vec2::new(50.0, 20.0)).hypot() < 1e-6, "{p1:?} → {q1:?}");
     // Undo puts both back in one step.
     s.execute("edit.undo", &json!({})).unwrap();
     assert!((line_ends(&s, c).1 - p1).hypot() < 1e-6);
@@ -786,8 +786,8 @@ fn connectors_follow_glued_shapes() {
     s.execute("edit.select", &json!({"ids": [a]})).unwrap();
     s.execute("edit.delete", &json!({})).unwrap();
     let st = s.doc().unwrap();
-    let sh = st.shape(deckcraft_model::ShapeId(c as u32)).unwrap();
-    assert!(matches!(sh.kind, deckcraft_model::ShapeKind::Connector { start: None, end: Some(_) }));
+    let sh = st.shape(iridium_decks_model::ShapeId(c as u32)).unwrap();
+    assert!(matches!(sh.kind, iridium_decks_model::ShapeKind::Connector { start: None, end: Some(_) }));
 }
 
 #[test]
@@ -808,7 +808,7 @@ fn drawing_a_line_between_shapes_glues_it() {
     let st = s.doc().unwrap();
     let line = st.shapes().iter().find(|x| x.is_line()).unwrap();
     match line.kind {
-        deckcraft_model::ShapeKind::Connector { start: Some((x, _)), end: Some((y, _)) } => {
+        iridium_decks_model::ShapeKind::Connector { start: Some((x, _)), end: Some((y, _)) } => {
             assert_eq!((x.0 as u64, y.0 as u64), (a, b));
         }
         ref k => panic!("not glued: {k:?}"),
@@ -843,7 +843,7 @@ fn freeform_tools_and_command() {
     let st = s.doc().unwrap();
     let sh = st.shapes().last().unwrap();
     match &sh.geom {
-        deckcraft_model::Geom::Custom { paths } => assert!(paths[0].d.ends_with('Z') && paths[0].d.matches(" L ").count() == 2, "{}", paths[0].d),
+        iridium_decks_model::Geom::Custom { paths } => assert!(paths[0].d.ends_with('Z') && paths[0].d.matches(" L ").count() == 2, "{}", paths[0].d),
         g => panic!("{g:?}"),
     }
     let x = sh.xfrm.unwrap();
@@ -866,10 +866,10 @@ fn freeform_tools_and_command() {
         s.pointer(ev(tools::PointerKind::Up, x, y)).unwrap();
     }
     let r = s.key("Enter", Default::default()).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     let st = s.doc().unwrap();
     match &st.shape(id).unwrap().geom {
-        deckcraft_model::Geom::Custom { paths } => assert_eq!(paths[0].d.matches(" C ").count(), 3),
+        iridium_decks_model::Geom::Custom { paths } => assert_eq!(paths[0].d.matches(" C ").count(), 3),
         g => panic!("{g:?}"),
     }
 }
@@ -915,22 +915,22 @@ fn grown_table_frame_covers_its_drawn_rows() {
     }
     let st = s.doc().unwrap();
     let sh = st.shapes().iter().find(|sh| json!(sh.id) == id).unwrap().clone();
-    let deckcraft_model::ShapeKind::Table(t) = &sh.kind else { panic!("not a table") };
+    let iridium_decks_model::ShapeKind::Table(t) = &sh.kind else { panic!("not a table") };
     let drawn: f64 = tools::table_rows(st, t).iter().sum();
     assert!(drawn > 12.0, "rows should grow: {drawn}");
     let x = cmd::xfrm_of(&st.doc, &st.selection, &sh);
     assert!((x.h - drawn).abs() < 1e-6, "frame {} vs drawn {drawn}", x.h);
-    let below_stored = deckcraft_geom::Point::new(120.0, 100.0 + drawn - 2.0);
+    let below_stored = iridium_decks_geom::Point::new(120.0, 100.0 + drawn - 2.0);
     assert!(matches!(s.hit_test(below_stored, 1.0), Some(tools::Hit::Shape { .. })));
 }
 
 /// A table at (100, 100): columns `cols` wide, rows 40 pt tall, cells holding `data`.
-fn table_at(s: &mut Session, cols: &[f64], data: serde_json::Value) -> deckcraft_model::ShapeId {
+fn table_at(s: &mut Session, cols: &[f64], data: serde_json::Value) -> iridium_decks_model::ShapeId {
     let rows = data.as_array().map_or(1, Vec::len);
     let w: f64 = cols.iter().sum();
     let r =
         s.execute("insert.table", &json!({"rows": rows, "cols": cols.len(), "rect": [100.0, 100.0, w, 40.0 * rows as f64], "data": data})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     for (c, cw) in cols.iter().enumerate() {
         s.execute("table.columnWidth", &json!({"id": id, "col": c, "width": cw})).unwrap();
     }
@@ -938,9 +938,9 @@ fn table_at(s: &mut Session, cols: &[f64], data: serde_json::Value) -> deckcraft
     id
 }
 
-fn table_of(s: &Session, id: deckcraft_model::ShapeId) -> deckcraft_model::Table {
+fn table_of(s: &Session, id: iridium_decks_model::ShapeId) -> iridium_decks_model::Table {
     match &s.doc().unwrap().shape(id).unwrap().kind {
-        deckcraft_model::ShapeKind::Table(t) => t.clone(),
+        iridium_decks_model::ShapeKind::Table(t) => t.clone(),
         k => panic!("not a table: {k:?}"),
     }
 }
@@ -954,16 +954,16 @@ fn text_sel(s: &Session) -> Option<TextSel> {
 }
 
 /// Slide point of the caret before character `ch` of paragraph `para` in the text being edited.
-fn caret_point(s: &Session, para: usize, ch: usize) -> deckcraft_geom::Point {
+fn caret_point(s: &Session, para: usize, ch: usize) -> iridium_decks_geom::Point {
     let st = s.doc().unwrap();
     text_point(st, st.selection.text.as_ref().unwrap(), para, ch)
 }
 
 /// Slide point of the caret before character `ch` of paragraph `para` of text `t`.
-fn text_point(st: &DocState, t: &TextSel, para: usize, ch: usize) -> deckcraft_geom::Point {
+fn text_point(st: &DocState, t: &TextSel, para: usize, ch: usize) -> iridium_decks_geom::Point {
     let (l, m) = cmd::text::text_frame(st, t).unwrap();
-    let (x, top, bot) = l.caret(deckcraft_text::Pos { para, ch }).unwrap();
-    m * deckcraft_geom::Point::new(x, (top + bot) / 2.0)
+    let (x, top, bot) = l.caret(iridium_decks_text::Pos { para, ch }).unwrap();
+    m * iridium_decks_geom::Point::new(x, (top + bot) / 2.0)
 }
 
 #[test]
@@ -981,8 +981,8 @@ fn cell_text_is_laid_out_where_the_cell_draws_it() {
     // Hit testing: the start and the end of "Hello world".
     let st = s.doc().unwrap();
     let t = TextSel { shape: id, cell: Some((0, 0)), ..Default::default() };
-    assert_eq!(cmd::text::text_pos_at(st, &t, deckcraft_geom::Point::new(101.0, 115.0)), (0, 0));
-    assert_eq!(cmd::text::text_pos_at(st, &t, deckcraft_geom::Point::new(295.0, 115.0)), (0, 11));
+    assert_eq!(cmd::text::text_pos_at(st, &t, iridium_decks_geom::Point::new(101.0, 115.0)), (0, 0));
+    assert_eq!(cmd::text::text_pos_at(st, &t, iridium_decks_geom::Point::new(295.0, 115.0)), (0, 11));
 }
 
 #[test]
@@ -1143,7 +1143,7 @@ fn dragging_across_cells_selects_a_range_of_cells() {
     s.execute("edit.delete", &json!({"id": id})).unwrap();
     assert!(s.doc().unwrap().shape(id).is_none());
     // A span past the table's edge (from a file) stops at the edge.
-    let mut t = deckcraft_model::Table::new(3, 3, 300.0, 40.0);
+    let mut t = iridium_decks_model::Table::new(3, 3, 300.0, 40.0);
     (t.rows[0].cells[0].row_span, t.rows[0].cells[0].grid_span) = (u32::MAX, u32::MAX);
     assert_eq!(cmd::table::cell_block(&t, (1, 1), (2, 2)), ((0, 0), (2, 2)));
 }
@@ -1217,7 +1217,7 @@ fn caret_moves_by_line_in_a_wrapped_cell() {
 fn table_borders_are_hit_where_they_are_drawn() {
     let mut s = session();
     let id = table_at(&mut s, &[100.0, 100.0, 100.0], json!([["a", "b", "c"], ["d", "e", "f"]]));
-    let hit = |s: &Session, x: f64, y: f64| s.hit_test(deckcraft_geom::Point::new(x, y), 3.0);
+    let hit = |s: &Session, x: f64, y: f64| s.hit_test(iridium_decks_geom::Point::new(x, y), 3.0);
     assert_eq!(hit(&s, 201.0, 125.0), Some(tools::Hit::TableColumn { id, col: 0 }));
     assert_eq!(hit(&s, 400.0, 125.0), Some(tools::Hit::TableColumn { id, col: 2 }), "the right edge");
     assert_eq!(hit(&s, 150.0, 139.0), Some(tools::Hit::TableRow { id, row: 0 }));
@@ -1327,7 +1327,7 @@ fn rotated_tables_hit_the_cell_under_the_pointer() {
     s.execute("shape.rotate", &json!({"ids": [id], "deg": 90})).unwrap();
     let st = s.doc().unwrap();
     let f = cmd::table::table_frame(st, st.shape(id).unwrap()).unwrap();
-    let p = f.affine * deckcraft_geom::Point::new(150.0, 60.0);
+    let p = f.affine * iridium_decks_geom::Point::new(150.0, 60.0);
     s.pointer(tev(PointerKind::DoubleClick, p.x, p.y)).unwrap();
     assert_eq!(text_sel(&s).and_then(|t| t.cell), Some((1, 1)));
 }
@@ -1363,17 +1363,17 @@ fn right_to_left_paragraphs() {
     let para = |s: &Session| s.doc().unwrap().current_slide().unwrap().shapes[0].text.as_ref().unwrap().paragraphs[0].props.clone();
     assert_eq!(para(&s).rtl, Some(true));
     // Left (the default) becomes right: the text stays at its start edge.
-    assert_eq!(para(&s).align, Some(deckcraft_model::text::Align::Right));
+    assert_eq!(para(&s).align, Some(iridium_decks_model::text::Align::Right));
     s.execute("format.align", &json!({"align": "justifyLow"})).unwrap();
-    assert_eq!(para(&s).align, Some(deckcraft_model::text::Align::JustLow));
+    assert_eq!(para(&s).align, Some(iridium_decks_model::text::Align::JustLow));
     // Toggling back keeps a justified alignment.
     s.execute("format.rtl", &json!({})).unwrap();
     assert_eq!(para(&s).rtl, Some(false));
-    assert_eq!(para(&s).align, Some(deckcraft_model::text::Align::JustLow));
+    assert_eq!(para(&s).align, Some(iridium_decks_model::text::Align::JustLow));
     s.execute("format.rtl", &json!({"on": true})).unwrap();
     s.execute("format.alignLeft", &json!({})).unwrap();
     s.execute("format.rtl", &json!({"on": false})).unwrap();
-    assert_eq!(para(&s).align, Some(deckcraft_model::text::Align::Right));
+    assert_eq!(para(&s).align, Some(iridium_decks_model::text::Align::Right));
     s.execute("edit.undo", &json!({})).unwrap();
     assert_eq!(para(&s).rtl, Some(true));
 }
@@ -1393,7 +1393,7 @@ fn typing_kurdish_or_arabic_auto_detects_rtl_and_advances_caret_smoothly() {
         let st = s.doc().unwrap();
         let t = st.selection.text.as_ref().unwrap();
         let l = super::cmd::text::layout_for(st, t).unwrap();
-        let (cx, ..) = l.caret(deckcraft_text::Pos { para: t.caret.0, ch: t.caret.1 }).unwrap();
+        let (cx, ..) = l.caret(iridium_decks_text::Pos { para: t.caret.0, ch: t.caret.1 }).unwrap();
 
         if first_x.is_none() {
             first_x = Some(cx);
@@ -1416,7 +1416,7 @@ fn typing_kurdish_or_arabic_auto_detects_rtl_and_advances_caret_smoothly() {
     s.execute("text.edit", &json!({"id": id})).unwrap();
     s.execute("text.insert", &json!({"text": "مرحبا"})).unwrap();
     let st = s.doc().unwrap();
-    let sh = st.shape(deckcraft_model::ShapeId(id as u32)).unwrap();
+    let sh = st.shape(iridium_decks_model::ShapeId(id as u32)).unwrap();
     let para = sh.text.as_ref().unwrap().paragraphs[0].props.clone();
     assert_eq!(para.rtl, Some(true));
     assert_eq!(para.align, None, "the text box keeps the alignment it inherits");
@@ -1435,11 +1435,11 @@ fn explicit_ltr_override_is_preserved_when_typing_rtl() {
 
 #[test]
 fn header_footer_fixed_date_is_the_slides_own_text() {
-    use deckcraft_model::text::RunKind;
+    use iridium_decks_model::text::RunKind;
     let mut s = session();
     let date = |s: &Session| {
         let slide = s.doc().unwrap().current_slide().unwrap();
-        slide.shapes.iter().find(|x| x.ph_type() == Some(deckcraft_model::PhType::Date)).and_then(|x| x.text.clone()).unwrap()
+        slide.shapes.iter().find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date)).and_then(|x| x.text.clone()).unwrap()
     };
     let kind = |s: &Session| date(s).paragraphs[0].runs[0].kind.clone();
     // Automatic: a date field, saved with today's date.
@@ -1529,9 +1529,9 @@ fn hyperlink_can_keep_highlight_click() {
 
 /// A .pptx (base64) whose first slide's title is set in `font`.
 fn deck_in_font(font: &str) -> String {
-    let mut p = deckcraft_model::Presentation::default();
+    let mut p = iridium_decks_model::Presentation::default();
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
-    let mut body = deckcraft_model::text::TextBody::from_text("Hello");
+    let mut body = iridium_decks_model::text::TextBody::from_text("Hello");
     body.paragraphs[0].runs[0].props.font = Some(font.into());
     slide.shapes[0].text = Some(body);
     crate::cmd::base64_encode(&crate::cmd::file::save_bytes(&p, "pptx").unwrap())
@@ -1544,7 +1544,7 @@ fn opening_a_file_lists_the_fonts_it_uses_that_are_missing() {
     assert_eq!(r["missingFonts"], json!(["Qqq Nonexistent Sans"]));
     assert_eq!(s.doc().unwrap().missing_fonts, vec!["Qqq Nonexistent Sans".to_string()]);
     // A font that is there (bundled or installed) isn't listed; new documents list nothing.
-    let have = deckcraft_fonts::FontDb::global().face(deckcraft_fonts::FALLBACK_FAMILY, "Regular").family.clone();
+    let have = iridium_decks_fonts::FontDb::global().face(iridium_decks_fonts::FALLBACK_FAMILY, "Regular").family.clone();
     let r = s.execute("file.openBytes", &json!({"name": "b.pptx", "data": deck_in_font(&have)})).unwrap();
     assert_eq!(r["missingFonts"], json!([]));
     s.execute("file.new", &json!({})).unwrap();
@@ -1561,21 +1561,21 @@ fn a_macos_hidden_system_font_is_not_reported_missing() {
 
 #[test]
 fn an_embedded_face_is_used_when_the_machine_lacks_it() {
-    let mut p = deckcraft_model::Presentation::default();
+    let mut p = iridium_decks_model::Presentation::default();
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
-    let mut body = deckcraft_model::text::TextBody::from_text("Hello");
-    body.paragraphs[0].runs[0].props.font = Some("DeckCraft Colr Squares".into());
+    let mut body = iridium_decks_model::text::TextBody::from_text("Hello");
+    body.paragraphs[0].runs[0].props.font = Some("Decks Colr Squares".into());
     slide.shapes[0].text = Some(body);
     let id = p
         .add_media("font1.fntdata", "application/x-fontdata", include_bytes!("../../render/tests/fixtures/colr-squares.ttf").to_vec())
         .expect("media");
-    p.embedded_fonts.push(deckcraft_model::EmbeddedFont { typeface: "DeckCraft Colr Squares".into(), regular: Some(id), ..Default::default() });
+    p.embedded_fonts.push(iridium_decks_model::EmbeddedFont { typeface: "Decks Colr Squares".into(), regular: Some(id), ..Default::default() });
     let data = crate::cmd::base64_encode(&crate::cmd::file::save_bytes(&p, "pptx").unwrap());
     let mut s = Session::with_new();
     let r = s.execute("file.openBytes", &json!({"name": "fonts.pptx", "data": data})).unwrap();
     assert_eq!(r["missingFonts"], json!([]));
     let font = s.doc().unwrap().doc.embedded_fonts.first().unwrap();
-    assert_eq!(font.typeface, "DeckCraft Colr Squares");
+    assert_eq!(font.typeface, "Decks Colr Squares");
     assert!(font.regular.is_some());
 }
 
@@ -1584,10 +1584,10 @@ fn clicks_in_flipped_shapes_hit_the_text_where_it_is_drawn() {
     // Flips don't mirror text, so a click lands on the character drawn under it.
     let mut s = session();
     let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 400, 100], "text": "Hello flipped world"})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     let pos = |s: &Session, x: f64, y: f64| {
         let st = s.doc().unwrap();
-        tools::text_pos(st, st.shape(id).unwrap(), deckcraft_geom::Point::new(x, y))
+        tools::text_pos(st, st.shape(id).unwrap(), iridium_decks_geom::Point::new(x, y))
     };
     let xs = [240.0, 300.0, 360.0];
     let plain = xs.map(|x| pos(&s, x, 150.0));
@@ -1633,7 +1633,7 @@ fn shapes_off_the_slide_can_be_selected_and_moved() {
     s.execute("edit.select", &json!({"ids": []})).unwrap();
     let ev = |kind, x, y| PointerEvent { kind, x, y, mods: Mods::default(), tol: 3.0, pressure: None };
     // Hover and click wholly off the slide.
-    assert!(matches!(s.hit_test(deckcraft_geom::Point::new(1060.0, 140.0), 3.0), Some(tools::Hit::Shape { id, .. }) if id.0 as u64 == off));
+    assert!(matches!(s.hit_test(iridium_decks_geom::Point::new(1060.0, 140.0), 3.0), Some(tools::Hit::Shape { id, .. }) if id.0 as u64 == off));
     s.pointer(ev(PointerKind::Down, 1060.0, 140.0)).unwrap();
     s.pointer(ev(PointerKind::Up, 1060.0, 140.0)).unwrap();
     assert_eq!(s.doc().unwrap().selection.shapes.iter().map(|i| i.0 as u64).collect::<Vec<_>>(), vec![off]);
@@ -1840,9 +1840,9 @@ fn ime_composition_in_a_table_cell_is_underlined() {
     let thin: Vec<_> = u.iter().filter(|x| !x.2).collect();
     let thick: Vec<_> = u.iter().filter(|x| x.2).collect();
     assert_eq!((thin.len(), thick.len()), (1, 1), "{u:?}");
-    let sh = s.doc().unwrap().shape(deckcraft_model::ShapeId(id as u32)).unwrap().clone();
+    let sh = s.doc().unwrap().shape(iridium_decks_model::ShapeId(id as u32)).unwrap().clone();
     let x = cmd::xfrm_of(&s.doc().unwrap().doc, &s.doc().unwrap().selection, &sh);
-    let deckcraft_model::ShapeKind::Table(tb) = &sh.kind else { panic!("not a table") };
+    let iridium_decks_model::ShapeKind::Table(tb) = &sh.kind else { panic!("not a table") };
     let col = tb.cols[0];
     let row = cmd::table_drawn_heights(&s.doc().unwrap().doc, &s.doc().unwrap().selection, tb)[0];
     for (a, b, _) in &u {
@@ -1856,8 +1856,8 @@ fn ime_composition_in_a_table_cell_is_underlined() {
     assert!(top.x >= x.x && top.x <= x.x + col && top.y >= x.y && bot.y <= x.y + row + 1.0, "caret in the cell");
     s.commit_text("日本語").unwrap();
     assert!(cmd::text::composition_underlines(s.doc().unwrap()).is_empty());
-    let sh = s.doc().unwrap().shape(deckcraft_model::ShapeId(id as u32)).unwrap().clone();
-    let deckcraft_model::ShapeKind::Table(tb) = &sh.kind else { panic!("not a table") };
+    let sh = s.doc().unwrap().shape(iridium_decks_model::ShapeId(id as u32)).unwrap().clone();
+    let iridium_decks_model::ShapeKind::Table(tb) = &sh.kind else { panic!("not a table") };
     assert_eq!(tb.cell(0, 0).map(|c| c.text.text()), Some("日本語".into()));
 }
 
@@ -1883,7 +1883,7 @@ fn file_info_reports_the_presentation() {
     s.execute("file.info", &json!({})).unwrap();
     assert_eq!(s.doc().unwrap().history.undo.len(), before);
     // Saved to disk, it reports where and how big.
-    let dir = std::env::temp_dir().join(format!("deckcraft-info-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-info-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("Info test.pptx").to_string_lossy().to_string();
     s.execute("file.saveAs", &json!({"path": path})).unwrap();
@@ -1926,7 +1926,7 @@ fn slide_ranges_parse_like_powerpoints_print_box() {
 fn outline_rtf_exports_and_opens_back() {
     let mut s = session();
     s.execute("slide.fromOutline", &json!({"text": "Roadmap\n\tShip 1.0\n\t\tLinux first\n"})).unwrap();
-    let dir = std::env::temp_dir().join(format!("deckcraft-rtf-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-rtf-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("deck.rtf");
     s.execute("file.export", &json!({"path": path.to_string_lossy()})).unwrap();
@@ -1947,18 +1947,18 @@ fn new_slide_body_goes_to_the_content_placeholder() {
     for before in [true, false] {
         let mut s = session();
         let doc = std::sync::Arc::make_mut(&mut s.doc_mut().unwrap().doc);
-        let id = deckcraft_model::ShapeId(doc.alloc_id().expect("id"));
+        let id = iridium_decks_model::ShapeId(doc.alloc_id().expect("id"));
         let lay = std::sync::Arc::make_mut(&mut doc.masters[0])
             .layouts
             .iter_mut()
-            .find(|l| l.kind == deckcraft_model::LayoutType::TitleAndContent)
+            .find(|l| l.kind == iridium_decks_model::LayoutType::TitleAndContent)
             .unwrap();
         let at = lay.shapes.iter().position(|x| x.ph.as_ref().is_some_and(|p| p.idx == 1)).unwrap();
         let mut small = lay.shapes[at].clone();
         small.id = id;
         small.name = "Subtitle 21".into();
         let ph = small.ph.as_mut().unwrap();
-        ph.kind = deckcraft_model::PhType::Body;
+        ph.kind = iridium_decks_model::PhType::Body;
         ph.idx = 21;
         ph.size = Some("quarter".into());
         lay.shapes.insert(if before { at } else { at + 1 }, small);
@@ -1984,13 +1984,13 @@ fn cell_fill_walks_only_the_cells_a_huge_selection_covers() {
     s.execute("table.cellFill", &json!({"none": true})).unwrap();
     let st = s.doc().unwrap();
     let sh = st.shapes().iter().find(|sh| json!(sh.id) == id).unwrap();
-    let deckcraft_model::ShapeKind::Table(t) = &sh.kind else { panic!("not a table") };
+    let iridium_decks_model::ShapeKind::Table(t) = &sh.kind else { panic!("not a table") };
     let fills: Vec<bool> = [(0, 0), (0, 1), (1, 0), (1, 1)].iter().map(|&(r, c)| t.cell(r, c).is_some_and(|x| x.fill.is_some())).collect();
     assert_eq!(fills, [false, false, false, true]);
 }
 
 /// Each slide as (title, [(level, bullet text)]).
-fn outline_of(p: &deckcraft_model::Presentation) -> Vec<(String, Vec<(u8, String)>)> {
+fn outline_of(p: &iridium_decks_model::Presentation) -> Vec<(String, Vec<(u8, String)>)> {
     p.slides
         .iter()
         .map(|s| {
@@ -2044,9 +2044,9 @@ fn plain_outlines_are_unchanged() {
     assert_eq!(p.slides.first().map(|s| s.title()).as_deref(), Some("# Intro"));
 }
 
-fn text_box_xfrm(s: &Session, id: u64) -> deckcraft_geom::Xfrm {
+fn text_box_xfrm(s: &Session, id: u64) -> iridium_decks_geom::Xfrm {
     let st = s.doc().unwrap();
-    cmd::xfrm_of(&st.doc, &st.selection, st.shape(deckcraft_model::ShapeId(id as u32)).unwrap())
+    cmd::xfrm_of(&st.doc, &st.selection, st.shape(iridium_decks_model::ShapeId(id as u32)).unwrap())
 }
 
 fn right_click(s: &mut Session, x: f64, y: f64) -> serde_json::Value {
@@ -2055,7 +2055,7 @@ fn right_click(s: &mut Session, x: f64, y: f64) -> serde_json::Value {
 
 /// A blank slide with a rectangle A (100,100 200×100) and a text box B (400,100 200 wide),
 /// nothing selected.
-fn two_shapes() -> (Session, deckcraft_model::ShapeId, deckcraft_model::ShapeId) {
+fn two_shapes() -> (Session, iridium_decks_model::ShapeId, iridium_decks_model::ShapeId) {
     let mut s = session();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     let a = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100.0, 100.0, 200.0, 100.0], "text": "Shape A"})).unwrap()["id"]
@@ -2067,7 +2067,7 @@ fn two_shapes() -> (Session, deckcraft_model::ShapeId, deckcraft_model::ShapeId)
         sel.text = None;
     })
     .unwrap();
-    (s, deckcraft_model::ShapeId(a as u32), deckcraft_model::ShapeId(b as u32))
+    (s, iridium_decks_model::ShapeId(a as u32), iridium_decks_model::ShapeId(b as u32))
 }
 
 #[test]
@@ -2124,9 +2124,9 @@ fn right_click_in_edited_text_keeps_the_text_selection() {
 mod copy_remap {
     use std::sync::Arc;
 
-    use deckcraft_model::style::PictureFill;
-    use deckcraft_model::text::Bullet;
-    use deckcraft_model::{Animation, Fill, MediaId, Shape, ShapeId, ShapeKind, Table, TextBody, Transition, Xfrm};
+    use iridium_decks_model::style::PictureFill;
+    use iridium_decks_model::text::Bullet;
+    use iridium_decks_model::{Animation, Fill, MediaId, Shape, ShapeId, ShapeKind, Table, TextBody, Transition, Xfrm};
     use serde_json::json;
 
     use crate::*;
@@ -2187,7 +2187,7 @@ mod copy_remap {
 
     /// A 4 by 4 PNG of one color.
     fn solid_png(rgb: [u8; 3]) -> Vec<u8> {
-        deckcraft_render::Image { width: 4, height: 4, pixels: [rgb[0], rgb[1], rgb[2], 255].repeat(16) }.to_png()
+        iridium_decks_render::Image { width: 4, height: 4, pixels: [rgb[0], rgb[1], rgb[2], 255].repeat(16) }.to_png()
     }
 
     #[test]
@@ -2202,7 +2202,7 @@ mod copy_remap {
         b.doc_mut().unwrap().selection.shapes.clear();
         let r = b.execute("edit.pasteSpecial", &json!({"as": "picture"})).unwrap();
         let id = ShapeId(r["id"].as_u64().or_else(|| r["ids"][0].as_u64()).unwrap() as u32);
-        let img = deckcraft_render::decode_image(&picture_bytes(&b, &shape(&b, 0, id))).unwrap();
+        let img = iridium_decks_render::decode_image(&picture_bytes(&b, &shape(&b, 0, id))).unwrap();
         // The middle of the drawing is the middle of the copied picture.
         assert_eq!(img.get_pixel(img.width() / 2, img.height() / 2).0, [255, 0, 0, 255]);
     }
@@ -2376,8 +2376,8 @@ mod copy_remap {
         let (t2, tr2) = resolves(&s, n - 1);
         assert!(t2 != t && tr2 != tr);
         // Save and reload keeps them resolving.
-        let bytes = crate::cmd::file::save_bytes(&s.doc().unwrap().doc, "deckcraft").unwrap();
-        let back = deckcraft_format::load(&bytes).unwrap();
+        let bytes = crate::cmd::file::save_bytes(&s.doc().unwrap().doc, "iridium-decks").unwrap();
+        let back = iridium_decks_format::load(&bytes).unwrap();
         for sl in &back.slides {
             for a in &sl.animations {
                 assert!(sl.shapes.iter().any(|x| x.id == a.shape));
@@ -2415,7 +2415,7 @@ fn pdf_options_take_paper_and_orientation() {
 fn pdf_options_reject_unsupported_per_page() {
     for n in [1, 2, 3, 4, 6, 9] {
         let o = cmd::file::pdf_options(&json!({"layout": "handouts", "perPage": n}), 1).unwrap();
-        assert!(matches!(o.layout, deckcraft_pdf::PageLayout::Handouts { per_page } if per_page as usize == n));
+        assert!(matches!(o.layout, iridium_decks_pdf::PageLayout::Handouts { per_page } if per_page as usize == n));
     }
     for n in [0, 5, 7, 8, 10] {
         let e = cmd::file::pdf_options(&json!({"layout": "handouts", "perPage": n}), 1).unwrap_err();
@@ -2430,7 +2430,7 @@ fn pdf_options_reject_unsupported_per_page() {
 #[test]
 fn shape_line_sets_compound_and_arrow_sizes() {
     // The Format Shape pane's Line page: compound type, arrowheads and their sizes.
-    use deckcraft_model::style::Compound;
+    use iridium_decks_model::style::Compound;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "line", "rect": [100, 100, 200, 0]})).unwrap();
@@ -2498,10 +2498,10 @@ fn shape_effects_props_adjust_shadow_glow_and_reflection() {
 /// 0 makes it opaque again, and it is one undo step.
 #[test]
 fn text_transparency_keeps_the_colour_and_sets_alpha() {
-    use deckcraft_model::{ColorTransform, Fill};
+    use iridium_decks_model::{ColorTransform, Fill};
     let mut s = session();
     let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100], "text": "Hi"})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     let fill = |s: &Session| {
         let st = s.doc().unwrap();
         st.shape(id).unwrap().text.as_ref().unwrap().paragraphs[0].runs[0].props.fill.clone()
@@ -2515,7 +2515,7 @@ fn text_transparency_keeps_the_colour_and_sets_alpha() {
     s.execute("format.textTransparency", &json!({"value": 0.6})).unwrap();
     s.execute("format.textTransparency", &json!({"value": 0.5})).unwrap();
     let Some(Fill::Solid { color }) = fill(&s) else { panic!() };
-    assert_eq!(color.base, deckcraft_model::ColorBase::Rgb { rgb: deckcraft_model::Rgba::rgb(0xC0, 0, 0) });
+    assert_eq!(color.base, iridium_decks_model::ColorBase::Rgb { rgb: iridium_decks_model::Rgba::rgb(0xC0, 0, 0) });
     assert_eq!(color.mods.iter().filter(|m| matches!(m, ColorTransform::Alpha(_))).count(), 1);
     assert!((color.alpha() - 0.5).abs() < 1e-9);
     s.execute("format.textTransparency", &json!({"value": 0})).unwrap();
@@ -2529,7 +2529,7 @@ fn text_transparency_keeps_the_colour_and_sets_alpha() {
 
 #[test]
 fn edit_points_turns_a_preset_into_a_freeform_and_moves_adds_deletes() {
-    use deckcraft_model::Geom;
+    use iridium_decks_model::Geom;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100]})).unwrap();
@@ -2623,7 +2623,7 @@ fn edit_points_escape_cancels_a_point_or_handle_drag() {
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [100, 100, 200, 100]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
-    let id = deckcraft_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
     let path = |s: &Session| s.doc().unwrap().shape(id).map(|sh| format!("{:?}", sh.geom)).unwrap_or_default();
     let undo_len = |s: &Session| s.doc().unwrap().history.undo.len();
     let ev = |kind, x: f64, y: f64| PointerEvent { kind, x, y, mods: Mods::default(), ..Default::default() };
@@ -2681,7 +2681,7 @@ fn edit_points_types_and_handles() {
     let q = |s: &mut Session| s.execute("shape.points", &json!({})).unwrap();
     assert_eq!(q(&mut s)["types"][0][1], "corner");
     // A rectangle's corner has no handles until it is a smooth point.
-    let id = deckcraft_model::ShapeId(q(&mut s)["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(q(&mut s)["id"].as_u64().unwrap() as u32);
     let handles = |s: &Session| {
         let st = s.doc().unwrap();
         crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 1).unwrap()
@@ -2695,7 +2695,7 @@ fn edit_points_types_and_handles() {
     assert!(((hi - v).hypot() - (ho - v).hypot()).abs() < 1e-6);
     assert!(((hi - v).normalize() + (ho - v).normalize()).hypot() < 1e-6);
     // Dragging one handle of a smooth point mirrors the other.
-    let to = v + deckcraft_geom::Vec2::new(40.0, 10.0);
+    let to = v + iridium_decks_geom::Vec2::new(40.0, 10.0);
     s.execute("shape.moveHandle", &json!({"index": 1, "side": "out", "x": to.x, "y": to.y})).unwrap();
     let (hi, ho, v) = handles(&s);
     assert!((ho.unwrap() - to).hypot() < 1e-6 || q(&mut s)["types"][0][1] == "smooth");
@@ -2708,7 +2708,7 @@ fn edit_points_types_and_handles() {
     assert_eq!(q(&mut s)["types"][0][1], "straight");
     s.execute("shape.pointType", &json!({"index": 1, "type": "corner"})).unwrap();
     let (hi0, ho, v) = handles(&s);
-    let off = v + deckcraft_geom::Vec2::new(0.0, -30.0);
+    let off = v + iridium_decks_geom::Vec2::new(0.0, -30.0);
     let _ = ho;
     // (The pointer passes the type last chosen for the vertex, as here.)
     s.execute("shape.moveHandle", &json!({"index": 1, "side": "out", "x": off.x, "y": off.y, "type": "corner"})).unwrap();
@@ -2730,7 +2730,7 @@ fn edit_points_types_and_handles() {
     s.pointer(ev(PointerKind::Up, ho.x + 20.0, ho.y + 20.0)).unwrap();
     let st = s.doc().unwrap();
     let (_, ho2, _) = crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 2).unwrap();
-    assert!((ho2.unwrap() - (ho + deckcraft_geom::Vec2::new(20.0, 20.0))).hypot() < 1e-3, "{ho2:?}");
+    assert!((ho2.unwrap() - (ho + iridium_decks_geom::Vec2::new(20.0, 20.0))).hypot() < 1e-3, "{ho2:?}");
     s.execute("edit.undo", &json!({})).unwrap();
     let st = s.doc().unwrap();
     let (_, ho3, _) = crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 2).unwrap();
@@ -2742,19 +2742,19 @@ fn edit_points_types_and_handles() {
 #[test]
 fn edit_points_handle_drag_modifiers_set_the_point_type() {
     use crate::tools::{Mods, PointerEvent, PointerKind};
-    use deckcraft_geom::Vec2;
+    use iridium_decks_geom::Vec2;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [100, 100, 200, 100]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
-    let id = deckcraft_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
     let handles = |s: &Session| {
         let st = s.doc().unwrap();
         let (hi, ho, v) = crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 0).unwrap();
         (hi.unwrap(), ho.unwrap(), v)
     };
-    let ev = |kind, p: deckcraft_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
-    let drag = |s: &mut Session, from: deckcraft_geom::Point, to: deckcraft_geom::Point, mods: Mods| {
+    let ev = |kind, p: iridium_decks_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
+    let drag = |s: &mut Session, from: iridium_decks_geom::Point, to: iridium_decks_geom::Point, mods: Mods| {
         s.pointer(ev(PointerKind::Down, from, Mods::default())).unwrap();
         s.pointer(ev(PointerKind::Drag, to, mods)).unwrap();
         s.pointer(ev(PointerKind::Up, to, mods)).unwrap();
@@ -2795,18 +2795,18 @@ fn edit_points_handle_drag_modifiers_set_the_point_type() {
 #[test]
 fn edit_points_escape_takes_back_the_point_type_of_a_modifier_drag() {
     use crate::tools::{Mods, PointerEvent, PointerKind};
-    use deckcraft_geom::Vec2;
+    use iridium_decks_geom::Vec2;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [100, 100, 200, 100]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
-    let id = deckcraft_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
     let handles = |s: &Session| {
         let st = s.doc().unwrap();
         let (hi, ho, v) = crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 0).unwrap();
         (hi.unwrap(), ho.unwrap(), v)
     };
-    let ev = |kind, p: deckcraft_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
+    let ev = |kind, p: iridium_decks_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
     let alt = Mods { alt: true, ..Default::default() };
     let (_, ho, v) = handles(&s);
     s.pointer(ev(PointerKind::Down, v, Mods::default())).unwrap();
@@ -2836,19 +2836,19 @@ fn edit_points_escape_takes_back_the_point_type_of_a_modifier_drag() {
 #[test]
 fn edit_points_remembered_point_type_follows_undo_redo_and_its_shape() {
     use crate::tools::{Mods, PointerEvent, PointerKind};
-    use deckcraft_geom::Vec2;
+    use iridium_decks_geom::Vec2;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [100, 100, 200, 100]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
-    let id = deckcraft_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
     let handles = |s: &Session| {
         let st = s.doc().unwrap();
         let (hi, ho, v) = crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, 0).unwrap();
         (hi.unwrap(), ho.unwrap(), v)
     };
-    let ev = |kind, p: deckcraft_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
-    let drag = |s: &mut Session, from: deckcraft_geom::Point, to: deckcraft_geom::Point, mods: Mods| {
+    let ev = |kind, p: iridium_decks_geom::Point, mods: Mods| PointerEvent { kind, x: p.x, y: p.y, mods, ..Default::default() };
+    let drag = |s: &mut Session, from: iridium_decks_geom::Point, to: iridium_decks_geom::Point, mods: Mods| {
         s.pointer(ev(PointerKind::Down, from, Mods::default())).unwrap();
         s.pointer(ev(PointerKind::Drag, to, mods)).unwrap();
         s.pointer(ev(PointerKind::Up, to, mods)).unwrap();
@@ -2900,7 +2900,7 @@ fn edit_points_remembered_point_type_follows_undo_redo_and_its_shape() {
     // The remembered type belongs to its shape: the same point of another ellipse stays smooth.
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [100, 300, 200, 100]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
-    let other = deckcraft_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
+    let other = iridium_decks_model::ShapeId(s.execute("shape.points", &json!({})).unwrap()["id"].as_u64().unwrap() as u32);
     assert_ne!(other, id);
     let handles_of = |s: &Session| {
         let st = s.doc().unwrap();
@@ -2940,14 +2940,14 @@ fn edit_points_straight_and_curved_segments() {
     s.execute("shape.segmentType", &json!({"segment": 1, "type": "curved"})).unwrap();
     assert_eq!(q(&mut s)["segments"][0], json!(["straight", "curved", "straight", "straight"]));
     assert_eq!(q(&mut s)["paths"], before);
-    let id = deckcraft_model::ShapeId(q(&mut s)["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(q(&mut s)["id"].as_u64().unwrap() as u32);
     let handles = |s: &Session, i| {
         let st = s.doc().unwrap();
         crate::cmd::points::slide_handles(&st.doc, &st.selection, st.shape(id).unwrap(), 0, i).unwrap()
     };
     let (out0, in1) = (handles(&s, 0).1.unwrap(), handles(&s, 1).0.unwrap());
-    assert!((out0 - deckcraft_geom::Point::new(100.0 + 200.0 / 3.0, 100.0)).hypot() < 1e-3, "{out0:?}");
-    assert!((in1 - deckcraft_geom::Point::new(100.0 + 400.0 / 3.0, 100.0)).hypot() < 1e-3, "{in1:?}");
+    assert!((out0 - iridium_decks_geom::Point::new(100.0 + 200.0 / 3.0, 100.0)).hypot() < 1e-3, "{out0:?}");
+    assert!((in1 - iridium_decks_geom::Point::new(100.0 + 400.0 / 3.0, 100.0)).hypot() < 1e-3, "{in1:?}");
     // Bend it, then Straight Segment drops its handles; the points stay where they are.
     s.execute("shape.moveHandle", &json!({"index": 1, "side": "in", "x": in1.x, "y": 60})).unwrap();
     let bent = q(&mut s)["paths"].clone();
@@ -2979,7 +2979,7 @@ fn edit_points_open_and_close_path() {
     let pts =
         |s: &mut Session| -> Vec<[f64; 2]> { serde_json::from_value(s.execute("shape.points", &json!({})).unwrap()["paths"][0].clone()).unwrap() };
     let d = |s: &Session| match &s.doc().unwrap().selected_shapes()[0].geom {
-        deckcraft_model::Geom::Custom { paths } => paths[0].d.clone(),
+        iridium_decks_model::Geom::Custom { paths } => paths[0].d.clone(),
         g => panic!("{g:?}"),
     };
     assert!(s.execute("shape.closePath", &json!({"index": 0})).is_err(), "the outline is closed already");
@@ -3019,7 +3019,7 @@ fn edit_points_delete_segment_opens_the_outline() {
     let pts =
         |s: &mut Session| -> Vec<[f64; 2]> { serde_json::from_value(s.execute("shape.points", &json!({})).unwrap()["paths"][0].clone()).unwrap() };
     let d = |s: &Session| match &s.doc().unwrap().selected_shapes()[0].geom {
-        deckcraft_model::Geom::Custom { paths } => paths[0].d.clone(),
+        iridium_decks_model::Geom::Custom { paths } => paths[0].d.clone(),
         g => panic!("{g:?}"),
     };
     // A point type remembered for handle drags belongs to the old numbering: deleting forgets it.
@@ -3109,7 +3109,7 @@ fn edit_points_add_point_at_the_start_of_an_open_outline() {
     s.execute("shape.insert", &json!({"preset": "donut", "rect": [100, 100, 200, 200]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
     let d = |s: &Session| match &s.doc().unwrap().selected_shapes()[0].geom {
-        deckcraft_model::Geom::Custom { paths } => paths[0].d.clone(),
+        iridium_decks_model::Geom::Custom { paths } => paths[0].d.clone(),
         g => panic!("{g:?}"),
     };
     s.execute("shape.openPath", &json!({"index": 0})).unwrap();
@@ -3154,20 +3154,20 @@ fn edit_points_right_click_on_a_handle_keeps_the_picked_vertex() {
     assert_eq!((s.tool.edit_segment, s.tool.edit_vertex), (None, Some((path, index))));
 }
 
-/// #392: a `.deckcraft` whose embedded picture is damaged opens as an untitled "(Repaired)"
+/// #392: a `.iridium-decks` whose embedded picture is damaged opens as an untitled "(Repaired)"
 /// copy with a message, so Save can't overwrite the original with the empty media.
 #[test]
 fn damaged_native_file_opens_as_repaired_copy() {
-    let mut p = deckcraft_model::Presentation::default();
+    let mut p = iridium_decks_model::Presentation::default();
     p.add_media("a.png", "image/png", b"PICTURE-BYTES-0123456789".to_vec());
-    let good = deckcraft_format::save(&p).unwrap();
+    let good = iridium_decks_format::save(&p).unwrap();
     // PNGs are stored as they are, so flipping a byte breaks the entry's CRC.
     let mut bad = good.clone();
     let at = bad.windows(13).position(|w| w == b"PICTURE-BYTES").unwrap();
     bad[at] ^= 0xff;
-    let dir = std::env::temp_dir().join(format!("deckcraft-392-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-392-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
-    for (name, bytes, damaged) in [("good.deckcraft", &good, false), ("bad.deckcraft", &bad, true)] {
+    for (name, bytes, damaged) in [("good.iridium-decks", &good, false), ("bad.iridium-decks", &bad, true)] {
         let path = dir.join(name);
         std::fs::write(&path, bytes).unwrap();
         let mut s = Session::new();
@@ -3182,13 +3182,13 @@ fn damaged_native_file_opens_as_repaired_copy() {
         let r = s.execute("file.openBytes", &json!({"name": name, "data": crate::cmd::base64_encode(bytes)})).unwrap();
         assert_eq!(r["damagedMedia"].as_array().map(|a| a.len()), Some(usize::from(damaged)));
     }
-    assert_eq!(std::fs::read(dir.join("bad.deckcraft")).unwrap(), bad, "original untouched");
+    assert_eq!(std::fs::read(dir.join("bad.iridium-decks")).unwrap(), bad, "original untouched");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
 #[test]
 fn motion_path_presets_have_paths_ids_and_round_trip() {
-    use deckcraft_model::anim::{ANIMATIONS, AnimClass, preset_path};
+    use iridium_decks_model::anim::{ANIMATIONS, AnimClass, preset_path};
     let paths: Vec<_> = ANIMATIONS.iter().filter(|a| a.2 == AnimClass::Path).collect();
     // Preset ids identify the effect when PowerPoint's file is read back: no two share one.
     let mut ids: Vec<u32> = paths.iter().map(|a| a.3).collect();
@@ -3203,7 +3203,7 @@ fn motion_path_presets_have_paths_ids_and_round_trip() {
     let a = s.doc().unwrap().doc.slides[s.doc().unwrap().selection.slide].animations[0].clone();
     assert_eq!(a.path, preset_path("heart"));
     let p = s.doc().unwrap().doc.as_ref().clone();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&p).unwrap()).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).unwrap()).unwrap();
     let b = back.slides.iter().flat_map(|sl| &sl.animations).next().unwrap();
     assert_eq!((b.effect.as_str(), b.class), ("heart", AnimClass::Path));
     assert!(b.path.as_deref().is_some_and(|p| p.contains('L')));
@@ -3218,7 +3218,7 @@ fn numbering_takes_color_and_size() {
     {
         let id = s.doc().unwrap().selection.shapes[0];
         let d = std::sync::Arc::make_mut(&mut s.doc_mut().unwrap().doc);
-        let shape = deckcraft_model::find_shape_mut(&mut std::sync::Arc::make_mut(&mut d.slides[0]).shapes, id).unwrap();
+        let shape = iridium_decks_model::find_shape_mut(&mut std::sync::Arc::make_mut(&mut d.slides[0]).shapes, id).unwrap();
         let props = &mut shape.text.as_mut().unwrap().paragraphs[0].props;
         props.bullet_font_follow_text = Some(true);
         props.bullet_color_follow_text = Some(true);
@@ -3232,13 +3232,13 @@ fn numbering_takes_color_and_size() {
         st.shape(id).unwrap().text.as_ref().unwrap().paragraphs[0].props.clone()
     };
     let pp = para(&s);
-    assert!(matches!(&pp.bullet, Some(deckcraft_model::text::Bullet::AutoNum { scheme, start_at: 3 }) if scheme == "romanUcPeriod"));
+    assert!(matches!(&pp.bullet, Some(iridium_decks_model::text::Bullet::AutoNum { scheme, start_at: 3 }) if scheme == "romanUcPeriod"));
     assert_eq!(pp.bullet_size, Some(1.5));
     assert_eq!(pp.bullet_font_follow_text, Some(true));
     assert_eq!(pp.bullet_color_follow_text, None);
     assert_eq!(pp.bullet_size_follow_text, None);
     assert_eq!(pp.bullet_size_points, None);
-    assert_eq!(pp.bullet_color, Some(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)));
+    assert_eq!(pp.bullet_color, Some(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent2)));
     s.execute("format.bullets", &json!({"on": true, "char": "★", "size": 9000})).unwrap();
     assert_eq!(para(&s).bullet_size, Some(4.0));
     assert_eq!(para(&s).bullet_size_points, None);
@@ -3247,24 +3247,24 @@ fn numbering_takes_color_and_size() {
 
 #[test]
 fn paste_special_keeps_source_look_picture_or_text() {
-    use deckcraft_model::style::{ColorBase, Fill};
+    use iridium_decks_model::style::{ColorBase, Fill};
     let mut s = session();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100], "text": "Q3 plan"})).unwrap();
     s.execute("shape.fill", &json!({"color": "accent1"})).unwrap();
     let old_accent = {
         let d = s.doc().unwrap();
         let sl = d.current_slide().unwrap();
-        d.doc.master_for(sl).unwrap().0.scheme().get(deckcraft_color::SchemeSlot::Accent1)
+        d.doc.master_for(sl).unwrap().0.scheme().get(iridium_decks_color::SchemeSlot::Accent1)
     };
     s.execute("edit.copy", &json!({})).unwrap();
     s.execute("design.theme", &json!({"name": "Ember"})).unwrap();
     {
         let d = s.doc().unwrap();
         let sl = d.current_slide().unwrap();
-        assert_ne!(d.doc.master_for(sl).unwrap().0.scheme().get(deckcraft_color::SchemeSlot::Accent1), old_accent);
+        assert_ne!(d.doc.master_for(sl).unwrap().0.scheme().get(iridium_decks_color::SchemeSlot::Accent1), old_accent);
     }
     let fill_of = |s: &Session, id: &Value| {
-        let sid = deckcraft_model::ShapeId(id.as_u64().unwrap() as u32);
+        let sid = iridium_decks_model::ShapeId(id.as_u64().unwrap() as u32);
         s.doc().unwrap().shape(sid).unwrap().fill.clone()
     };
 
@@ -3280,10 +3280,10 @@ fn paste_special_keeps_source_look_picture_or_text() {
     assert!(matches!(&s.clipboard.shapes[0].fill, Some(Fill::Solid { color }) if matches!(color.base, ColorBase::Scheme { .. })));
 
     let pic = s.execute("edit.pasteSpecial", &json!({"as": "picture"})).unwrap();
-    let pid = deckcraft_model::ShapeId(pic["id"].as_u64().or_else(|| pic["ids"][0].as_u64()).unwrap() as u32);
+    let pid = iridium_decks_model::ShapeId(pic["id"].as_u64().or_else(|| pic["ids"][0].as_u64()).unwrap() as u32);
     let d = s.doc().unwrap();
     let sh = d.shape(pid).unwrap();
-    let deckcraft_model::ShapeKind::Picture { fill } = &sh.kind else { panic!("{:?}", sh.kind) };
+    let iridium_decks_model::ShapeKind::Picture { fill } = &sh.kind else { panic!("{:?}", sh.kind) };
     assert_eq!(d.doc.media(fill.media).unwrap().content_type, "image/png");
     let x = sh.xfrm.unwrap();
     assert!((x.w - 216.0).abs() < 1.0 && (x.h - 116.0).abs() < 1.0, "{x:?}");
@@ -3305,7 +3305,7 @@ fn image_export_scale_fits_the_largest_picture() {
     let doc = s.doc().unwrap().doc.clone();
     assert_eq!(crate::cmd::file::image_scale(&doc, 2.0), 2.0);
     assert_eq!(crate::cmd::file::image_scale(&doc, f64::NAN), 1.0);
-    let max = f64::from(deckcraft_render::MAX_SIDE);
+    let max = f64::from(iridium_decks_render::MAX_SIDE);
     assert_eq!(crate::cmd::file::image_scale(&doc, 16.0), 16.0, "16× of 960 pt fits");
     s.execute("design.slideSize", &json!({"w": 4032, "h": 72})).unwrap();
     let doc = s.doc().unwrap().doc.clone();
@@ -3317,7 +3317,7 @@ fn image_export_scale_fits_the_largest_picture() {
 /// slides already were.
 #[test]
 fn a_failed_all_slides_export_says_what_was_written() {
-    let dir = std::env::temp_dir().join(format!("deckcraft-export-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-export-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     std::fs::create_dir_all(dir.join("deck2.png")).unwrap();
     let mut s = Session::with_new();
@@ -3389,12 +3389,12 @@ fn picture_styles_replace_each_other_in_one_step() {
     let p = pic(&s);
     assert_eq!(p.geom.preset_name(), Some("ellipse"));
     assert_eq!(p.effects.as_ref().unwrap().soft_edge, Some(12.0));
-    assert!(p.line.as_ref().is_some_and(|l| l.fill == Some(deckcraft_model::Fill::None)));
+    assert!(p.line.as_ref().is_some_and(|l| l.fill == Some(iridium_decks_model::Fill::None)));
 
     // Survives PPTX.
     let doc = s.doc().unwrap().doc.as_ref().clone();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&doc).unwrap()).unwrap();
-    let bp = back.slides.iter().flat_map(|sl| &sl.shapes).find(|sh| matches!(sh.kind, deckcraft_model::ShapeKind::Picture { .. })).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&doc).unwrap()).unwrap();
+    let bp = back.slides.iter().flat_map(|sl| &sl.shapes).find(|sh| matches!(sh.kind, iridium_decks_model::ShapeKind::Picture { .. })).unwrap();
     assert_eq!(bp.geom.preset_name(), Some("ellipse"));
     assert_eq!(bp.effects.as_ref().and_then(|e| e.soft_edge), Some(12.0));
 
@@ -3417,7 +3417,7 @@ fn picture_recolor_and_transparent_color() {
     let mut s = session();
     let id = s.execute("insert.picture", &json!({"data": cmd::base64_encode(PNG), "name": "a.png"})).unwrap()["id"].clone();
     let adj = |s: &Session| match &s.doc().unwrap().shapes().iter().find(|sh| json!(sh.id) == id).unwrap().kind {
-        deckcraft_model::ShapeKind::Picture { fill } => fill.adjust.clone(),
+        iridium_decks_model::ShapeKind::Picture { fill } => fill.adjust.clone(),
         _ => panic!("not a picture"),
     };
     assert_eq!(s.execute("picture.recolors", &json!({})).unwrap().as_array().unwrap().len(), 21);
@@ -3427,7 +3427,7 @@ fn picture_recolor_and_transparent_color() {
     s.execute("picture.recolor", &json!({"ids": [id], "preset": "accent2Light"})).unwrap();
     let a = adj(&s);
     assert!(a.bilevel.is_none());
-    assert!(matches!(&a.duotone, Some((d, _)) if *d == deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)));
+    assert!(matches!(&a.duotone, Some((d, _)) if *d == iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent2)));
     s.execute("picture.recolor", &json!({"ids": [id], "preset": "washout"})).unwrap();
     let a = adj(&s);
     assert!(a.duotone.is_none() && a.brightness == 0.7 && a.contrast == -0.7);
@@ -3437,21 +3437,21 @@ fn picture_recolor_and_transparent_color() {
     assert!(s.execute("picture.recolor", &json!({"ids": [id], "preset": "plaid"})).is_err());
 
     s.execute("picture.transparentColor", &json!({"ids": [id], "color": "#FFFFFF"})).unwrap();
-    assert_eq!(adj(&s).clear_color, Some(deckcraft_color::Rgba::rgb(255, 255, 255)));
+    assert_eq!(adj(&s).clear_color, Some(iridium_decks_color::Rgba::rgb(255, 255, 255)));
     // Both survive PPTX.
     let doc = s.doc().unwrap().doc.as_ref().clone();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&doc).unwrap()).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&doc).unwrap()).unwrap();
     let ba = back.slides.iter().flat_map(|sl| &sl.shapes).find_map(|sh| match &sh.kind {
-        deckcraft_model::ShapeKind::Picture { fill } => Some(fill.adjust.clone()),
+        iridium_decks_model::ShapeKind::Picture { fill } => Some(fill.adjust.clone()),
         _ => None,
     });
     let ba = ba.unwrap();
     assert!(ba.grayscale);
-    assert_eq!(ba.clear_color, Some(deckcraft_color::Rgba::rgb(255, 255, 255)));
+    assert_eq!(ba.clear_color, Some(iridium_decks_color::Rgba::rgb(255, 255, 255)));
     s.execute("picture.transparentColor", &json!({"ids": [id], "none": true})).unwrap();
     assert!(adj(&s).clear_color.is_none());
     s.execute("picture.recolor", &json!({"ids": [id], "preset": "none"})).unwrap();
-    assert_eq!(adj(&s), deckcraft_model::style::PictureAdjust::default());
+    assert_eq!(adj(&s), iridium_decks_model::style::PictureAdjust::default());
 }
 
 #[test]
@@ -3464,11 +3464,11 @@ fn transparent_color_at_a_point_takes_the_pictures_own_pixel_there() {
     let id =
         s.execute("insert.picture", &json!({"data": cmd::base64_encode(&png), "name": "a.png", "rect": [100, 100, 400, 200]})).unwrap()["id"].clone();
     let clear = |s: &Session| match &s.doc().unwrap().shapes().iter().find(|sh| json!(sh.id) == id).unwrap().kind {
-        deckcraft_model::ShapeKind::Picture { fill } => fill.adjust.clear_color,
+        iridium_decks_model::ShapeKind::Picture { fill } => fill.adjust.clear_color,
         _ => panic!("not a picture"),
     };
-    let red = deckcraft_color::Rgba::rgb(255, 0, 0);
-    let blue = deckcraft_color::Rgba::rgb(0, 0, 255);
+    let red = iridium_decks_color::Rgba::rgb(255, 0, 0);
+    let blue = iridium_decks_color::Rgba::rgb(0, 0, 255);
     s.execute("picture.transparentColor", &json!({"ids": [id], "at": [450, 200]})).unwrap();
     assert_eq!(clear(&s), Some(blue));
     // The picture's own colour, not the one drawn after a correction brightened it.
@@ -3501,20 +3501,20 @@ fn ramp_picture(s: &mut Session, n: u32, rect: [u32; 4]) -> serde_json::Value {
     s.execute("insert.picture", &json!({"data": cmd::base64_encode(&png), "name": "r.png", "rect": rect})).unwrap()["id"].clone()
 }
 
-fn clear_color_of(s: &Session, id: &serde_json::Value) -> Option<deckcraft_color::Rgba> {
-    fn find(shapes: &[deckcraft_model::Shape], id: &serde_json::Value) -> Option<deckcraft_model::Shape> {
+fn clear_color_of(s: &Session, id: &serde_json::Value) -> Option<iridium_decks_color::Rgba> {
+    fn find(shapes: &[iridium_decks_model::Shape], id: &serde_json::Value) -> Option<iridium_decks_model::Shape> {
         shapes.iter().find_map(|sh| {
             if json!(sh.id) == *id {
                 return Some(sh.clone());
             }
             match &sh.kind {
-                deckcraft_model::ShapeKind::Group { children, .. } => find(children, id),
+                iridium_decks_model::ShapeKind::Group { children, .. } => find(children, id),
                 _ => None,
             }
         })
     }
     match find(s.doc().unwrap().shapes(), id).unwrap().kind {
-        deckcraft_model::ShapeKind::Picture { fill } => fill.adjust.clear_color,
+        iridium_decks_model::ShapeKind::Picture { fill } => fill.adjust.clear_color,
         _ => panic!("not a picture"),
     }
 }
@@ -3529,7 +3529,7 @@ fn transparent_color_at_a_point_follows_the_pictures_3d_camera() {
     // 175 is a quarter of the way across the drawn picture: column 2, not column 3 (the 75/200
     // of the unturned box).
     s.execute("picture.transparentColor", &json!({"ids": [id], "at": [175, 150]})).unwrap();
-    assert_eq!(clear_color_of(&s, &id), Some(deckcraft_color::Rgba::rgb(40, 0, 0)));
+    assert_eq!(clear_color_of(&s, &id), Some(iridium_decks_color::Rgba::rgb(40, 0, 0)));
     // Inside the unturned box but outside the drawn picture: nothing is under the pointer.
     assert!(s.execute("picture.transparentColor", &json!({"ids": [id], "at": [120, 150]})).is_err());
 }
@@ -3544,12 +3544,12 @@ fn transparent_color_at_a_point_finds_a_grouped_picture_without_its_own_box() {
     // A grouped picture that keeps no box of its own is drawn where the default box puts it.
     let sz = s.doc().unwrap().doc.slide_size;
     s.edit(|doc, sel| {
-        fn clear(shapes: &mut [deckcraft_model::Shape], id: &serde_json::Value) {
+        fn clear(shapes: &mut [iridium_decks_model::Shape], id: &serde_json::Value) {
             for sh in shapes {
                 if json!(sh.id) == *id {
                     sh.xfrm = None;
                 }
-                if let deckcraft_model::ShapeKind::Group { children, .. } = &mut sh.kind {
+                if let iridium_decks_model::ShapeKind::Group { children, .. } = &mut sh.kind {
                     clear(children, id);
                 }
             }
@@ -3561,10 +3561,10 @@ fn transparent_color_at_a_point_finds_a_grouped_picture_without_its_own_box() {
     // Left tenth of the default box (10%, 10%, 80% x 20% of the slide): column 0.
     let at = [sz.width * 0.1 + 1.0, sz.height * 0.2];
     s.execute("picture.transparentColor", &json!({"ids": [pic], "at": at})).unwrap();
-    assert_eq!(clear_color_of(&s, &pic), Some(deckcraft_color::Rgba::rgb(0, 0, 0)));
+    assert_eq!(clear_color_of(&s, &pic), Some(iridium_decks_color::Rgba::rgb(0, 0, 0)));
     let at = [sz.width * 0.9 - 1.0, sz.height * 0.2];
     s.execute("picture.transparentColor", &json!({"ids": [pic], "at": at})).unwrap();
-    assert_eq!(clear_color_of(&s, &pic), Some(deckcraft_color::Rgba::rgb(180, 0, 0)));
+    assert_eq!(clear_color_of(&s, &pic), Some(iridium_decks_color::Rgba::rgb(180, 0, 0)));
 }
 
 #[test]
@@ -3577,11 +3577,11 @@ fn transparent_color_at_a_point_takes_the_topmost_selected_picture() {
     s.execute("edit.select", &json!({"ids": [under, over]})).unwrap();
     // x = 250 is column 7 of `under` (140) and column 5 of `over` (100): the click is on `over`.
     s.execute("picture.transparentColor", &json!({"at": [250, 150]})).unwrap();
-    assert_eq!(clear_color_of(&s, &over), Some(deckcraft_color::Rgba::rgb(100, 0, 0)));
+    assert_eq!(clear_color_of(&s, &over), Some(iridium_decks_color::Rgba::rgb(100, 0, 0)));
     assert_eq!(clear_color_of(&s, &under), None);
     // Where `over` is not, the picture below is still found.
     s.execute("picture.transparentColor", &json!({"at": [120, 150]})).unwrap();
-    assert_eq!(clear_color_of(&s, &under), Some(deckcraft_color::Rgba::rgb(20, 0, 0)));
+    assert_eq!(clear_color_of(&s, &under), Some(iridium_decks_color::Rgba::rgb(20, 0, 0)));
 }
 
 #[test]
@@ -3631,7 +3631,7 @@ fn table_borders_margins_and_cell_alignment() {
     let table = |s: &Session| {
         let st = s.doc().unwrap();
         let sh = st.shapes().iter().find(|sh| json!(sh.id) == id).unwrap().clone();
-        let deckcraft_model::ShapeKind::Table(t) = sh.kind else { panic!("not a table") };
+        let iridium_decks_model::ShapeKind::Table(t) = sh.kind else { panic!("not a table") };
         t
     };
     // Outside borders round the top-left 2×2 block; neighbours get the facing side too.
@@ -3645,7 +3645,9 @@ fn table_borders_margins_and_cell_alignment() {
     assert_eq!(w(1, 1, 1), Some(2.0));
     assert_eq!(w(1, 2, 0), Some(2.0), "neighbour's facing side");
     assert_eq!(w(2, 1, 2), Some(2.0), "neighbour below");
-    assert!(matches!(&t.rows[0].cells[0].borders[0].as_ref().unwrap().dash, Some(deckcraft_model::style::Dash::Preset { name }) if name == "dash"));
+    assert!(
+        matches!(&t.rows[0].cells[0].borders[0].as_ref().unwrap().dash, Some(iridium_decks_model::style::Dash::Preset { name }) if name == "dash")
+    );
     // Inside horizontal only for the block.
     s.execute("table.borders", &json!({"id": id, "which": "insideH", "cells": block})).unwrap();
     let t = table(&s);
@@ -3660,7 +3662,7 @@ fn table_borders_margins_and_cell_alignment() {
         t.rows
             .iter()
             .flat_map(|r| &r.cells)
-            .all(|c| c.diag_down.is_none() && c.borders.iter().all(|b| b.as_ref().is_some_and(|l| l.fill == Some(deckcraft_model::Fill::None))))
+            .all(|c| c.diag_down.is_none() && c.borders.iter().all(|b| b.as_ref().is_some_and(|l| l.fill == Some(iridium_decks_model::Fill::None))))
     );
     assert!(s.execute("table.borders", &json!({"id": id, "which": "sideways"})).is_err());
     // Margins and vertical alignment.
@@ -3670,18 +3672,18 @@ fn table_borders_margins_and_cell_alignment() {
     let t = table(&s);
     assert_eq!(t.rows[0].cells[0].margins, Some([14.4; 4]));
     assert_eq!(t.rows[0].cells[1].margins, Some([5.0, 0.0, 0.0, 0.0]));
-    assert!(t.rows.iter().flat_map(|r| &r.cells).all(|c| c.anchor == Some(deckcraft_model::text::Anchor::Middle)));
+    assert!(t.rows.iter().flat_map(|r| &r.cells).all(|c| c.anchor == Some(iridium_decks_model::text::Anchor::Middle)));
     // Survives PPTX.
     let p = s.doc().unwrap().doc.as_ref().clone();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&p).unwrap()).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).unwrap()).unwrap();
     let bt = back
         .slides
         .iter()
         .flat_map(|sl| &sl.shapes)
-        .find_map(|sh| if let deckcraft_model::ShapeKind::Table(t) = &sh.kind { Some(t.clone()) } else { None })
+        .find_map(|sh| if let iridium_decks_model::ShapeKind::Table(t) = &sh.kind { Some(t.clone()) } else { None })
         .unwrap();
     assert_eq!(bt.rows[0].cells[0].margins, Some([14.4; 4]));
-    assert_eq!(bt.rows[1].cells[1].anchor, Some(deckcraft_model::text::Anchor::Middle));
+    assert_eq!(bt.rows[1].cells[1].anchor, Some(iridium_decks_model::text::Anchor::Middle));
     // One undo step each.
     s.execute("edit.undo", &json!({})).unwrap();
     assert!(table(&s).rows[0].cells[0].anchor.is_none());
@@ -3692,12 +3694,12 @@ fn smartart_text_pane_edits_regenerate_the_diagram() {
     let mut s = session();
     let r = s.execute("insert.smartArt", &json!({"kind": "blockList", "items": ["Plan", "\tScope", "Build"]})).unwrap();
     let gid = r["id"].as_u64().unwrap();
-    let kids = |s: &Session| match s.doc().unwrap().shape(deckcraft_model::ShapeId(gid as u32)).map(|x| &x.kind) {
-        Some(deckcraft_model::ShapeKind::Group { children, .. }) => children.clone(),
+    let kids = |s: &Session| match s.doc().unwrap().shape(iridium_decks_model::ShapeId(gid as u32)).map(|x| &x.kind) {
+        Some(iridium_decks_model::ShapeKind::Group { children, .. }) => children.clone(),
         _ => panic!("not a group"),
     };
     assert_eq!(kids(&s).len(), 2, "Scope is a bullet inside Plan");
-    let box_before = s.doc().unwrap().shape(deckcraft_model::ShapeId(gid as u32)).unwrap().xfrm;
+    let box_before = s.doc().unwrap().shape(iridium_decks_model::ShapeId(gid as u32)).unwrap().xfrm;
 
     // Type into the second shape directly, then add a node: the typed text is kept.
     let build = kids(&s)[1].id.0;
@@ -3725,14 +3727,14 @@ fn smartart_text_pane_edits_regenerate_the_diagram() {
     let child = kids(&s)[0].id.0;
     s.execute("smartArt.layout", &json!({"id": child, "kind": "hierarchy"})).unwrap();
     assert_eq!(kids(&s).len(), 3 + 1, "three boxes and one link");
-    assert_eq!(s.doc().unwrap().shape(deckcraft_model::ShapeId(gid as u32)).unwrap().xfrm, box_before);
+    assert_eq!(s.doc().unwrap().shape(iridium_decks_model::ShapeId(gid as u32)).unwrap().xfrm, box_before);
     s.execute("edit.undo", &json!({})).unwrap();
     assert_eq!(kids(&s).len(), 2);
 
-    // The outline survives a .deckcraft save.
+    // The outline survives a .iridium-decks save.
     let doc = s.doc().unwrap().doc.as_ref().clone();
-    let bytes = deckcraft_format::save(&doc).unwrap();
-    let back = deckcraft_format::load(&bytes).unwrap();
+    let bytes = iridium_decks_format::save(&doc).unwrap();
+    let back = iridium_decks_format::load(&bytes).unwrap();
     assert!(back.slides[0].shapes.iter().any(|x| x.diagram.as_ref().is_some_and(|d| d.nodes.len() == 3)));
 }
 
@@ -3744,7 +3746,7 @@ fn smartart_round_trips_through_pptx_as_a_diagram() {
     s.execute("smartArt.style", &json!({"style": "intense"})).unwrap();
     s.execute("smartArt.colors", &json!({"colors": "accent3"})).unwrap();
     let doc = s.doc().unwrap().doc.as_ref().clone();
-    let bytes = deckcraft_pptx::export(&doc).unwrap();
+    let bytes = iridium_decks_pptx::export(&doc).unwrap();
     let names: Vec<String> = {
         let z = zip::ZipArchive::new(std::io::Cursor::new(&bytes)).unwrap();
         z.file_names().map(String::from).collect()
@@ -3752,7 +3754,7 @@ fn smartart_round_trips_through_pptx_as_a_diagram() {
     for part in ["data1", "layout1", "quickStyle1", "colors1", "drawing1"] {
         assert!(names.iter().any(|n| n == &format!("ppt/diagrams/{part}.xml")), "{part} in {names:?}");
     }
-    let back = deckcraft_pptx::import(&bytes).unwrap();
+    let back = iridium_decks_pptx::import(&bytes).unwrap();
     assert!(back.validate().is_empty());
     let g = back.slides[1].shapes.iter().find(|x| x.diagram.is_some()).expect("a SmartArt group");
     let d = g.diagram.as_ref().unwrap();
@@ -3765,14 +3767,14 @@ fn smartart_round_trips_through_pptx_as_a_diagram() {
 
     // The Text Pane works on the imported diagram, and a second round trip keeps the edit.
     let gid = g.id.0;
-    let path = std::env::temp_dir().join(format!("deckcraft-smartart-{}.pptx", std::process::id()));
+    let path = std::env::temp_dir().join(format!("iridium-decks-smartart-{}.pptx", std::process::id()));
     std::fs::write(&path, &bytes).unwrap();
     let mut s2 = Session::new();
     s2.execute("file.open", &json!({"path": path.to_string_lossy()})).unwrap();
     let _ = std::fs::remove_file(&path);
     s2.execute("slide.go", &json!({"index": 1})).unwrap();
     s2.execute("smartArt.addNode", &json!({"id": gid, "index": 3, "position": "after", "text": "COO"})).unwrap();
-    let again = deckcraft_pptx::import(&deckcraft_pptx::export(s2.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
+    let again = iridium_decks_pptx::import(&iridium_decks_pptx::export(s2.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
     let d = again.slides[1].shapes.iter().find_map(|x| x.diagram.clone()).unwrap();
     assert_eq!(d.nodes.last().map(|n| (n.text.as_str(), n.level)), Some(("COO", 1)));
 }
@@ -3782,26 +3784,26 @@ fn smartart_pictures_3d_styles_and_colour_variants() {
     let mut s = session();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("insert.smartArt", &json!({"kind": "pictureCaption", "items": ["Lakes", "\tBlue", "Hills"]})).unwrap();
-    let pics = |s: &Session| -> Vec<deckcraft_model::Shape> {
+    let pics = |s: &Session| -> Vec<iridium_decks_model::Shape> {
         let st = s.doc().unwrap();
         let g = st.doc.slides[1].shapes.iter().find(|x| x.diagram.is_some()).unwrap().clone();
         g.children().iter().filter(|c| c.name == "SmartArt picture").cloned().collect()
     };
     assert_eq!(pics(&s).len(), 2, "one picture placeholder per top-level node");
-    assert!(pics(&s).iter().all(|p| !matches!(p.fill, Some(deckcraft_model::Fill::Picture(_)))));
+    assert!(pics(&s).iter().all(|p| !matches!(p.fill, Some(iridium_decks_model::Fill::Picture(_)))));
     // A 1×1 PNG put in through a sub-point lands in its top-level node.
     let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     s.execute("smartArt.picture", &json!({"index": 1, "name": "p.png", "data": png})).unwrap();
     let p = pics(&s);
-    assert!(matches!(p[0].fill, Some(deckcraft_model::Fill::Picture(_))));
-    assert!(!matches!(p[1].fill, Some(deckcraft_model::Fill::Picture(_))));
+    assert!(matches!(p[0].fill, Some(iridium_decks_model::Fill::Picture(_))));
+    assert!(!matches!(p[1].fill, Some(iridium_decks_model::Fill::Picture(_))));
     // Text edits keep the picture; reset removes it.
     s.execute("smartArt.addNode", &json!({"text": "Woods"})).unwrap();
-    assert!(matches!(pics(&s)[0].fill, Some(deckcraft_model::Fill::Picture(_))));
+    assert!(matches!(pics(&s)[0].fill, Some(iridium_decks_model::Fill::Picture(_))));
     assert_eq!(pics(&s).len(), 3);
     // The picture is written to the .pptx drawing.
-    let bytes = deckcraft_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap();
-    let back = deckcraft_pptx::import(&bytes).unwrap();
+    let bytes = iridium_decks_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap();
+    let back = iridium_decks_pptx::import(&bytes).unwrap();
     assert!(back.validate().is_empty());
     let bd = back.slides[1].shapes.iter().find_map(|x| x.diagram.as_ref()).unwrap();
     assert_eq!(bd.kind, "pictureCaption");
@@ -3810,7 +3812,7 @@ fn smartart_pictures_3d_styles_and_colour_variants() {
     assert!(back.media(m).is_some_and(|x| !x.data.is_empty()));
     assert!(bd.nodes.iter().skip(1).all(|n| n.picture.is_none()));
     s.execute("smartArt.picture", &json!({"index": 0, "reset": true})).unwrap();
-    assert!(pics(&s).iter().all(|p| !matches!(p.fill, Some(deckcraft_model::Fill::Picture(_)))));
+    assert!(pics(&s).iter().all(|p| !matches!(p.fill, Some(iridium_decks_model::Fill::Picture(_)))));
 
     // 3-D styles carry a lit bevel; colour variants round trip through .pptx.
     s.execute("smartArt.style", &json!({"style": "cartoon"})).unwrap();
@@ -3821,7 +3823,7 @@ fn smartart_pictures_3d_styles_and_colour_variants() {
     for (style, colors) in [("polished", "range34"), ("powder", "accent5Grad"), ("brick", "accent2")] {
         s.execute("smartArt.style", &json!({"style": style})).unwrap();
         s.execute("smartArt.colors", &json!({"colors": colors})).unwrap();
-        let back = deckcraft_pptx::import(&deckcraft_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
+        let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
         let d = back.slides[1].shapes.iter().find_map(|x| x.diagram.clone()).unwrap();
         assert_eq!((d.style.as_str(), d.colors.as_str()), (style, colors));
     }
@@ -3842,7 +3844,7 @@ fn smartart_converts_to_and_from_text_and_shapes() {
     // Name and Title: titles show in their own box and survive a .pptx round trip.
     s.execute("smartArt.layout", &json!({"id": gid, "kind": "nameTitleOrgChart"})).unwrap();
     s.execute("smartArt.setNodes", &json!({"id": gid, "index": 0, "title": "Lead"})).unwrap();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap()).unwrap();
     let bd = back.slides[1].shapes.iter().find_map(|x| x.diagram.clone()).unwrap();
     assert_eq!((bd.kind.as_str(), bd.nodes[0].title.as_str()), ("nameTitleOrgChart", "Lead"));
 
@@ -3864,7 +3866,7 @@ fn smartart_converts_to_and_from_text_and_shapes() {
 /// Action Settings: click and hover actions on the selected shape, removed again with `none`.
 #[test]
 fn action_settings_set_click_and_hover() {
-    use deckcraft_model::text::Action;
+    use iridium_decks_model::text::Action;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({})).unwrap();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [0, 0, 50, 50]})).unwrap();
@@ -3887,7 +3889,7 @@ fn action_settings_set_click_and_hover() {
 
 #[test]
 fn artistic_effects_apply_change_remove_and_round_trip() {
-    use deckcraft_model::ShapeKind;
+    use iridium_decks_model::ShapeKind;
     let mut img = image::RgbaImage::new(40, 30);
     for (x, y, p) in img.enumerate_pixels_mut() {
         *p = if x < 20 { image::Rgba([200, 30, 30, 255]) } else { image::Rgba([20, 20, 220, if y < 5 { 0 } else { 255 }]) };
@@ -3941,7 +3943,7 @@ fn artistic_effects_apply_change_remove_and_round_trip() {
 
 #[test]
 fn handout_master_view_edits_and_round_trips() {
-    use deckcraft_model::PhType;
+    use iridium_decks_model::PhType;
     let mut s = Session::with_new();
     assert!(s.doc().unwrap().doc.handout_master.is_none());
     assert!(s.execute("handout.placeholders", &json!({"footer": false})).is_err(), "only in the view");
@@ -3970,8 +3972,8 @@ fn handout_master_view_edits_and_round_trips() {
     assert_eq!(s.doc().unwrap().selection.target, Target::Slides);
     // Reopening doesn't make a second master, and it survives PPTX.
     assert_eq!(s.execute("view.handoutMaster", &json!({})).unwrap()["created"], false);
-    let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
-    let back = deckcraft_pptx::import(&bytes).unwrap();
+    let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
+    let back = iridium_decks_pptx::import(&bytes).unwrap();
     let hm = back.handout_master.expect("handout master kept");
     assert_eq!(hm.shapes.len(), 4);
     assert!(hm.shapes.iter().any(|x| x.ph_type() == Some(PhType::SlideNum)));
@@ -3979,7 +3981,7 @@ fn handout_master_view_edits_and_round_trips() {
 
 #[test]
 fn notes_master_view_edits_and_saves() {
-    use deckcraft_model::PhType;
+    use iridium_decks_model::PhType;
     let mut s = Session::with_new();
     assert!(s.execute("notes.placeholders", &json!({"header": false})).is_err(), "only in the view");
     assert_eq!(s.execute("view.notesMaster", &json!({})).unwrap()["created"], true);
@@ -3998,8 +4000,8 @@ fn notes_master_view_edits_and_saves() {
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [20, 20, 60, 60]})).unwrap();
     assert!(s.doc().unwrap().doc.slides.iter().all(|sl| sl.notes.is_empty()));
     assert!(crate::master_page(&s.doc().unwrap().doc, Target::NotesMaster).is_some());
-    let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
-    let back = deckcraft_pptx::import(&bytes).unwrap();
+    let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
+    let back = iridium_decks_pptx::import(&bytes).unwrap();
     let nm = back.notes_master.expect("notes master written");
     assert_eq!(nm.shapes.len(), 6, "{:?}", nm.shapes.iter().map(|x| &x.name).collect::<Vec<_>>());
     assert!(!nm.shapes.iter().any(|x| x.ph_type() == Some(PhType::Header)));
@@ -4011,21 +4013,21 @@ fn notes_master_view_edits_and_saves() {
 #[test]
 fn a_png_export_records_the_slide_resolution() {
     let mut s = session();
-    let dir = std::env::temp_dir().join(format!("deckcraft-dpi-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-dpi-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let png = dir.join("slide.png");
     s.execute("file.export", &json!({"path": png.to_str().unwrap(), "format": "png"})).unwrap();
     let bytes = std::fs::read(&png).unwrap();
-    assert_eq!(deckcraft_render::image_dpi(&bytes), Some((144.0, 144.0)));
+    assert_eq!(iridium_decks_render::image_dpi(&bytes), Some((144.0, 144.0)));
     assert_eq!(png_size(&bytes), Some((1920, 1080)), "960×540 pt at 2 px per point");
     let one = dir.join("one.png");
     s.execute("file.export", &json!({"path": one.to_str().unwrap(), "format": "png", "scale": 1})).unwrap();
     let one_bytes = std::fs::read(&one).unwrap();
-    assert_eq!(deckcraft_render::image_dpi(&one_bytes), Some((72.0, 72.0)));
+    assert_eq!(iridium_decks_render::image_dpi(&one_bytes), Some((72.0, 72.0)));
     assert_eq!(png_size(&one_bytes), Some((960, 540)));
     let jpg = dir.join("slide.jpg");
     s.execute("file.export", &json!({"path": jpg.to_str().unwrap(), "format": "jpeg"})).unwrap();
-    assert_eq!(deckcraft_render::image_dpi(&std::fs::read(&jpg).unwrap()), Some((144.0, 144.0)));
+    assert_eq!(iridium_decks_render::image_dpi(&std::fs::read(&jpg).unwrap()), Some((144.0, 144.0)));
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -4036,7 +4038,7 @@ fn a_png_export_can_leave_the_background_transparent() {
     let mut s = session();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100]})).unwrap();
     s.execute("design.background", &json!({"color": "#0000C8"})).unwrap();
-    let dir = std::env::temp_dir().join(format!("deckcraft-transparent-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-transparent-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let read = |path: &std::path::Path| image::load_from_memory(&std::fs::read(path).unwrap()).unwrap().to_rgba8();
     let opaque = dir.join("opaque.png");
@@ -4064,7 +4066,7 @@ fn png_size(bytes: &[u8]) -> Option<(u32, u32)> {
 
 /// A blank slide holding one text box being edited, with smart guides and grid snapping off so
 /// drags move by exactly the pointer delta. Returns the session, the box id and its box.
-fn editing_text_box(rot: f64) -> (Session, u64, deckcraft_geom::Xfrm) {
+fn editing_text_box(rot: f64) -> (Session, u64, iridium_decks_geom::Xfrm) {
     let mut s = session();
     s.prefs.snap_to_grid = false;
     s.prefs.smart_guides = false;
@@ -4079,8 +4081,8 @@ fn editing_text_box(rot: f64) -> (Session, u64, deckcraft_geom::Xfrm) {
 }
 
 /// Slide point for a point in the box's own (rotated) frame.
-fn on_box(x: &deckcraft_geom::Xfrm, lx: f64, ly: f64) -> (f64, f64) {
-    let p = x.affine() * deckcraft_geom::Point::new(lx, ly);
+fn on_box(x: &iridium_decks_geom::Xfrm, lx: f64, ly: f64) -> (f64, f64) {
+    let p = x.affine() * iridium_decks_geom::Point::new(lx, ly);
     (p.x, p.y)
 }
 
@@ -4098,7 +4100,7 @@ fn drag_gesture(s: &mut Session, from: (f64, f64), to: (f64, f64)) -> serde_json
 fn dragging_the_frame_of_edited_text_moves_the_box() {
     let (mut s, id, x) = editing_text_box(0.0);
     assert!(x.h > 12.0, "{x:?}");
-    let sid = deckcraft_model::ShapeId(id as u32);
+    let sid = iridium_decks_model::ShapeId(id as u32);
     // Hovering the band on either side of the edge says "move"; the inside says "text".
     for ly in [-2.0, 2.0, x.h + 2.0] {
         let (px, py) = on_box(&x, x.w / 4.0, ly);
@@ -4150,7 +4152,7 @@ fn click_at(s: &mut Session, at: (f64, f64)) {
 #[test]
 fn clicking_the_frame_of_a_text_box_selects_it_whole() {
     let (mut s, id, x) = editing_text_box(0.0);
-    let sid = deckcraft_model::ShapeId(id as u32);
+    let sid = iridium_decks_model::ShapeId(id as u32);
     let undo_before = s.doc().unwrap().history.undo.len();
     // Leave editing and select nothing: a click on empty slide.
     click_at(&mut s, (20.0, 20.0));
@@ -4191,7 +4193,7 @@ fn clicking_the_frame_of_a_selected_plain_shape_still_takes_the_caret() {
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     let id =
         s.execute("shape.insert", &json!({"preset": "rect", "rect": [200.0, 150.0, 240.0, 60.0], "text": "Hello"})).unwrap()["id"].as_u64().unwrap();
-    let sid = deckcraft_model::ShapeId(id as u32);
+    let sid = iridium_decks_model::ShapeId(id as u32);
     let x = text_box_xfrm(&s, id);
     // The first click selects an ordinary shape, the second puts the caret, as before; the frame
     // rule is for text boxes and placeholders only.
@@ -4222,10 +4224,10 @@ fn dragging_inside_edited_text_selects_text() {
 fn frame_of_rotated_edited_text_follows_the_rotation() {
     let (mut s, id, x) = editing_text_box(30.0);
     assert_eq!(x.rot, 30.0);
-    let sid = deckcraft_model::ShapeId(id as u32);
+    let sid = iridium_decks_model::ShapeId(id as u32);
     // The rotated bottom edge is the frame; dragging it moves the box and keeps its rotation.
     let from = on_box(&x, x.w / 4.0, x.h + 1.0);
-    assert_eq!(s.hit_test(deckcraft_geom::Point::new(from.0, from.1), 3.0), Some(tools::Hit::Frame { id: sid }));
+    assert_eq!(s.hit_test(iridium_decks_geom::Point::new(from.0, from.1), 3.0), Some(tools::Hit::Frame { id: sid }));
     let down = drag_gesture(&mut s, from, (from.0 + 25.0, from.1 - 10.0));
     assert_eq!(down["hit"]["kind"], "frame");
     let moved = text_box_xfrm(&s, id);
@@ -4242,7 +4244,7 @@ fn frame_of_rotated_edited_text_follows_the_rotation() {
     // Inside the axis-aligned bounds but off the rotated box: neither text nor frame, so a press
     // there leaves editing instead of moving the caret.
     let off = on_box(&mx, mx.w / 2.0, -mx.h);
-    let off_pt = deckcraft_geom::Point::new(off.0, off.1);
+    let off_pt = iridium_decks_geom::Point::new(off.0, off.1);
     assert!(mx.bounds().contains(off_pt));
     assert_ne!(s.hit_test(off_pt, 3.0), Some(tools::Hit::Frame { id: sid }));
     let r = s.pointer(PointerEvent { kind: PointerKind::Down, x: off.0, y: off.1, mods: Mods::default(), tol: 3.0, pressure: None }).unwrap();
@@ -4317,7 +4319,7 @@ fn a_params_doc_spells_out_each_parameter() {
 /// `shape.fill`'s params doc names each key and kind its `gradient` takes.
 #[test]
 fn shape_fill_documents_each_gradient_key_and_kind() {
-    use deckcraft_model::style::GradientShape;
+    use iridium_decks_model::style::GradientShape;
     let params = cmd::parse_params(find_command("shape.fill").unwrap().params).unwrap();
     let about = params.iter().find(|p| p.name == "gradient").unwrap().about;
     assert_eq!(cmd::param_keys(about).unwrap(), ["stops", "kind", "angle", "focus", "rotateWithShape"]);
@@ -4367,13 +4369,13 @@ fn what_a_command_acts_on_names_only_keys_it_takes() {
 /// in the cell where it is drawn, and borders still resize.
 #[test]
 fn tables_with_a_file_defined_style_edit_and_resize() {
-    use deckcraft_model::style::{ColorRef, Fill};
-    use deckcraft_model::table::{TablePart, TablePartStyle, TableStyleDef};
+    use iridium_decks_model::style::{ColorRef, Fill};
+    use iridium_decks_model::table::{TablePart, TablePartStyle, TableStyleDef};
     let mut s = session();
     let id = table_at(&mut s, &[200.0, 200.0], json!([["Hello world", "b"], ["c", "d"]]));
     // A file-defined weight needs a real regular/bold pair, independent of missing Inter
     // or whichever system face happened to load first. Leave bold unset for the table style.
-    let fonts = deckcraft_fonts::FontDb::global();
+    let fonts = iridium_decks_fonts::FontDb::global();
     let regular = fonts.face("BIZ UDPGothic", "Regular");
     let bold = fonts.face("BIZ UDPGothic", "Bold");
     let metric_pair = regular.family == "BIZ UDPGothic"
@@ -4390,7 +4392,7 @@ fn tables_with_a_file_defined_style_edit_and_resize() {
     if metric_pair {
         let doc = std::sync::Arc::make_mut(&mut s.doc_mut().unwrap().doc);
         let slide = std::sync::Arc::make_mut(&mut doc.slides[0]);
-        let deckcraft_model::ShapeKind::Table(table) = &mut slide.shape_mut(id).unwrap().kind else { panic!("not a table") };
+        let iridium_decks_model::ShapeKind::Table(table) = &mut slide.shape_mut(id).unwrap().kind else { panic!("not a table") };
         for cell in &mut table.rows[0].cells {
             for paragraph in &mut cell.text.paragraphs {
                 for run in &mut paragraph.runs {
@@ -4411,7 +4413,7 @@ fn tables_with_a_file_defined_style_edit_and_resize() {
         let style = table_of(&s, id).style;
         let d = s.doc_mut().unwrap();
         let doc = std::sync::Arc::make_mut(&mut d.doc);
-        let solid = |r, g, b| Some(Fill::solid(ColorRef::rgb(deckcraft_color::Rgba::rgb(r, g, b))));
+        let solid = |r, g, b| Some(Fill::solid(ColorRef::rgb(iridium_decks_color::Rgba::rgb(r, g, b))));
         doc.table_styles.push(TableStyleDef {
             id: style,
             name: "File style".into(),
@@ -4450,9 +4452,9 @@ fn tables_with_a_file_defined_style_edit_and_resize() {
 
 #[test]
 fn editing_notes_keeps_their_formatting_through_pptx() {
-    use deckcraft_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
+    use iridium_decks_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
     // A deck whose notes have a bold heading over indented bullet points, as saved by PowerPoint.
-    let mut p = deckcraft_model::defaults::new_presentation(None);
+    let mut p = iridium_decks_model::defaults::new_presentation(None);
     let bullet = ParaProps { margin_left: Some(22.5), indent: Some(-22.5), bullet: Some(Bullet::Char { char: "•".into() }), ..Default::default() };
     let point = |t: &str| Paragraph { level: 1, props: bullet.clone(), runs: vec![Run::new(t)], ..Default::default() };
     std::sync::Arc::make_mut(&mut p.slides[0]).notes = TextBody {
@@ -4463,7 +4465,7 @@ fn editing_notes_keeps_their_formatting_through_pptx() {
         ],
         ..Default::default()
     };
-    let bytes = deckcraft_pptx::export(&p).unwrap();
+    let bytes = iridium_decks_pptx::export(&p).unwrap();
     let mut s = session();
     s.execute("file.openBytes", &json!({"name": "notes.pptx", "data": crate::cmd::base64_encode(&bytes)})).unwrap();
     // Type a word into the second bullet, as the notes pane does.
@@ -4480,7 +4482,7 @@ fn editing_notes_keeps_their_formatting_through_pptx() {
     };
     check(&s.doc().unwrap().doc.slides[0].notes);
     let saved = s.execute("file.saveBytes", &json!({"format": "pptx"})).unwrap()["data"].as_str().unwrap().to_string();
-    let reopened = deckcraft_pptx::import(&crate::cmd::base64_decode(&saved).unwrap()).unwrap();
+    let reopened = iridium_decks_pptx::import(&crate::cmd::base64_decode(&saved).unwrap()).unwrap();
     check(&reopened.slides[0].notes);
     // slide.inspect hands out the formatted notes, and slide.notes {body} takes them back as they are.
     let body = s.execute("slide.inspect", &json!({"index": 0})).unwrap()["notesBody"].clone();
@@ -4514,8 +4516,8 @@ fn autocorrect_options_as_you_type() {
     s.execute("text.autocorrect", &json!({"sentenceCaps": false, "days": false})).unwrap();
     assert_eq!(typed(&mut s, "hello monday "), "hello monday ");
     // Your own entries, and deleting a built-in one.
-    s.execute("text.autocorrect", &json!({"add": ["dc", "Iridium Decks"], "remove": "teh"})).unwrap();
-    assert_eq!(typed(&mut s, "dc teh "), "Iridium Decks teh ");
+    s.execute("text.autocorrect", &json!({"add": ["dc", "Decks"], "remove": "teh"})).unwrap();
+    assert_eq!(typed(&mut s, "dc teh "), "Decks teh ");
     let v = s.execute("text.autocorrect", &json!({})).unwrap();
     let entries = v["entries"].as_array().unwrap();
     assert!(entries.iter().any(|e| e[0] == "dc"));
@@ -4565,7 +4567,7 @@ fn autocorrect_superscripts_ordinals_as_you_type() {
 
 #[test]
 fn autoformat_starts_bulleted_and_numbered_lists_as_you_type() {
-    use deckcraft_model::text::Bullet;
+    use iridium_decks_model::text::Bullet;
     let mut s = session();
     let title = s.doc().unwrap().current_slide().unwrap().shapes[0].id.0;
     let para = |s: &Session| {
@@ -4644,7 +4646,7 @@ fn autoformat_starts_bulleted_and_numbered_lists_as_you_type() {
 #[test]
 fn theme_variants_apply_and_report_the_current_one() {
     let mut s = session();
-    let name = deckcraft_model::theme::builtin_themes()[1].name.clone();
+    let name = iridium_decks_model::theme::builtin_themes()[1].name.clone();
     s.execute("design.theme", &json!({"name": name})).unwrap();
     let v = s.execute("design.variants", &json!({})).unwrap();
     assert_eq!(v["variants"].as_array().unwrap().len(), 4);
@@ -4665,7 +4667,7 @@ fn theme_variants_apply_and_report_the_current_one() {
     // It survives PPTX.
     s.execute("design.variant", &json!({"index": 2})).unwrap();
     let p = s.doc().unwrap().doc.as_ref().clone();
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&p).unwrap()).unwrap();
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).unwrap()).unwrap();
     assert_eq!(back.masters[0].theme.colors.colors, p.masters[0].theme.colors.colors);
 }
 
@@ -4707,24 +4709,24 @@ fn spelling_without_a_dictionary_falls_back_to_common_misspellings() {
 
 #[test]
 fn spelling_checks_each_run_in_its_language_and_learns_words() {
-    let dir = std::env::temp_dir().join(format!("deckcraft-userdic-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-userdic-{}", std::process::id()));
     let _ = std::fs::remove_dir_all(&dir);
     crate::spell::set_user_dictionary_path(dir.join("user.dic"));
     crate::spell::install("xx-ONE", crate::spell::Dictionary::parse(b"", b"2\nhello\nworld\n"));
     crate::spell::install("xx-TWO", crate::spell::Dictionary::parse(b"", b"2\nhallo\nwelt\n"));
     let mut s = session();
-    let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 300, 100], "text": "hello hallo deckcraft"})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 300, 100], "text": "hello hallo decks"})).unwrap();
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     // The second word is in another language (as a PPTX run's `lang` gives it).
     s.edit(|doc, _| {
-        let sh = deckcraft_model::find_shape_mut(&mut std::sync::Arc::make_mut(&mut doc.slides[0]).shapes, id).unwrap();
+        let sh = iridium_decks_model::find_shape_mut(&mut std::sync::Arc::make_mut(&mut doc.slides[0]).shapes, id).unwrap();
         let p = &mut sh.text.as_mut().unwrap().paragraphs[0];
         let t = p.runs[0].text.clone();
         let props = p.runs[0].props.clone();
         p.runs = vec![
-            deckcraft_model::Run::with(&t[..6], deckcraft_model::RunProps { lang: Some("xx-ONE".into()), ..props.clone() }),
-            deckcraft_model::Run::with(&t[6..12], deckcraft_model::RunProps { lang: Some("xx-TWO".into()), ..props.clone() }),
-            deckcraft_model::Run::with(&t[12..], deckcraft_model::RunProps { lang: Some("xx-ONE".into()), ..props }),
+            iridium_decks_model::Run::with(&t[..6], iridium_decks_model::RunProps { lang: Some("xx-ONE".into()), ..props.clone() }),
+            iridium_decks_model::Run::with(&t[6..12], iridium_decks_model::RunProps { lang: Some("xx-TWO".into()), ..props.clone() }),
+            iridium_decks_model::Run::with(&t[12..], iridium_decks_model::RunProps { lang: Some("xx-ONE".into()), ..props }),
         ];
         Ok(())
     })
@@ -4736,10 +4738,10 @@ fn spelling_checks_each_run_in_its_language_and_learns_words() {
         .iter()
         .map(|w| (w["word"].as_str().unwrap().to_string(), w["lang"].as_str().unwrap().to_string(), w["start"].as_u64().unwrap()))
         .collect();
-    assert_eq!(words, vec![("deckcraft".to_string(), "xx-ONE".to_string(), 12)]);
-    s.execute("review.addToDictionary", &json!({"word": "deckcraft"})).unwrap();
+    assert_eq!(words, vec![("decks".to_string(), "xx-ONE".to_string(), 12)]);
+    s.execute("review.addToDictionary", &json!({"word": "decks"})).unwrap();
     assert!(s.execute("review.spelling", &json!({})).unwrap().as_array().unwrap().is_empty());
-    assert_eq!(std::fs::read_to_string(dir.join("user.dic")).unwrap(), "deckcraft\n");
+    assert_eq!(std::fs::read_to_string(dir.join("user.dic")).unwrap(), "decks\n");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -4782,8 +4784,8 @@ fn language_all_marks_every_text_in_the_deck_with_nothing_selected() {
         .edit(|doc, _| {
             let m = std::sync::Arc::make_mut(doc.masters.first_mut().unwrap());
             let sh = m.layouts[0].shapes.iter_mut().find(|sh| sh.text.is_some()).unwrap();
-            let lv = deckcraft_model::text::LevelStyle {
-                run: deckcraft_model::RunProps { lang: Some("de-DE".into()), ..Default::default() },
+            let lv = iridium_decks_model::text::LevelStyle {
+                run: iridium_decks_model::RunProps { lang: Some("de-DE".into()), ..Default::default() },
                 ..Default::default()
             };
             sh.text.as_mut().unwrap().list_style.set(0, lv);
@@ -4792,16 +4794,16 @@ fn language_all_marks_every_text_in_the_deck_with_nothing_selected() {
         .unwrap();
     s.execute("format.languageAll", &json!({"lang": "xx-AL"})).unwrap();
     let st = s.doc().unwrap();
-    let ph = deckcraft_model::find_shape(&st.doc.masters[0].layouts[0].shapes, placeholder).unwrap();
+    let ph = iridium_decks_model::find_shape(&st.doc.masters[0].layouts[0].shapes, placeholder).unwrap();
     assert_eq!(ph.text.as_ref().unwrap().list_style.level(0).unwrap().run.lang.as_deref(), Some("xx-AL"));
     // A body without a list style doesn't get one.
-    let boxed = st.doc.slides.iter().find_map(|sl| deckcraft_model::find_shape(&sl.shapes, deckcraft_model::ShapeId(a as u32))).unwrap();
+    let boxed = st.doc.slides.iter().find_map(|sl| iridium_decks_model::find_shape(&sl.shapes, iridium_decks_model::ShapeId(a as u32))).unwrap();
     assert!(boxed.text.as_ref().unwrap().list_style.is_empty());
     let mut langs = vec![];
     for sl in &st.doc.slides {
-        deckcraft_model::walk(&sl.shapes, &mut |sh, _| {
+        iridium_decks_model::walk(&sl.shapes, &mut |sh, _| {
             langs.extend(sh.text.iter().flat_map(|t| &t.paragraphs).flat_map(|p| &p.runs).map(|r| r.props.lang.clone()));
-            if let deckcraft_model::ShapeKind::Table(t) = &sh.kind {
+            if let iridium_decks_model::ShapeKind::Table(t) = &sh.kind {
                 langs.extend(t.rows.iter().flat_map(|r| &r.cells).flat_map(|c| &c.text.paragraphs).map(|p| p.end_props.lang.clone()));
             }
         });
@@ -4816,7 +4818,7 @@ fn language_all_marks_every_text_in_the_deck_with_nothing_selected() {
     // One undo step puts the per-box language back.
     s.execute("edit.undo", &json!({})).unwrap();
     let st = s.doc().unwrap();
-    let sh = st.doc.slides.iter().find_map(|sl| deckcraft_model::find_shape(&sl.shapes, deckcraft_model::ShapeId(a as u32))).unwrap();
+    let sh = st.doc.slides.iter().find_map(|sl| iridium_decks_model::find_shape(&sl.shapes, iridium_decks_model::ShapeId(a as u32))).unwrap();
     assert_eq!(sh.text.as_ref().unwrap().paragraphs[0].runs[0].props.lang.as_deref(), Some("de-DE"));
     assert!(s.execute("format.languageAll", &json!({})).is_err());
     assert!(s.execute("format.languageAll", &json!({"lang": "en US!"})).is_err());
@@ -4837,7 +4839,7 @@ fn the_caret_takes_the_colour_of_the_text() {
         empty
     };
     // Dark text on the light theme, light text on the dark one: never black on a dark slide.
-    let (light, dark) = (caret("Iridium Decks"), caret("Nocturne"));
+    let (light, dark) = (caret("Decks"), caret("Nocturne"));
     assert!(light.r < 0x60 && light.g < 0x60 && light.b < 0x60, "{light:?}");
     assert!(dark.r > 0xC0 && dark.g > 0xC0 && dark.b > 0xC0, "{dark:?}");
     // Text set to red gets a red caret.
@@ -4858,22 +4860,22 @@ fn the_caret_takes_the_colour_of_the_text() {
 fn smooth_corners_makes_a_squircle_outline() {
     let mut s = session();
     let r = s.execute("shape.insert", &json!({"preset": "roundRect", "rect": [100, 100, 200, 100]})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     s.execute("shape.smoothCorners", &json!({"smoothing": 60})).unwrap();
     let d = |s: &Session| match &s.doc().unwrap().shape(id).unwrap().geom {
-        deckcraft_model::Geom::Custom { paths } => paths[0].d.clone(),
+        iridium_decks_model::Geom::Custom { paths } => paths[0].d.clone(),
         g => panic!("{g:?}"),
     };
     // The default roundRect radius is 16.667% of the short side: 16.667 pt, smoothed 60%.
-    assert_eq!(d(&s), deckcraft_geom::squircle::path_d(200.0, 100.0, 16.667, 0.6));
+    assert_eq!(d(&s), iridium_decks_geom::squircle::path_d(200.0, 100.0, 16.667, 0.6));
     // The smoothed outline takes a new smoothing with the radius it was drawn with; without a
     // radius, or with another one (it could be any freeform), it is refused.
     s.execute("shape.smoothCorners", &json!({"smoothing": 100, "radius": 16.667})).unwrap();
-    assert_eq!(d(&s), deckcraft_geom::squircle::path_d(200.0, 100.0, 16.667, 1.0));
+    assert_eq!(d(&s), iridium_decks_geom::squircle::path_d(200.0, 100.0, 16.667, 1.0));
     assert!(s.execute("shape.smoothCorners", &json!({"smoothing": 50})).is_err());
     assert!(s.execute("shape.smoothCorners", &json!({"smoothing": 50, "radius": 30})).is_err());
     s.execute("edit.undo", &json!({})).unwrap();
-    assert_eq!(d(&s), deckcraft_geom::squircle::path_d(200.0, 100.0, 16.667, 0.6));
+    assert_eq!(d(&s), iridium_decks_geom::squircle::path_d(200.0, 100.0, 16.667, 0.6));
     // Other shapes are refused.
     s.execute("shape.insert", &json!({"preset": "ellipse", "rect": [0, 0, 50, 50]})).unwrap();
     assert!(s.execute("shape.smoothCorners", &json!({"smoothing": 50})).is_err());
@@ -4881,12 +4883,12 @@ fn smooth_corners_makes_a_squircle_outline() {
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [0, 0, 50, 50]})).unwrap();
     s.execute("shape.editPoints", &json!({"on": true})).unwrap();
     s.execute("shape.editPoints", &json!({"on": false})).unwrap();
-    assert!(matches!(s.doc().unwrap().shapes().last().unwrap().geom, deckcraft_model::Geom::Custom { .. }), "Edit Points made a freeform");
+    assert!(matches!(s.doc().unwrap().shapes().last().unwrap().geom, iridium_decks_model::Geom::Custom { .. }), "Edit Points made a freeform");
     assert!(s.execute("shape.smoothCorners", &json!({"smoothing": 50, "radius": 8})).is_err());
     // The outline round-trips through PPTX as custom geometry.
     let bytes = crate::cmd::file::save_bytes(&s.doc().unwrap().doc, "pptx").unwrap();
     let back = crate::cmd::file::open_presentation("x.pptx", &bytes).unwrap();
-    let sh = back.slides.iter().flat_map(|sl| sl.shapes.iter()).find(|sh| matches!(sh.geom, deckcraft_model::Geom::Custom { .. }));
+    let sh = back.slides.iter().flat_map(|sl| sl.shapes.iter()).find(|sh| matches!(sh.geom, iridium_decks_model::Geom::Custom { .. }));
     assert!(sh.is_some(), "a custom outline in the saved file");
 }
 
@@ -4914,10 +4916,10 @@ fn wordart_adjust_handle_drags_and_undoes() {
         let hs = tools::wordart_handles(&st.doc, &st.selection, sh, x.w, x.h);
         assert_eq!(hs.len(), 1);
         let at = x.affine() * hs[0].pos;
-        (at, deckcraft_geom::Point::new(x.center().x, x.y))
+        (at, iridium_decks_geom::Point::new(x.center().x, x.y))
     };
     assert!(matches!(s.hit_test(at, 4.0), Some(tools::Hit::Warp { index: 0, .. })));
-    let ev = |kind, p: deckcraft_geom::Point| PointerEvent { kind, x: p.x, y: p.y, mods: Mods::default(), tol: 4.0, pressure: None };
+    let ev = |kind, p: iridium_decks_geom::Point| PointerEvent { kind, x: p.x, y: p.y, mods: Mods::default(), tol: 4.0, pressure: None };
     s.pointer(ev(PointerKind::Down, at)).unwrap();
     s.pointer(ev(PointerKind::Drag, top)).unwrap();
     s.pointer(ev(PointerKind::Up, top)).unwrap();
@@ -4932,7 +4934,7 @@ fn wordart_adjust_handle_drags_and_undoes() {
 
 #[test]
 fn shape_picture_fill_options_tile_offset_and_round_trip() {
-    use deckcraft_model::style::PictureMode;
+    use iridium_decks_model::style::PictureMode;
     let mut img = image::RgbaImage::new(4, 4);
     img.put_pixel(0, 0, image::Rgba([255, 0, 0, 255]));
     let mut png = Vec::new();
@@ -4941,7 +4943,7 @@ fn shape_picture_fill_options_tile_offset_and_round_trip() {
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100]})).unwrap();
     let pf = |s: &Session| match s.doc().unwrap().selected_shapes()[0].fill.clone() {
-        Some(deckcraft_model::Fill::Picture(pf)) => pf,
+        Some(iridium_decks_model::Fill::Picture(pf)) => pf,
         other => panic!("{other:?}"),
     };
     // Options without a picture fill are a no-op, not an error.
@@ -4961,7 +4963,7 @@ fn shape_picture_fill_options_tile_offset_and_round_trip() {
     s.execute("file.openBytes", &json!({"name": "p.pptx", "data": cmd::base64_encode(&bytes)})).unwrap();
     let doc = &s.doc().unwrap().doc;
     let back = doc.slides.iter().flat_map(|sl| sl.shapes.iter()).find_map(|sh| match &sh.fill {
-        Some(deckcraft_model::Fill::Picture(pf)) => Some(pf.clone()),
+        Some(iridium_decks_model::Fill::Picture(pf)) => Some(pf.clone()),
         _ => None,
     });
     let back = back.unwrap();
@@ -5030,7 +5032,7 @@ fn find_and_replace_after_a_line_break() {
 #[test]
 fn pen_pressure_is_kept_and_a_mouse_draws_at_full_width() {
     let mut s = session();
-    s.set_tool(tools::ToolKind::Ink { mode: "pen".into(), color: deckcraft_model::Rgba::rgb(20, 20, 20), width: 4.0 });
+    s.set_tool(tools::ToolKind::Ink { mode: "pen".into(), color: iridium_decks_model::Rgba::rgb(20, 20, 20), width: 4.0 });
     let ev = |kind, x, y, pressure| tools::PointerEvent { kind, x, y, mods: Mods::default(), tol: 3.0, pressure };
     s.pointer(ev(PointerKind::Down, 40.0, 80.0, Some(0.2))).unwrap();
     s.pointer(ev(PointerKind::Drag, 80.0, 80.0, Some(1.0))).unwrap();
@@ -5045,10 +5047,10 @@ fn pen_pressure_is_kept_and_a_mouse_draws_at_full_width() {
 
 fn ink_pressures(s: &Session) -> Vec<Vec<f32>> {
     let st = s.doc().unwrap();
-    let Some(sh) = st.shapes().iter().rev().find(|sh| matches!(sh.kind, deckcraft_model::ShapeKind::Ink { .. })) else {
+    let Some(sh) = st.shapes().iter().rev().find(|sh| matches!(sh.kind, iridium_decks_model::ShapeKind::Ink { .. })) else {
         return vec![];
     };
-    let deckcraft_model::ShapeKind::Ink { strokes } = &sh.kind else { return vec![] };
+    let iridium_decks_model::ShapeKind::Ink { strokes } = &sh.kind else { return vec![] };
     strokes.iter().map(|stroke| stroke.points.iter().map(|p| p.2).collect()).collect()
 }
 
@@ -5109,7 +5111,7 @@ fn three_d_reset_and_flat_shapes_drop_the_xml() {
 fn background_loads_are_adopted_through_a_command() {
     let mut src = Session::with_new();
     src.execute("slide.new", &json!({})).unwrap();
-    let path = std::env::temp_dir().join(format!("deckcraft-adopt-{}.deckcraft", std::process::id()));
+    let path = std::env::temp_dir().join(format!("iridium-decks-adopt-{}.iridium-decks", std::process::id()));
     let path = path.to_string_lossy().to_string();
     src.execute("file.saveAs", &json!({"path": path})).unwrap();
 
@@ -5160,7 +5162,7 @@ fn an_exhausted_id_space_refuses_growth() {
     let after = s.doc().unwrap().doc.clone();
     assert_eq!(after.slides.len(), before.slides.len());
     let mut ids = vec![];
-    deckcraft_model::walk(&after.slides[0].shapes, &mut |sh, _| ids.push(sh.id.0));
+    iridium_decks_model::walk(&after.slides[0].shapes, &mut |sh, _| ids.push(sh.id.0));
     ids.push(after.slides[0].id.0);
     ids.push(after.next_id);
     let mut sorted = ids.clone();
@@ -5172,7 +5174,7 @@ fn an_exhausted_id_space_refuses_growth() {
 #[test]
 fn shape_ids_beyond_u32_are_rejected_not_wrapped() {
     let (mut s, a, b) = two_shapes();
-    let wrap = |id: deckcraft_model::ShapeId| u64::from(id.0) + (1u64 << 32);
+    let wrap = |id: iridium_decks_model::ShapeId| u64::from(id.0) + (1u64 << 32);
     let shapes_before = s.doc().unwrap().shapes().len();
     let r = s.execute("shape.connect", &json!({"from": wrap(a), "to": wrap(b)}));
     assert!(r.is_err(), "connect must reject ids beyond u32, got {r:?}");
@@ -5226,8 +5228,8 @@ fn paragraph_commands_clamp_a_direct_hostile_text_selection() {
     s.execute("text.select", &json!({"anchor": [0, 0], "caret": [u64::MAX, 0]})).unwrap();
     s.execute("format.alignCenter", &json!({})).unwrap();
     s.execute("format.case", &json!({"mode": "upper"})).unwrap();
-    let body = s.doc().unwrap().shape(deckcraft_model::ShapeId(title)).unwrap().text.as_ref().unwrap();
-    assert_eq!(body.paragraphs[0].props.align, Some(deckcraft_model::text::Align::Center));
+    let body = s.doc().unwrap().shape(iridium_decks_model::ShapeId(title)).unwrap().text.as_ref().unwrap();
+    assert_eq!(body.paragraphs[0].props.align, Some(iridium_decks_model::text::Align::Center));
 }
 
 #[test]
@@ -5314,7 +5316,7 @@ fn opening_a_pptx_with_an_unreadable_slide_says_so() {
     let mut s = session();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     assert_eq!(s.doc().unwrap().doc.slides.len(), 2);
-    let good = deckcraft_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap();
+    let good = iridium_decks_pptx::export(s.doc().unwrap().doc.as_ref()).unwrap();
     let mut zin = zip::ZipArchive::new(Cursor::new(good.clone())).unwrap();
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let o = zip::write::SimpleFileOptions::default();
@@ -5347,7 +5349,7 @@ fn opening_a_pptx_with_an_unreadable_slide_says_so() {
 /// they were, a glow of 10^18 pt made the renderer ask for 34 GB and abort.
 #[test]
 fn opening_a_file_caps_absurd_effect_sizes() {
-    use deckcraft_model::style::{Glow, Reflection};
+    use iridium_decks_model::style::{Glow, Reflection};
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 100], "text": "Glow"})).unwrap();
@@ -5365,9 +5367,9 @@ fn opening_a_file_caps_absurd_effect_sizes() {
                 *e.reflection.as_mut().unwrap() =
                     Reflection { blur: huge, start_alpha: 0.5, end_alpha: 0.0, end_pos: 0.5, dist: huge, ..Default::default() };
             }
-            let glow = Some(Glow { color: deckcraft_model::style::ColorRef::rgb(deckcraft_color::Rgba::BLACK), radius: huge });
-            let runs: Vec<&mut deckcraft_model::text::Run> = match &mut sh.kind {
-                deckcraft_model::ShapeKind::Table(t) => t
+            let glow = Some(Glow { color: iridium_decks_model::style::ColorRef::rgb(iridium_decks_color::Rgba::BLACK), radius: huge });
+            let runs: Vec<&mut iridium_decks_model::text::Run> = match &mut sh.kind {
+                iridium_decks_model::ShapeKind::Table(t) => t
                     .rows
                     .iter_mut()
                     .flat_map(|r| r.cells.iter_mut())
@@ -5382,9 +5384,9 @@ fn opening_a_file_caps_absurd_effect_sizes() {
         }
         // Inherited styles too: the deck default, a master's body style, a text box's own list
         // style, and the theme's effect styles that shape styles point at.
-        let level = deckcraft_model::text::LevelStyle {
-            run: deckcraft_model::text::RunProps {
-                glow: Some(Glow { color: deckcraft_model::style::ColorRef::rgb(deckcraft_color::Rgba::BLACK), radius: huge }),
+        let level = iridium_decks_model::text::LevelStyle {
+            run: iridium_decks_model::text::RunProps {
+                glow: Some(Glow { color: iridium_decks_model::style::ColorRef::rgb(iridium_decks_color::Rgba::BLACK), radius: huge }),
                 ..Default::default()
             },
             ..Default::default()
@@ -5393,7 +5395,7 @@ fn opening_a_file_caps_absurd_effect_sizes() {
         let m = std::sync::Arc::make_mut(&mut doc.masters[0]);
         m.body_style.set(0, level.clone());
         if let Some(fx) = m.theme.format.effects.first_mut() {
-            fx.glow = Some(Glow { color: deckcraft_model::style::ColorRef::rgb(deckcraft_color::Rgba::BLACK), radius: huge });
+            fx.glow = Some(Glow { color: iridium_decks_model::style::ColorRef::rgb(iridium_decks_color::Rgba::BLACK), radius: huge });
         }
         let list = crate::shapes_mut(doc, sel).unwrap();
         if let Some(t) = list.iter_mut().find_map(|sh| sh.text.as_mut()) {
@@ -5402,14 +5404,14 @@ fn opening_a_file_caps_absurd_effect_sizes() {
         Ok(())
     })
     .unwrap();
-    for format in ["deckcraft", "pptx"] {
+    for format in ["iridium-decks", "pptx"] {
         let bytes = cmd::file::save_bytes(&s.doc().unwrap().doc, format).unwrap();
         let mut t = Session::new();
         t.execute("file.openBytes", &json!({"name": format!("fx.{format}"), "data": cmd::base64_encode(&bytes)})).unwrap();
         let st = t.doc().unwrap();
         let slide = st.doc.slides.last().unwrap();
         let mut glows = vec![];
-        deckcraft_model::walk(&slide.shapes, &mut |sh, _| {
+        iridium_decks_model::walk(&slide.shapes, &mut |sh, _| {
             if let Some(e) = &sh.effects {
                 glows.extend(e.glow.as_ref().map(|g| g.radius));
                 assert!(e.soft_edge.is_none_or(|v| (0.0..=100.0).contains(&v)), "{format}: {:?}", e.soft_edge);
@@ -5423,12 +5425,12 @@ fn opening_a_file_caps_absurd_effect_sizes() {
             for p in sh.text.iter().flat_map(|t| t.paragraphs.iter()) {
                 glows.extend(p.runs.iter().filter_map(|r| r.props.glow.as_ref().map(|g| g.radius)));
             }
-            if let deckcraft_model::ShapeKind::Table(tb) = &sh.kind {
+            if let iridium_decks_model::ShapeKind::Table(tb) = &sh.kind {
                 let cells = tb.rows.iter().flat_map(|r| r.cells.iter()).flat_map(|c| c.text.paragraphs.iter());
                 glows.extend(cells.flat_map(|p| p.runs.iter()).filter_map(|r| r.props.glow.as_ref().map(|g| g.radius)));
             }
         });
-        let inherited = |ls: &deckcraft_model::text::ListStyle| {
+        let inherited = |ls: &iridium_decks_model::text::ListStyle| {
             ls.levels.iter().flatten().filter_map(|l| l.run.glow.as_ref().map(|g| g.radius)).collect::<Vec<_>>()
         };
         glows.extend(inherited(&st.doc.default_text_style));
@@ -5437,7 +5439,7 @@ fn opening_a_file_caps_absurd_effect_sizes() {
             glows.extend(inherited(ls));
         }
         glows.extend(m.theme.format.effects.iter().filter_map(|e| e.glow.as_ref().map(|g| g.radius)));
-        deckcraft_model::walk(&slide.shapes, &mut |sh, _| glows.extend(sh.text.iter().flat_map(|t| inherited(&t.list_style))));
+        iridium_decks_model::walk(&slide.shapes, &mut |sh, _| glows.extend(sh.text.iter().flat_map(|t| inherited(&t.list_style))));
         assert!(!glows.is_empty(), "{format}: the glows were kept");
         assert!(glows.iter().all(|g| (0.0..=150.0).contains(g)), "{format}: {glows:?}");
         // Capped, the slide renders (checked last: uncapped, this is what ran out of memory).
@@ -5446,7 +5448,7 @@ fn opening_a_file_caps_absurd_effect_sizes() {
     }
 }
 
-/// A .deckcraft file whose shapes repeat an id (groups included) opens with fresh ids for the
+/// A .iridium-decks file whose shapes repeat an id (groups included) opens with fresh ids for the
 /// repeats: the deck passes `validate`, the first shape keeps its id and none is lost.
 #[test]
 fn opening_a_file_gives_repeated_shape_ids_fresh_ones() {
@@ -5461,10 +5463,10 @@ fn opening_a_file_gives_repeated_shape_ids_fresh_ones() {
     let first = s.doc().unwrap().shapes()[0].id;
     // Every shape, the group's children too, takes the group's id.
     s.edit(|doc, sel| {
-        fn all(shapes: &mut [deckcraft_model::Shape], id: deckcraft_model::ShapeId) {
+        fn all(shapes: &mut [iridium_decks_model::Shape], id: iridium_decks_model::ShapeId) {
             for sh in shapes {
                 sh.id = id;
-                if let deckcraft_model::ShapeKind::Group { children, .. } = &mut sh.kind {
+                if let iridium_decks_model::ShapeKind::Group { children, .. } = &mut sh.kind {
                     all(children, id);
                 }
             }
@@ -5474,14 +5476,14 @@ fn opening_a_file_gives_repeated_shape_ids_fresh_ones() {
     })
     .unwrap();
     assert!(!s.doc().unwrap().doc.validate().is_empty(), "the deck repeats ids");
-    let bytes = cmd::file::save_bytes(&s.doc().unwrap().doc, "deckcraft").unwrap();
+    let bytes = cmd::file::save_bytes(&s.doc().unwrap().doc, "iridium-decks").unwrap();
     let mut t = Session::new();
-    t.execute("file.openBytes", &json!({"name": "dup.deckcraft", "data": cmd::base64_encode(&bytes)})).unwrap();
+    t.execute("file.openBytes", &json!({"name": "dup.iridium-decks", "data": cmd::base64_encode(&bytes)})).unwrap();
     let st = t.doc().unwrap();
     assert_eq!(st.doc.validate(), Vec::<String>::new());
     let slide = st.doc.slides.last().unwrap();
     let mut ids = vec![];
-    deckcraft_model::walk(&slide.shapes, &mut |sh, _| ids.push(sh.id));
+    iridium_decks_model::walk(&slide.shapes, &mut |sh, _| ids.push(sh.id));
     assert_eq!(ids.len(), 6, "the group, its four children and the ellipse");
     assert_eq!(ids[0], first, "the first shape keeps its id");
     assert!(ids.iter().all(|id| id.0 <= st.doc.next_id), "new ids come from the deck's counter");
@@ -5503,7 +5505,7 @@ fn change_case_spans_formatting_runs() {
         s.execute("format.bold", &json!({"on": true})).unwrap();
         (s, id)
     };
-    let text_of = |s: &Session, id: u32| s.doc().unwrap().shape(deckcraft_model::ShapeId(id)).unwrap().text.clone().unwrap();
+    let text_of = |s: &Session, id: u32| s.doc().unwrap().shape(iridium_decks_model::ShapeId(id)).unwrap().text.clone().unwrap();
     for (mode, input, want) in [("title", "hello world", "Hello World"), ("sentence", "hello world. bye", "Hello world. Bye")] {
         // Text range.
         let (mut s, id) = setup(input, 3);
@@ -5530,11 +5532,11 @@ fn change_case_spans_formatting_runs() {
 
 #[test]
 fn flipping_a_rotated_shape_mirrors_its_outline() {
-    let corners = |s: &Session, id: deckcraft_model::ShapeId| {
+    let corners = |s: &Session, id: iridium_decks_model::ShapeId| {
         let x = s.doc().unwrap().shape(id).unwrap().xfrm.unwrap();
         let a = x.affine();
         [(0.0, 0.0), (x.w, 0.0), (x.w, x.h), (0.0, x.h)].map(|(px, py)| {
-            let p = a * deckcraft_geom::Point::new(px, py);
+            let p = a * iridium_decks_geom::Point::new(px, py);
             ((p.x * 100.0).round() as i64, (p.y * 100.0).round() as i64)
         })
     };
@@ -5545,7 +5547,7 @@ fn flipping_a_rotated_shape_mirrors_its_outline() {
     for (cmd, horizontal) in [("arrange.flipHorizontal", true), ("arrange.flipVertical", false)] {
         let mut s = session();
         let r = s.execute("shape.insert", &json!({"preset": "rect", "rect": [100, 100, 200, 50]})).unwrap();
-        let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+        let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
         s.execute("shape.rotate", &json!({"deg": 30})).unwrap();
         let before = corners(&s, id);
         // Mirror about the box's centre line (centre is 200, 125).
@@ -5597,7 +5599,7 @@ fn shape_geometry_commands_limit_size_and_position() {
 /// (and leaves Edit Points), Redo the freeform; leaving Edit Points adds no step.
 #[test]
 fn edit_points_conversion_is_one_undo_step() {
-    use deckcraft_model::Geom;
+    use iridium_decks_model::Geom;
     let mut s = Session::with_new();
     s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
     s.execute("shape.insert", &json!({"preset": "star5", "rect": [100, 100, 200, 100]})).unwrap();
@@ -5648,7 +5650,7 @@ fn no_fill_shape_allows_selecting_and_editing_underlying_text() {
     s.execute("shape.fill", &json!({"none": true})).unwrap();
     assert!(s.doc().unwrap().shape(over).unwrap().style.is_some(), "the ordinary quick style remains");
     s.execute("edit.deselect", &json!({})).unwrap();
-    let p = deckcraft_geom::Point::new(200.0, 310.0);
+    let p = iridium_decks_geom::Point::new(200.0, 310.0);
     assert!(matches!(s.hit_test(p, 3.0), Some(tools::Hit::Shape { id, .. }) if id == under));
     for kind in [PointerKind::Down, PointerKind::Up] {
         s.pointer(tev(kind, p.x, p.y)).unwrap();
@@ -5684,8 +5686,8 @@ fn no_fill_shape_hit_testing_respects_rotation_and_pointer_tolerance() {
     s.execute("shape.fill", &json!({"none": true})).unwrap();
     s.execute("shape.rotate", &json!({"deg": 30})).unwrap();
     let x = s.doc().unwrap().shape(over).unwrap().xfrm.unwrap();
-    let p = x.affine() * deckcraft_geom::Point::new(x.w / 2.0, x.h / 2.0);
-    let edge = x.affine() * deckcraft_geom::Point::new(0.0, x.h / 4.0);
+    let p = x.affine() * iridium_decks_geom::Point::new(x.w / 2.0, x.h / 2.0);
+    let edge = x.affine() * iridium_decks_geom::Point::new(0.0, x.h / 4.0);
     for tol in [0.5, 3.0, 8.0] {
         s.execute("edit.deselect", &json!({})).unwrap();
         assert!(matches!(s.hit_test(p, tol), Some(tools::Hit::Shape { id, .. }) if id == under));
@@ -5719,7 +5721,7 @@ fn no_fill_hit_testing_resolves_style_and_theme_fills() {
             }
         }
         s.execute("edit.deselect", &json!({})).unwrap();
-        let p = deckcraft_geom::Point::new(200.0, 310.0);
+        let p = iridium_decks_geom::Point::new(200.0, 310.0);
         assert!(matches!(s.hit_test(p, 3.0), Some(tools::Hit::Shape { id, .. }) if id == under), "{source}");
         // An explicit fill takes precedence over the no-fill style/theme.
         s.execute("edit.select", &json!({"ids": [over.0]})).unwrap();
@@ -5737,7 +5739,7 @@ fn no_fill_text_shapes_keep_their_interior_text_target() {
     s.execute("text.set", &json!({"id": over.0, "text": "FOREGROUND TEXT"})).unwrap();
     s.execute("shape.fill", &json!({"none": true})).unwrap();
     s.execute("edit.deselect", &json!({})).unwrap();
-    let p = deckcraft_geom::Point::new(200.0, 310.0);
+    let p = iridium_decks_geom::Point::new(200.0, 310.0);
     assert!(matches!(s.hit_test(p, 3.0), Some(tools::Hit::Shape { id, text: true }) if id == over));
     s.pointer(tev(PointerKind::DoubleClick, p.x, p.y)).unwrap();
     assert_eq!(text_sel(&s).unwrap().shape, over);
@@ -5752,14 +5754,14 @@ fn no_fill_locked_shape_keeps_outline_selection_without_moving() {
     s.execute("shape.lock", &json!({"locked": true})).unwrap();
     let before = s.doc().unwrap().shape(over).unwrap().xfrm;
     s.execute("edit.deselect", &json!({})).unwrap();
-    let inside = deckcraft_geom::Point::new(200.0, 310.0);
+    let inside = iridium_decks_geom::Point::new(200.0, 310.0);
     assert!(matches!(s.hit_test(inside, 3.0), Some(tools::Hit::Shape { id, .. }) if id == under));
     for kind in [PointerKind::Down, PointerKind::Up] {
         s.pointer(tev(kind, inside.x, inside.y)).unwrap();
     }
     assert_eq!(text_sel(&s).unwrap().shape, under);
     s.execute("edit.deselect", &json!({})).unwrap();
-    let edge = deckcraft_geom::Point::new(80.0, 330.0);
+    let edge = iridium_decks_geom::Point::new(80.0, 330.0);
     assert!(matches!(s.hit_test(edge, 3.0), Some(tools::Hit::Shape { id, .. }) if id == over));
     s.pointer(tev(PointerKind::Down, edge.x, edge.y)).unwrap();
     s.pointer(tev(PointerKind::Drag, edge.x + 40.0, edge.y + 20.0)).unwrap();
@@ -5780,7 +5782,7 @@ fn no_fill_shape_without_text_or_outline_passes_interior_clicks() {
         s.execute("shape.line", &json!({"none": true})).unwrap();
         s.execute("shape.lock", &json!({"locked": locked})).unwrap();
         s.execute("edit.deselect", &json!({})).unwrap();
-        let p = deckcraft_geom::Point::new(200.0, 310.0);
+        let p = iridium_decks_geom::Point::new(200.0, 310.0);
         assert!(matches!(s.hit_test(p, 3.0), Some(tools::Hit::Shape { id, .. }) if id == under));
         for kind in [PointerKind::Down, PointerKind::Up] {
             s.pointer(tev(kind, p.x, p.y)).unwrap();
@@ -5879,8 +5881,8 @@ fn pending_resize_autofit(s: &mut Session, ids: &[u64]) {
     s.edit(|doc, sel| {
         let shapes = crate::shapes_mut(doc, sel).unwrap();
         for id in ids {
-            let sh = deckcraft_model::find_shape_mut(shapes, ShapeId(*id as u32)).unwrap();
-            sh.text.as_mut().unwrap().body.autofit = Some(deckcraft_model::text::AutoFit::Shape);
+            let sh = iridium_decks_model::find_shape_mut(shapes, ShapeId(*id as u32)).unwrap();
+            sh.text.as_mut().unwrap().body.autofit = Some(iridium_decks_model::text::AutoFit::Shape);
         }
         Ok(())
     })
@@ -6153,9 +6155,9 @@ fn duplicating_a_moved_copy_repeats_the_move() {
     assert_eq!(s.doc().unwrap().doc.validate(), Vec::<String>::new());
 }
 
-fn chart_of(s: &Session, id: u64) -> deckcraft_model::Chart {
-    match &s.doc().unwrap().shape(deckcraft_model::ShapeId(id as u32)).unwrap().kind {
-        deckcraft_model::ShapeKind::Chart(c) => (**c).clone(),
+fn chart_of(s: &Session, id: u64) -> iridium_decks_model::Chart {
+    match &s.doc().unwrap().shape(iridium_decks_model::ShapeId(id as u32)).unwrap().kind {
+        iridium_decks_model::ShapeKind::Chart(c) => (**c).clone(),
         k => panic!("not a chart: {k:?}"),
     }
 }
@@ -6168,12 +6170,16 @@ fn chart_options_text_color_sets_clears_and_refuses() {
     let id = s.execute("insert.chart", &json!({"type": "column", "title": "Sales"})).unwrap()["id"].as_u64().unwrap();
     assert_eq!(chart_of(&s, id).text_color, None);
     s.execute("chart.options", &json!({"id": id, "textColor": "#FF0000"})).unwrap();
-    assert_eq!(chart_of(&s, id).text_color, Some(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(255, 0, 0))));
+    assert_eq!(chart_of(&s, id).text_color, Some(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(255, 0, 0))));
     s.execute("chart.options", &json!({"id": id, "textColor": "accent2"})).unwrap();
-    assert_eq!(chart_of(&s, id).text_color, Some(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)));
+    assert_eq!(chart_of(&s, id).text_color, Some(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent2)));
     let e = s.execute("chart.options", &json!({"id": id, "textColor": "reddish"})).unwrap_err().to_string();
     assert!(e.contains("textColor"), "{e}");
-    assert_eq!(chart_of(&s, id).text_color, Some(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)), "refused: unchanged");
+    assert_eq!(
+        chart_of(&s, id).text_color,
+        Some(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent2)),
+        "refused: unchanged"
+    );
     s.execute("chart.options", &json!({"id": id, "textColor": null})).unwrap();
     assert_eq!(chart_of(&s, id).text_color, None);
 }
@@ -6185,7 +6191,7 @@ fn format_color_on_a_selected_chart_sets_its_text_color() {
     let id = s.execute("insert.chart", &json!({"type": "column", "title": "Sales"})).unwrap()["id"].as_u64().unwrap();
     s.execute("edit.select", &json!({"ids": [id]})).unwrap();
     s.execute("format.color", &json!({"color": "accent2"})).unwrap();
-    assert_eq!(chart_of(&s, id).text_color, Some(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent2)));
+    assert_eq!(chart_of(&s, id).text_color, Some(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent2)));
 }
 
 #[test]
@@ -6224,13 +6230,13 @@ fn invalid_ids_array_never_falls_back_to_the_selection() {
     for ids in [json!([-1]), json!([1.5]), json!([4294967296u64]), json!([-1, a])] {
         let r = s.execute("edit.delete", &json!({ "ids": ids }));
         assert!(matches!(r, Err(crate::EngineError::BadParams { .. })), "invalid ids {ids} gave {r:?}");
-        assert!(s.doc().unwrap().shape(deckcraft_model::ShapeId(a as u32)).is_some(), "shape deleted for {ids}");
+        assert!(s.doc().unwrap().shape(iridium_decks_model::ShapeId(a as u32)).is_some(), "shape deleted for {ids}");
     }
 }
 
 #[test]
 fn table_cell_align_sets_the_horizontal_alignment() {
-    use deckcraft_model::text::{Align, Anchor};
+    use iridium_decks_model::text::{Align, Anchor};
     let mut s = session();
     let id = table_at(&mut s, &[100.0, 100.0], json!([["a", "b"], ["c", "d"]]));
     s.execute("table.cellAlign", &json!({"id": id.0, "align": "center", "cells": [[0, 0], [1, 0]]})).unwrap();
@@ -6308,12 +6314,12 @@ fn picture_reset_keeps_the_frame_shape() {
     s.execute("shape.change", &json!({"preset": "roundRect"})).unwrap();
     s.execute("picture.adjust", &json!({"brightness": 0.3})).unwrap();
     let geom = s.doc().unwrap().selected_shapes()[0].geom.clone();
-    assert_ne!(geom, deckcraft_model::Geom::preset("rect"));
+    assert_ne!(geom, iridium_decks_model::Geom::preset("rect"));
     s.execute("picture.reset", &json!({})).unwrap();
     let sh = s.doc().unwrap().selected_shapes()[0].clone();
     assert_eq!(sh.geom, geom, "the frame shape stays");
     match &sh.kind {
-        deckcraft_model::ShapeKind::Picture { fill } => assert_eq!(fill.adjust, Default::default()),
+        iridium_decks_model::ShapeKind::Picture { fill } => assert_eq!(fill.adjust, Default::default()),
         _ => panic!("not a picture"),
     }
     let doc = command_specs().iter().find(|c| c.id == "picture.reset").unwrap().params;
@@ -6334,7 +6340,7 @@ fn exporting_a_slide_again_overwrites_the_png_with_the_edit() {
     // A folder of this run's own: created exclusively (never one an earlier or parallel run left).
     let stamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map_or(0, |d| d.as_nanos());
     let dir = (0..100)
-        .map(|k| std::env::temp_dir().join(format!("deckcraft-hh12-{}-{stamp}-{k}", std::process::id())))
+        .map(|k| std::env::temp_dir().join(format!("iridium-decks-hh12-{}-{stamp}-{k}", std::process::id())))
         .find(|d| std::fs::create_dir(d).is_ok())
         .expect("a fresh temporary folder");
     let _cleanup = Cleanup(dir.clone());
@@ -6371,7 +6377,7 @@ fn action_button_fill_follows_the_theme() {
 #[test]
 fn invalid_slide_index_never_falls_back_to_the_selection_in_export_commands() {
     let mut s = session();
-    let dir = std::env::temp_dir().join(format!("deckcraft-badslide-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-badslide-{}", std::process::id()));
     let path = dir.join("a.png");
     for slide in [json!(-1), json!(1.5), json!("two")] {
         let r = s.execute("file.export", &json!({"path": path.to_string_lossy(), "slide": slide, "scale": 0.1}));
@@ -6469,7 +6475,7 @@ fn master_body_placeholder_format_keeps_per_level_formatting() {
         let ctx = crate::cmd::text::ctx_for(&st.doc, &st.selection).unwrap();
         let sh = &st.doc.masters[0].shapes[body_idx];
         let body = sh.text.as_ref().unwrap();
-        body.paragraphs.iter().map(|p| p.runs[0].props.size.or(deckcraft_model::resolve::level_style(&ctx, sh, p.level).run.size)).collect()
+        body.paragraphs.iter().map(|p| p.runs[0].props.size.or(iridium_decks_model::resolve::level_style(&ctx, sh, p.level).run.size)).collect()
     };
     s.execute("format.grow", &json!({})).unwrap();
     assert_eq!((level(&s, 0).run.size, level(&s, 1).run.size), (Some(36.0), Some(32.0)));
@@ -6493,7 +6499,7 @@ fn slide_master_view_rejects_invalid_indices() {
 
 #[test]
 fn save_to_image_path_is_an_error_not_zip_bytes() {
-    let dir = std::env::temp_dir().join(format!("deckcraft-save-img-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-save-img-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     for (cmd, name) in [("file.save", "a.png"), ("file.saveAs", "a.jpg"), ("file.save", "a.jpeg")] {
         let mut s = Session::new();

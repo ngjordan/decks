@@ -61,7 +61,7 @@ fn pick_album_picture(app: &mut SlideApp) -> Option<Value> {
         return None;
     }
     let name = std::path::Path::new(&path).file_name().and_then(std::ffi::OsStr::to_str).filter(|s| !s.is_empty()).unwrap_or("picture").to_string();
-    Some(json!({"name": name, "data": deckcraft_engine::cmd::base64_encode(&loaded)}))
+    Some(json!({"name": name, "data": iridium_decks_engine::cmd::base64_encode(&loaded)}))
 }
 
 /// Draw an accessible album combo box, preserving its current/default selection and storing a
@@ -85,15 +85,10 @@ fn album_choice(ui: &mut Ui, d: &mut Dialog, id: &str, name: &str, key: &str, de
     });
 }
 
-const ALBUM_THEMES: &[&str] = &["Iridium Decks", "Harbor", "Ember", "Meadow", "Nocturne", "Paper", "Coral Reef", "Slate"];
+const ALBUM_THEMES: &[&str] = &["Decks", "Harbor", "Ember", "Meadow", "Nocturne", "Paper", "Coral Reef", "Slate"];
 
 fn current_theme(app: &SlideApp) -> String {
-    app.session
-        .active()
-        .and_then(|d| d.doc.masters.first())
-        .map(|m| m.theme.name.clone())
-        .filter(|n| !n.is_empty())
-        .unwrap_or_else(|| "Iridium Decks".into())
+    app.session.active().and_then(|d| d.doc.masters.first()).map(|m| m.theme.name.clone()).filter(|n| !n.is_empty()).unwrap_or_else(|| "Decks".into())
 }
 
 fn album_json_id(v: &Value) -> Option<u64> {
@@ -278,7 +273,7 @@ pub(super) fn photo_album_dialog(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog
         check(ui, d, "Captions under pictures", "captions", false);
         check(ui, d, "ALL pictures black and white", "grayscale", false);
         ui.label("Album theme");
-        album_choice(ui, d, "album_theme", "Album theme", "theme", "Iridium Decks", &ALBUM_THEMES.iter().map(|n| (*n, *n)).collect::<Vec<_>>());
+        album_choice(ui, d, "album_theme", "Album theme", "theme", "Decks", &ALBUM_THEMES.iter().map(|n| (*n, *n)).collect::<Vec<_>>());
     });
     let captions = d.fields.get("captions").is_some_and(|v| v == "1");
     let grayscale = d.fields.get("grayscale").is_some_and(|v| v == "1");
@@ -295,7 +290,7 @@ pub(super) fn photo_album_dialog(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog
         }
         let layout = d.get("layout", "1");
         let frame = d.get("frame", "rect");
-        let theme = d.get("theme", "Iridium Decks");
+        let theme = d.get("theme", "Decks");
         let theme_was = d.fields.get("themeWas").cloned().unwrap_or_default();
         let mut payload = json!({"pictures": list, "layout": layout, "frame": frame, "captions": captions, "grayscale": grayscale});
         if theme != theme_was

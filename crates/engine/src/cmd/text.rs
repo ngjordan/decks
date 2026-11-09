@@ -2,11 +2,11 @@
 
 use std::sync::Arc;
 
-use deckcraft_geom::{Affine, Point, Rect};
-use deckcraft_model::edit::{self as ed, Pos};
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::text::{Align, AutoFit, Hyperlink, Paragraph, Run, RunKind, RunProps, TextBody};
-use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind};
+use iridium_decks_geom::{Affine, Point, Rect};
+use iridium_decks_model::edit::{self as ed, Pos};
+use iridium_decks_model::resolve::{self, Ctx};
+use iridium_decks_model::text::{Align, AutoFit, Hyperlink, Paragraph, Run, RunKind, RunProps, TextBody};
+use iridium_decks_model::{Presentation, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{
@@ -151,7 +151,7 @@ fn body_mut<'a>(doc: &'a mut Presentation, sel: &Selection, t: &TextSel) -> Opti
         return doc.slides.get_mut(sel.slide).map(|s| &mut Arc::make_mut(s).notes);
     }
     let shapes = crate::shapes_mut(doc, sel)?;
-    let sh = deckcraft_model::find_shape_mut(shapes, t.shape)?;
+    let sh = iridium_decks_model::find_shape_mut(shapes, t.shape)?;
     if let Some((r, c)) = t.cell {
         if let ShapeKind::Table(tb) = &mut sh.kind {
             return tb.cell_mut(r, c).map(|x| &mut x.text);

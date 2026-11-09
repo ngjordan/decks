@@ -21,10 +21,10 @@ pub(crate) fn prompt_body(rctx: &Ctx, s: &Shape, kind: PhType) -> TextBody {
     }
     let mut t = TextBody::from_text(txt);
     if matches!(kind, PhType::Picture | PhType::Chart | PhType::Table | PhType::Media | PhType::Diagram | PhType::ClipArt) {
-        t.body.anchor = Some(deckcraft_model::text::Anchor::Bottom);
+        t.body.anchor = Some(iridium_decks_model::text::Anchor::Bottom);
         if let Some(p) = t.paragraphs.first_mut() {
-            p.props.align = Some(deckcraft_model::text::Align::Center);
-            p.props.bullet = Some(deckcraft_model::text::Bullet::None);
+            p.props.align = Some(iridium_decks_model::text::Align::Center);
+            p.props.bullet = Some(iridium_decks_model::text::Bullet::None);
             p.props.margin_left = Some(0.0);
             p.props.indent = Some(0.0);
             for r in &mut p.runs {
@@ -39,7 +39,7 @@ thread_local! {
     static GLYPH_CACHE: std::cell::RefCell<HashMap<(u32, u32), Arc<BezPath>>> = std::cell::RefCell::new(HashMap::new());
 }
 
-pub(crate) fn glyph(face: &deckcraft_fonts::FontFace, gid: u32) -> Arc<BezPath> {
+pub(crate) fn glyph(face: &iridium_decks_fonts::FontFace, gid: u32) -> Arc<BezPath> {
     let key = (face.id(), gid);
     if let Some(p) = GLYPH_CACHE.with(|c| c.borrow().get(&key).cloned()) {
         return p;
@@ -57,12 +57,12 @@ pub(crate) fn glyph(face: &deckcraft_fonts::FontFace, gid: u32) -> Arc<BezPath> 
 
 /// Draw a text body into shape space `m` within the text rect `opts.rect`.
 pub fn draw_text(ctx: &mut RenderContext, rctx: &Ctx, s: &Shape, body: &TextBody, m: Affine, opts: &Opts) {
-    let l = deckcraft_text::layout(rctx, s, body, opts);
+    let l = iridium_decks_text::layout(rctx, s, body, opts);
     draw_layout(ctx, &l, opts.rect, m);
 }
 
 /// Add transient list markers to an editor layout, using the document's own bullet glyphs.
-pub(crate) fn preview_empty_bullets(l: &mut deckcraft_text::TextLayout) {
+pub(crate) fn preview_empty_bullets(l: &mut iridium_decks_text::TextLayout) {
     for mut run in l.empty_bullets.drain(..) {
         run.color = Rgba::rgb(0xB3, 0xB3, 0xB3);
         run.alpha = 1.0;
@@ -89,23 +89,23 @@ pub fn text_transform(m: Affine, tr: Rect, rotation: f64) -> Affine {
     t
 }
 
-/// The WordArt warp of `s`'s text over its text rectangle `tr`, if it has one Iridium Decks draws.
-pub fn text_warp(rctx: &Ctx, s: &Shape, tr: Rect) -> Option<deckcraft_geom::warp::Warp> {
+/// The WordArt warp of `s`'s text over its text rectangle `tr`, if it has one Decks draws.
+pub fn text_warp(rctx: &Ctx, s: &Shape, tr: Rect) -> Option<iridium_decks_geom::warp::Warp> {
     let bp = resolve::body(rctx, s);
     let name = bp.warp.as_deref()?;
-    deckcraft_geom::warp::warp(name, &bp.warp_adj, tr)
+    iridium_decks_geom::warp::warp(name, &bp.warp_adj, tr)
 }
 
 /// Draw an already laid-out text block.
-pub fn draw_layout(ctx: &mut RenderContext, l: &deckcraft_text::TextLayout, tr: Rect, m: Affine) {
+pub fn draw_layout(ctx: &mut RenderContext, l: &iridium_decks_text::TextLayout, tr: Rect, m: Affine) {
     draw_layout_with(ctx, l, tr, m, &[]);
 }
 
 /// Draw a laid-out text block with per-paragraph animation states.
-pub fn draw_layout_with(ctx: &mut RenderContext, l: &deckcraft_text::TextLayout, tr: Rect, m: Affine, paras: &[(usize, ParaState)]) {
+pub fn draw_layout_with(ctx: &mut RenderContext, l: &iridium_decks_text::TextLayout, tr: Rect, m: Affine, paras: &[(usize, ParaState)]) {
     let para = |i: usize| paras.iter().find(|(p, _)| *p == i).map(|(_, s)| *s).unwrap_or_default();
     let m = text_transform(m, tr, l.rotation);
-    let deco = |ctx: &mut RenderContext, d: &deckcraft_text::Deco| {
+    let deco = |ctx: &mut RenderContext, d: &iridium_decks_text::Deco| {
         let ps = para(d.para);
         if !ps.visible || ps.opacity <= 0.001 {
             return;
@@ -146,7 +146,7 @@ pub fn draw_layout_with(ctx: &mut RenderContext, l: &deckcraft_text::TextLayout,
             };
             let li = line_at(l, run.para, *y);
             if !grads.iter().any(|(i, _)| *i == li) {
-                let scheme = deckcraft_color::ColorScheme { name: String::new(), colors: [Rgba::BLACK; 12] };
+                let scheme = iridium_decks_color::ColorScheme { name: String::new(), colors: [Rgba::BLACK; 12] };
                 let stops = g.stops.iter().map(|s| (s.pos, s.color.resolve(&scheme, None))).collect();
                 let bounds = l.lines.get(li).and_then(line_bounds).unwrap_or(tr);
                 grads.push((li, paint::gradient(&g.shape, stops, bounds, run.alpha * ps.opacity)));
@@ -162,7 +162,7 @@ pub fn draw_layout_with(ctx: &mut RenderContext, l: &deckcraft_text::TextLayout,
 
 /// Where glyph `gid` of `run` with its pen at (`x`, `y`) is drawn, in text space: there, turned a
 /// quarter turn back about its em box's centre when it stands upright in vertical text.
-pub(crate) fn glyph_place(run: &deckcraft_text::GlyphRun, gid: u32, x: f64, y: f64) -> Affine {
+pub(crate) fn glyph_place(run: &iridium_decks_text::GlyphRun, gid: u32, x: f64, y: f64) -> Affine {
     let at = Affine::translate((x, y));
     match run.upright_centre(gid, x, y) {
         Some((cx, cy)) => Affine::translate((cx, cy)) * Affine::rotate(-std::f64::consts::FRAC_PI_2) * Affine::translate((-cx, -cy)) * at,
@@ -172,7 +172,7 @@ pub(crate) fn glyph_place(run: &deckcraft_text::GlyphRun, gid: u32, x: f64, y: f
 
 /// Fill an underline, strikethrough or highlight with the current paint and transform: its box,
 /// its dashes, or its zigzag stroked.
-pub(crate) fn fill_deco(ctx: &mut RenderContext, d: &deckcraft_text::Deco) {
+pub(crate) fn fill_deco(ctx: &mut RenderContext, d: &iridium_decks_text::Deco) {
     if let Some((pts, w)) = d.wave() {
         let mut path = BezPath::new();
         for (i, p) in pts.iter().enumerate() {
@@ -192,7 +192,7 @@ pub(crate) fn fill_deco(ctx: &mut RenderContext, d: &deckcraft_text::Deco) {
 }
 
 /// The line of paragraph `para` holding a glyph on baseline `y` (the nearest baseline).
-fn line_at(l: &deckcraft_text::TextLayout, para: usize, y: f64) -> usize {
+fn line_at(l: &iridium_decks_text::TextLayout, para: usize, y: f64) -> usize {
     if let Some(&(first, count)) = l.para_lines.get(para) {
         if count == 0 {
             return 0;
@@ -217,7 +217,7 @@ fn line_at(l: &deckcraft_text::TextLayout, para: usize, y: f64) -> usize {
 }
 
 /// The box a line's text covers: its top and bottom, its first and last caret.
-pub(crate) fn line_bounds(li: &deckcraft_text::LineInfo) -> Option<Rect> {
+pub(crate) fn line_bounds(li: &iridium_decks_text::LineInfo) -> Option<Rect> {
     let (x0, x1) = li.caret_x.iter().fold((f64::INFINITY, f64::NEG_INFINITY), |(a, b), x| (a.min(*x), b.max(*x)));
     let r = Rect::new(x0, li.top, x1, li.bottom);
     (r.is_finite() && r.width() > 0.0 && r.height() > 0.0).then_some(r)
@@ -230,7 +230,7 @@ enum TextEffect {
 }
 
 /// Draw `run`'s shadow or glow (if it has one) under its glyphs, placed by `m`.
-fn text_effect(ctx: &mut RenderContext, run: &deckcraft_text::GlyphRun, which: TextEffect, m: Affine, opacity: f64) {
+fn text_effect(ctx: &mut RenderContext, run: &iridium_decks_text::GlyphRun, which: TextEffect, m: Affine, opacity: f64) {
     let Some(fx) = run.effects else { return };
     let k = run.size / run.face.upem.max(1.0);
     let skew = if run.fake_italic { Affine::new([1.0, 0.0, -0.2, 1.0, 0.0, 0.0]) } else { Affine::IDENTITY };
@@ -267,7 +267,7 @@ fn text_effect(ctx: &mut RenderContext, run: &deckcraft_text::GlyphRun, which: T
 }
 
 /// Draw glyph `gid` of `run` with its origin (on the baseline) mapped by `at`, faded by `opacity`.
-pub(crate) fn draw_glyph(ctx: &mut RenderContext, run: &deckcraft_text::GlyphRun, gid: u32, at: Affine, opacity: f64) {
+pub(crate) fn draw_glyph(ctx: &mut RenderContext, run: &iridium_decks_text::GlyphRun, gid: u32, at: Affine, opacity: f64) {
     draw_glyph_with(ctx, run, gid, at, opacity, None);
 }
 
@@ -275,7 +275,7 @@ pub(crate) fn draw_glyph(ctx: &mut RenderContext, run: &deckcraft_text::GlyphRun
 /// the glyph's origin to that space) instead of the run's colour.
 fn draw_glyph_with(
     ctx: &mut RenderContext,
-    run: &deckcraft_text::GlyphRun,
+    run: &iridium_decks_text::GlyphRun,
     gid: u32,
     at: Affine,
     opacity: f64,

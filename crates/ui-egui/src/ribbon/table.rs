@@ -46,7 +46,7 @@ pub(super) fn table_design(app: &mut SlideApp, ui: &mut Ui) {
         });
     });
     group(ui, |ui| {
-        let styles = deckcraft_model::table::table_styles();
+        let styles = iridium_decks_model::table::table_styles();
         let quick: Vec<_> = styles.iter().filter(|(id, _)| id.starts_with("medium2") || id == "none" || id == "grid").take(8).collect();
         let cur = tbl.as_ref().map(|t| t.style.clone()).unwrap_or_default();
         let sel = quick.iter().position(|(id, _)| *id == cur);
@@ -144,8 +144,8 @@ pub(super) fn table_design(app: &mut SlideApp, ui: &mut Ui) {
     });
     // Draw Borders: the pencil splits cells along a line, the eraser merges across a border.
     group(ui, |ui| {
-        use deckcraft_engine::ToolKind;
-        use deckcraft_engine::tools::{DRAW_TABLE, TABLE_ERASER};
+        use iridium_decks_engine::ToolKind;
+        use iridium_decks_engine::tools::{DRAW_TABLE, TABLE_ERASER};
         let cur = app.session.tool.kind.clone();
         for (icon, label, preset) in [(Icon::Pencil, "Draw Table", DRAW_TABLE), (Icon::Eraser, "Table Eraser", TABLE_ERASER)] {
             let on = matches!(&cur, ToolKind::Shape { preset: p } if p == preset);
@@ -156,15 +156,15 @@ pub(super) fn table_design(app: &mut SlideApp, ui: &mut Ui) {
     });
 }
 
-pub fn paint_table_style(p: &egui::Painter, r: Rect, id: &str, sc: &deckcraft_color::ColorScheme) {
+pub fn paint_table_style(p: &egui::Painter, r: Rect, id: &str, sc: &iridium_decks_color::ColorScheme) {
     let slot = match id.rsplit('-').next().unwrap_or("accent1") {
-        "accent2" => deckcraft_color::SchemeSlot::Accent2,
-        "accent3" => deckcraft_color::SchemeSlot::Accent3,
-        "accent4" => deckcraft_color::SchemeSlot::Accent4,
-        "accent5" => deckcraft_color::SchemeSlot::Accent5,
-        "accent6" => deckcraft_color::SchemeSlot::Accent6,
-        "tx1" => deckcraft_color::SchemeSlot::Dk1,
-        _ => deckcraft_color::SchemeSlot::Accent1,
+        "accent2" => iridium_decks_color::SchemeSlot::Accent2,
+        "accent3" => iridium_decks_color::SchemeSlot::Accent3,
+        "accent4" => iridium_decks_color::SchemeSlot::Accent4,
+        "accent5" => iridium_decks_color::SchemeSlot::Accent5,
+        "accent6" => iridium_decks_color::SchemeSlot::Accent6,
+        "tx1" => iridium_decks_color::SchemeSlot::Dk1,
+        _ => iridium_decks_color::SchemeSlot::Accent1,
     };
     let a = theme::to_color32(sc.get(slot));
     let kind = id.split('-').next().unwrap_or("");

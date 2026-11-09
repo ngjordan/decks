@@ -41,7 +41,7 @@ pub(super) fn variant(s: &mut Session, p: &Value) -> Result<Value> {
     s.edit(|doc, sel| {
         let mi = master_index(doc, sel);
         let m = Arc::make_mut(doc.masters.get_mut(mi).ok_or_else(|| bad("design.variant", "no master"))?);
-        let v = deckcraft_model::theme::theme_variants(&m.theme);
+        let v = iridium_decks_model::theme::theme_variants(&m.theme);
         m.theme.colors =
             v.get(index).cloned().ok_or_else(|| bad("design.variant", format!("no variant {index}; 0..{}", v.len().saturating_sub(1))))?;
         Ok(())
@@ -53,7 +53,7 @@ pub(super) fn variants(s: &mut Session, _p: &Value) -> Result<Value> {
     let st = s.doc()?;
     let mi = master_index(&st.doc, &st.selection);
     let th = st.doc.masters.get(mi).map(|m| m.theme.clone()).unwrap_or_default();
-    let v = deckcraft_model::theme::theme_variants(&th);
+    let v = iridium_decks_model::theme::theme_variants(&th);
     let current = v.iter().position(|c| c.colors == th.colors.colors);
     Ok(json!({
         "theme": th.name,
@@ -62,15 +62,15 @@ pub(super) fn variants(s: &mut Session, _p: &Value) -> Result<Value> {
     }))
 }
 
-fn current_colors(s: &Session) -> Result<deckcraft_color::ColorScheme> {
+fn current_colors(s: &Session) -> Result<iridium_decks_color::ColorScheme> {
     let st = s.doc()?;
     let mi = master_index(&st.doc, &st.selection);
     st.doc.masters.get(mi).map(|m| m.theme.colors.clone()).ok_or_else(|| bad("design.colors", "no master"))
 }
 
-fn scheme_dialog_params(sc: &deckcraft_color::ColorScheme) -> Value {
+fn scheme_dialog_params(sc: &iridium_decks_color::ColorScheme) -> Value {
     let mut colors = serde_json::Map::new();
-    for slot in deckcraft_color::SchemeSlot::THEME {
+    for slot in iridium_decks_color::SchemeSlot::THEME {
         colors.insert(slot.xml_name().to_string(), Value::String(format!("#{}", sc.get(slot).hex())));
     }
     json!({"name": sc.name, "colors": colors})
@@ -78,7 +78,7 @@ fn scheme_dialog_params(sc: &deckcraft_color::ColorScheme) -> Value {
 
 /// `None` when the key is absent. Present values must be the twelve stored slots; aliases such
 /// as `bg1` are rejected because `ColorScheme::set` ignores them.
-fn parse_color_slots(colors_v: Option<&Value>) -> Result<Option<Vec<(deckcraft_color::SchemeSlot, deckcraft_color::Rgba)>>> {
+fn parse_color_slots(colors_v: Option<&Value>) -> Result<Option<Vec<(iridium_decks_color::SchemeSlot, iridium_decks_color::Rgba)>>> {
     let Some(v) = colors_v else { return Ok(None) };
     let Some(map) = v.as_object() else {
         return Err(bad("design.colors", "`colors` must be an object"));
@@ -88,13 +88,13 @@ fn parse_color_slots(colors_v: Option<&Value>) -> Result<Option<Vec<(deckcraft_c
     }
     let mut slots = Vec::with_capacity(map.len());
     for (k, v) in map {
-        let Some(slot) = deckcraft_color::SchemeSlot::from_xml(k) else {
+        let Some(slot) = iridium_decks_color::SchemeSlot::from_xml(k) else {
             return Err(bad("design.colors", format!("unknown colour `{k}`")));
         };
-        if !deckcraft_color::SchemeSlot::THEME.contains(&slot) {
+        if !iridium_decks_color::SchemeSlot::THEME.contains(&slot) {
             return Err(bad("design.colors", format!("`{k}` is not a theme colour")));
         }
-        let Some(rgb) = v.as_str().and_then(deckcraft_color::Rgba::from_hex) else {
+        let Some(rgb) = v.as_str().and_then(iridium_decks_color::Rgba::from_hex) else {
             return Err(bad("design.colors", format!("`{k}` needs a colour like #RRGGBB")));
         };
         slots.push((slot, rgb));
@@ -105,10 +105,10 @@ fn parse_color_slots(colors_v: Option<&Value>) -> Result<Option<Vec<(deckcraft_c
 /// A builtin `name` is applied first, then `colors` overlays those slots. The stored scheme name
 /// is the given name, or `Custom` when only colours are sent. An unknown name without colours is an error.
 fn next_scheme(
-    current: &deckcraft_color::ColorScheme,
+    current: &iridium_decks_color::ColorScheme,
     given: Option<&str>,
-    slots: Option<&[(deckcraft_color::SchemeSlot, deckcraft_color::Rgba)]>,
-) -> Result<deckcraft_color::ColorScheme> {
+    slots: Option<&[(iridium_decks_color::SchemeSlot, iridium_decks_color::Rgba)]>,
+) -> Result<iridium_decks_color::ColorScheme> {
     let mut next = current.clone();
     if let Some(name) = given {
         if let Some(builtin) = builtin_color_schemes().into_iter().find(|c| c.name.eq_ignore_ascii_case(name)) {
@@ -164,13 +164,13 @@ pub(super) fn fonts(s: &mut Session, p: &Value) -> Result<Value> {
     ok()
 }
 
-fn current_fonts(s: &Session) -> Result<deckcraft_model::theme::FontScheme> {
+fn current_fonts(s: &Session) -> Result<iridium_decks_model::theme::FontScheme> {
     let st = s.doc()?;
     let mi = master_index(&st.doc, &st.selection);
     st.doc.masters.get(mi).map(|m| m.theme.fonts.clone()).ok_or_else(|| bad("design.fonts", "no master"))
 }
 
-fn font_dialog_params(scheme: &deckcraft_model::theme::FontScheme) -> Value {
+fn font_dialog_params(scheme: &iridium_decks_model::theme::FontScheme) -> Value {
     json!({"name": scheme.name, "major": scheme.major.latin, "minor": scheme.minor.latin})
 }
 
@@ -191,11 +191,11 @@ fn face_param(key: &str, v: Option<&Value>) -> Result<Option<String>> {
 /// faces are overlaid or the name is not a builtin; a name-only builtin keeps its own name.
 /// Faces without a name are a custom scheme: an omitted `minor` copies `major`.
 fn next_font_scheme(
-    current: &deckcraft_model::theme::FontScheme,
+    current: &iridium_decks_model::theme::FontScheme,
     given: Option<&str>,
     major: Option<&str>,
     minor: Option<&str>,
-) -> Result<deckcraft_model::theme::FontScheme> {
+) -> Result<iridium_decks_model::theme::FontScheme> {
     let mut next = current.clone();
     if let Some(name) = given {
         let replaced = if let Some(builtin) = builtin_font_schemes().into_iter().find(|f| f.name.eq_ignore_ascii_case(name)) {

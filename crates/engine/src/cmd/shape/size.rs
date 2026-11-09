@@ -89,7 +89,7 @@ fn norm_deg(r: f64) -> f64 {
 }
 
 /// Width wins when both sides are set with the aspect locked, matching `shape.resize`.
-fn apply_size(x: &mut deckcraft_geom::Xfrm, spec: SizeSpec) {
+fn apply_size(x: &mut iridium_decks_geom::Xfrm, spec: SizeSpec) {
     let ar = if x.h > 0.0 { x.w / x.h } else { 1.0 };
     let mut nw = x.w;
     let mut nh = x.h;

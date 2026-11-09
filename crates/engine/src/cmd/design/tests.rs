@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
-use deckcraft_color::SchemeSlot;
-use deckcraft_model::style::PictureMode;
-use deckcraft_model::theme::{FontScheme, ScriptFont, builtin_color_schemes, builtin_font_schemes};
-use deckcraft_model::{Background, Fill};
+use iridium_decks_color::SchemeSlot;
+use iridium_decks_model::style::PictureMode;
+use iridium_decks_model::theme::{FontScheme, ScriptFont, builtin_color_schemes, builtin_font_schemes};
+use iridium_decks_model::{Background, Fill};
 use serde_json::{Value, json};
 
 use crate::{Session, UiRequest};
 
-fn scheme(s: &Session) -> deckcraft_color::ColorScheme {
+fn scheme(s: &Session) -> iridium_decks_color::ColorScheme {
     s.doc().unwrap().doc.masters[0].theme.colors.clone()
 }
 
@@ -28,7 +28,7 @@ fn png() -> String {
     crate::cmd::base64_encode(&bytes)
 }
 
-fn picture(s: &Session) -> deckcraft_model::style::PictureFill {
+fn picture(s: &Session) -> iridium_decks_model::style::PictureFill {
     match &s.doc().unwrap().doc.slides[0].background {
         Some(Background::Fill { fill: Fill::Picture(pf) }) => pf.clone(),
         other => panic!("expected a picture background, got {other:?}"),
@@ -78,7 +78,7 @@ fn colors_dialog_apply_and_reject() {
     match &s.ui_requests[0] {
         UiRequest::Dialog { id, params } => {
             assert_eq!(id, "themeColors");
-            assert_eq!(params["name"], "Iridium Decks");
+            assert_eq!(params["name"], "Decks");
             let colors = params["colors"].as_object().unwrap();
             assert_eq!(colors.len(), 12);
             assert_eq!(colors["accent1"].as_str().unwrap(), format!("#{}", original.get(SchemeSlot::Accent1).hex()));
@@ -98,7 +98,7 @@ fn colors_dialog_apply_and_reject() {
     colors_dialog_rejects(&mut s, n, &harbor);
 }
 
-fn colors_dialog_rejects(s: &mut Session, n: usize, harbor: &deckcraft_color::ColorScheme) {
+fn colors_dialog_rejects(s: &mut Session, n: usize, harbor: &iridium_decks_color::ColorScheme) {
     let err = s.execute("design.colors", &json!({"name": "Nope"})).unwrap_err().to_string();
     assert!(err.contains("no colour scheme `Nope`"), "{err}");
     assert!(s.execute("design.colors", &json!({"name": "  "})).is_err());
@@ -117,7 +117,7 @@ fn colors_dialog_rejects(s: &mut Session, n: usize, harbor: &deckcraft_color::Co
     colors_dialog_custom_overrides(s, n, harbor);
 }
 
-fn colors_dialog_custom_overrides(s: &mut Session, n: usize, harbor: &deckcraft_color::ColorScheme) {
+fn colors_dialog_custom_overrides(s: &mut Session, n: usize, harbor: &iridium_decks_color::ColorScheme) {
     s.execute("design.colors", &json!({"colors": {"accent1": "112233"}})).unwrap();
     assert_eq!(scheme(s).name, "Custom");
     assert_eq!(scheme(s).get(SchemeSlot::Accent1).hex(), "112233");
@@ -349,7 +349,8 @@ fn background_copy_from_slide_following_master_preserves_master_and_layout_backg
     s.execute("file.new", &json!({"theme": "Nocturne"})).unwrap();
     s.execute("slide.new", &json!({"layout": "titleAndContent"})).unwrap();
 
-    let custom_layout_bg = Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0x22, 0x22, 0x22))) };
+    let custom_layout_bg =
+        Background::Fill { fill: Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0x22, 0x22, 0x22))) };
     s.edit(|doc, _| {
         let m = Arc::make_mut(&mut doc.masters[0]);
         m.layouts[0].background = Some(custom_layout_bg.clone());
@@ -392,7 +393,8 @@ fn background_reset_all_preserves_master_and_layout_backgrounds() {
     s.execute("file.new", &json!({"theme": "Nocturne"})).unwrap();
     s.execute("slide.new", &json!({"layout": "titleAndContent"})).unwrap();
 
-    let custom_layout_bg = Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0x33, 0x33, 0x33))) };
+    let custom_layout_bg =
+        Background::Fill { fill: Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0x33, 0x33, 0x33))) };
     s.edit(|doc, _| {
         let m = Arc::make_mut(&mut doc.masters[0]);
         m.layouts[0].background = Some(custom_layout_bg.clone());
@@ -434,10 +436,11 @@ fn background_all_only_touches_used_masters() {
     s.execute("file.new", &json!({"theme": "Nocturne"})).unwrap();
 
     // Add a second master to presentation
-    let second_master_bg = Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0x55, 0x55, 0x55))) };
+    let second_master_bg =
+        Background::Fill { fill: Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0x55, 0x55, 0x55))) };
     s.edit(|doc, _| {
         let mut m2 = (*doc.masters[0]).clone();
-        m2.id = deckcraft_model::MasterId(999);
+        m2.id = iridium_decks_model::MasterId(999);
         m2.background = Some(second_master_bg.clone());
         doc.masters.push(Arc::new(m2));
         Ok(())
@@ -465,7 +468,7 @@ fn background_all_clears_layout_overrides_even_if_slides_and_master_match() {
     assert_eq!(s.doc().unwrap().doc.masters[0].background, s.doc().unwrap().doc.slides[0].background);
 
     // Add a layout override on layout 0
-    let custom_bg = Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0x12, 0x34, 0x56))) };
+    let custom_bg = Background::Fill { fill: Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0x12, 0x34, 0x56))) };
     s.edit(|doc, _| {
         let m = Arc::make_mut(&mut doc.masters[0]);
         m.layouts[0].background = Some(custom_bg);

@@ -4,7 +4,7 @@ pub(super) fn background(app: &mut SlideApp, ui: &mut Ui) {
     let sc = scheme(app);
     let bg = app.session.active().and_then(|d| d.current_slide().and_then(|s| s.background.clone()));
     let fill = match &bg {
-        Some(deckcraft_model::Background::Fill { fill }) => Some(fill.clone()),
+        Some(iridium_decks_model::Background::Fill { fill }) => Some(fill.clone()),
         _ => None,
     };
     let kind = match &fill {
@@ -28,7 +28,7 @@ pub(super) fn background(app: &mut SlideApp, ui: &mut Ui) {
             match k {
                 "solid" => run(app, "design.background", json!({"color": "bg1"})),
                 "gradient" => {
-                    let mut g = crate::fillui::default_gradient(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Bg2), 90.0);
+                    let mut g = crate::fillui::default_gradient(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Bg2), 90.0);
                     g.rotate_with_shape = false;
                     run(app, "design.background", json!({"gradient": crate::fillui::gradient_json(&g)}));
                 }
@@ -37,7 +37,7 @@ pub(super) fn background(app: &mut SlideApp, ui: &mut Ui) {
                         && let Some(path) = pick("picture")
                         && let Some(Ok(bytes)) = app.services.read.as_ref().map(|r| r(&path))
                     {
-                        let _ = app.run("design.background", json!({"picture": deckcraft_engine::cmd::base64_encode(&bytes)}));
+                        let _ = app.run("design.background", json!({"picture": iridium_decks_engine::cmd::base64_encode(&bytes)}));
                     }
                 }
                 "pattern" => run(app, "design.background", json!({"pattern": {"preset": "pct20", "fg": "accent1", "bg": "bg1"}})),
@@ -81,7 +81,7 @@ pub(super) fn background(app: &mut SlideApp, ui: &mut Ui) {
                 && let Some(path) = pick("picture")
                 && let Some(Ok(bytes)) = app.services.read.as_ref().map(|r| r(&path))
             {
-                let _ = app.run("design.background", json!({"picture": deckcraft_engine::cmd::base64_encode(&bytes)}));
+                let _ = app.run("design.background", json!({"picture": iridium_decks_engine::cmd::base64_encode(&bytes)}));
             }
             picture_background_options(app, ui, pf);
         }
@@ -112,8 +112,8 @@ pub(super) fn background(app: &mut SlideApp, ui: &mut Ui) {
 
 /// Render picture-fill background controls and route transparency, tiling, and tile geometry
 /// changes through the engine.
-fn picture_background_options(app: &mut SlideApp, ui: &mut Ui, pf: &deckcraft_model::style::PictureFill) {
-    use deckcraft_model::style::PictureMode;
+fn picture_background_options(app: &mut SlideApp, ui: &mut Ui, pf: &iridium_decks_model::style::PictureFill) {
+    use iridium_decks_model::style::PictureMode;
     let alpha = pf.alpha.unwrap_or(1.0);
     let mut tr = ((1.0 - alpha) * 100.0) as f32;
     if ui.add(egui::Slider::new(&mut tr, 0.0..=100.0).text("Transparency").suffix("%")).drag_stopped() {

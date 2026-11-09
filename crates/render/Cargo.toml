@@ -1,21 +1,21 @@
 [package]
-name = "deckcraft-render"
+name = "iridium-decks-render"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Iridium Decks renderer: slides, layouts and masters to pixels (vello_cpu): fills, outlines, effects, pictures, text, tables, charts"
+description = "Decks renderer: slides, layouts and masters to pixels (vello_cpu): fills, outlines, effects, pictures, text, tables, charts"
 
 [lints]
 workspace = true
 
 [dependencies]
-deckcraft-geom = { workspace = true }
-deckcraft-color = { workspace = true }
-deckcraft-metafile = { workspace = true }
-deckcraft-model = { workspace = true }
-deckcraft-anim = { workspace = true }
-deckcraft-fonts = { workspace = true }
-deckcraft-text = { workspace = true }
+iridium-decks-geom = { workspace = true }
+iridium-decks-color = { workspace = true }
+iridium-decks-metafile = { workspace = true }
+iridium-decks-model = { workspace = true }
+iridium-decks-anim = { workspace = true }
+iridium-decks-fonts = { workspace = true }
+iridium-decks-text = { workspace = true }
 vello_cpu = { workspace = true }
 vello_common = { workspace = true }
 image = { workspace = true }

@@ -2,7 +2,7 @@
 
 use crate::error::{Result, ensure, unsupported};
 use crate::tables::{DEFAULT_4X4_INTER, DEFAULT_4X4_INTRA, DEFAULT_8X8_INTER, DEFAULT_8X8_INTRA, ZIGZAG4, ZIGZAG8};
-use deckcraft_bitstream::BitReader;
+use iridium_decks_bitstream::BitReader;
 
 /// Scaling matrices after applying fall-back rules, stored in raster order (weightScale).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -675,7 +675,7 @@ impl Pps {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_bitstream::BitWriter;
+    use iridium_decks_bitstream::BitWriter;
 
     #[test]
     fn scaling_list_default_signal() {

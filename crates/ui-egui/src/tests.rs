@@ -50,7 +50,7 @@ fn a_trackpad_twist_rotates_the_shape_under_the_canvas() {
 /// The browser "PNG images (all slides)" export yields one image per slide, not just the selected one (#64).
 #[test]
 fn web_export_all_slides_gives_one_file_per_slide() {
-    let mut doc = deckcraft_model::Presentation::default();
+    let mut doc = iridium_decks_model::Presentation::default();
     if let Some(first) = doc.slides.first().cloned() {
         doc.slides.push(first.clone());
         doc.slides.push(first);
@@ -77,7 +77,7 @@ fn web_png_export_can_leave_the_background_transparent() {
         ..Default::default()
     };
     let mut app = SlideApp::new(Session::with_new(), services);
-    let corner_alpha = |bytes: &[u8]| deckcraft_render::decode_image(bytes).unwrap().get_pixel(2, 2).0[3];
+    let corner_alpha = |bytes: &[u8]| iridium_decks_render::decode_image(bytes).unwrap().get_pixel(2, 2).0[3];
     assert!(app.export_as("png", json!({})));
     assert!(app.export_as("png", json!({"transparentBackground": true})));
     assert!(app.export_as("jpeg", json!({"transparentBackground": true})));
@@ -126,21 +126,21 @@ fn quick_access_toolbar_adds_removes_resets_and_persists() {
     // Alt+1 runs position 0 (app.home) when on Windows/Linux, opening Backstage.
     app.session.mac_keys = false;
     assert!(!app.backstage_open());
-    assert!(crate::menus::ui_shortcut(app, egui::Key::Num1, deckcraft_engine::Mods { shift: false, alt: true, cmd: false }));
+    assert!(crate::menus::ui_shortcut(app, egui::Key::Num1, iridium_decks_engine::Mods { shift: false, alt: true, cmd: false }));
     assert!(app.backstage_open());
     // Disabled while Backstage is open.
-    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, deckcraft_engine::Mods { shift: false, alt: true, cmd: false }));
+    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, iridium_decks_engine::Mods { shift: false, alt: true, cmd: false }));
     app.close_backstage();
     // Alt+9 is unassigned when there are only 6 items.
-    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num9, deckcraft_engine::Mods { shift: false, alt: true, cmd: false }));
+    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num9, iridium_decks_engine::Mods { shift: false, alt: true, cmd: false }));
     // Disabled on macOS so Option+digit types characters.
     app.session.mac_keys = true;
-    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, deckcraft_engine::Mods { shift: false, alt: true, cmd: false }));
+    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, iridium_decks_engine::Mods { shift: false, alt: true, cmd: false }));
     app.session.mac_keys = false;
     // Disabled when text is being edited.
-    let shape_id = deckcraft_model::ShapeId(app.session.active().unwrap().selection.shapes.first().map(|s| s.0).unwrap_or(0));
-    app.session.active_mut().unwrap().selection.text = Some(deckcraft_engine::TextSel { shape: shape_id, ..Default::default() });
-    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, deckcraft_engine::Mods { shift: false, alt: true, cmd: false }));
+    let shape_id = iridium_decks_model::ShapeId(app.session.active().unwrap().selection.shapes.first().map(|s| s.0).unwrap_or(0));
+    app.session.active_mut().unwrap().selection.text = Some(iridium_decks_engine::TextSel { shape: shape_id, ..Default::default() });
+    assert!(!crate::menus::ui_shortcut(app, egui::Key::Num1, iridium_decks_engine::Mods { shift: false, alt: true, cmd: false }));
     app.session.active_mut().unwrap().selection.text = None;
     // Disabled QAT items (e.g. edit.undo when stack is empty) cannot run.
     assert!(!crate::qat::run_index(app, 3));
@@ -152,12 +152,12 @@ fn quick_access_toolbar_adds_removes_resets_and_persists() {
 #[test]
 fn opening_a_file_with_missing_fonts_shows_a_toast_once() {
     use egui_kittest::kittest::Queryable;
-    let mut p = deckcraft_model::Presentation::default();
+    let mut p = iridium_decks_model::Presentation::default();
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
-    let mut body = deckcraft_model::text::TextBody::from_text("Hello");
+    let mut body = iridium_decks_model::text::TextBody::from_text("Hello");
     body.paragraphs[0].runs[0].props.font = Some("Qqq Nonexistent Sans".into());
     slide.shapes[0].text = Some(body);
-    let data = deckcraft_engine::cmd::base64_encode(&deckcraft_engine::cmd::file::save_bytes(&p, "pptx").unwrap());
+    let data = iridium_decks_engine::cmd::base64_encode(&iridium_decks_engine::cmd::file::save_bytes(&p, "pptx").unwrap());
     let mut harness = egui_kittest::Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_ui_state(
         |ui, app: &mut SlideApp| {
             app.logic(ui.ctx());
@@ -190,15 +190,16 @@ fn change_picture_replaces_the_selected_picture() {
         let pics: Vec<_> = d.doc.slides[0]
             .shapes
             .iter()
-            .filter_map(|s| if let deckcraft_model::ShapeKind::Picture { fill } = &s.kind { Some(fill.media) } else { None })
+            .filter_map(|s| if let iridium_decks_model::ShapeKind::Picture { fill } = &s.kind { Some(fill.media) } else { None })
             .collect();
         assert_eq!(pics.len(), 1, "one picture, replaced in place");
         pics[0]
     };
     let insert = |app: &mut SlideApp| {
-        let id = app.session.execute("insert.picture", &json!({"name": "a.svg", "data": deckcraft_engine::cmd::base64_encode(&svg("red"))})).unwrap()
-            ["id"]
-            .clone();
+        let id =
+            app.session.execute("insert.picture", &json!({"name": "a.svg", "data": iridium_decks_engine::cmd::base64_encode(&svg("red"))})).unwrap()
+                ["id"]
+                .clone();
         app.session.execute("edit.select", &json!({"ids": [id]})).unwrap();
         media(app)
     };
@@ -385,7 +386,7 @@ fn ctrl_v_pastes_an_image_when_no_paste_event_arrives() {
     let session = Session::with_new();
     let png = {
         let d = session.active().unwrap();
-        deckcraft_engine::cmd::file::render_png(&d.doc, 0, 0.1, false).0
+        iridium_decks_engine::cmd::file::render_png(&d.doc, 0, 0.1, false).0
     };
     assert!(!png.is_empty());
     let services = Services { clipboard_image: Some(Box::new(move || Some(png.clone()))), ..Default::default() };
@@ -399,7 +400,7 @@ fn ctrl_v_pastes_an_image_when_no_paste_event_arrives() {
     harness.run_steps(2);
     let pictures = |app: &SlideApp| {
         let d = app.session.active().unwrap();
-        d.doc.slides[0].shapes.iter().filter(|s| matches!(s.kind, deckcraft_model::ShapeKind::Picture { .. })).count()
+        d.doc.slides[0].shapes.iter().filter(|s| matches!(s.kind, iridium_decks_model::ShapeKind::Picture { .. })).count()
     };
     let v = |pressed| egui::Event::Key { key: egui::Key::V, physical_key: None, pressed, repeat: false, modifiers: egui::Modifiers::COMMAND };
     // A text paste (Paste event on the press) does not also paste the image on release.
@@ -725,7 +726,7 @@ fn selected(app: &SlideApp) -> Vec<u64> {
 
 fn shape_x(app: &SlideApp, id: u64) -> f64 {
     let st = app.session.active().unwrap();
-    st.shape(deckcraft_model::ShapeId(id as u32)).and_then(|s| s.xfrm).unwrap().x
+    st.shape(iridium_decks_model::ShapeId(id as u32)).and_then(|s| s.xfrm).unwrap().x
 }
 
 /// #270: PowerPoint's Normal view draws objects off the slide on the area around it, where
@@ -754,7 +755,7 @@ fn off_slide_objects_show_on_the_pasteboard_and_can_be_selected_and_moved() {
         let shape = px(centre);
         let board = px(slide.min + egui::vec2(1060.0 * k, 400.0 * k));
         let doc = &harness.state().session.active().unwrap().doc;
-        let accent = doc.masters[0].theme.colors.get(deckcraft_color::SchemeSlot::Accent1);
+        let accent = doc.masters[0].theme.colors.get(iridium_decks_color::SchemeSlot::Accent1);
         let close = |a: u8, b: u8| (a as i32 - b as i32).abs() <= 4;
         assert!(close(shape[0], accent.r) && close(shape[1], accent.g) && close(shape[2], accent.b), "{shape:?} vs {accent:?}");
         assert_ne!(shape, board);
@@ -931,12 +932,12 @@ fn harness() -> egui_kittest::Harness<'static, SlideApp> {
 #[test]
 fn missing_recent_is_marked_and_its_error_shows() {
     let mut harness = harness();
-    let missing = "/deckcraft-tests/172/missing.deckcraft";
+    let missing = "/iridium-decks-tests/172/missing.iridium-decks";
     harness.state_mut().ui.recent = vec![missing.to_string()];
     harness.run_steps(2);
     // The row is labelled with the file's name. Clicking it raises the open error, and the
     // drawn message is a second node that mentions the name (the OS text after it varies).
-    harness.get_by_label("missing.deckcraft").click();
+    harness.get_by_label("missing.iridium-decks").click();
     harness.run_steps(2);
     // The file is read in the background (#350): wait for that read to finish.
     for _ in 0..500 {
@@ -948,14 +949,14 @@ fn missing_recent_is_marked_and_its_error_shows() {
     }
     harness.run_steps(2);
     assert!(harness.state().toast.is_some(), "the open error was raised");
-    assert!(harness.get_all_by_label_contains("missing.deckcraft").count() >= 2, "the open error is drawn on the page, next to the entry");
+    assert!(harness.get_all_by_label_contains("missing.iridium-decks").count() >= 2, "the open error is drawn on the page, next to the entry");
 }
 
 /// #172: a Recent entry can be removed from the list.
 #[test]
 fn recent_entry_can_be_removed() {
     let mut harness = harness();
-    harness.state_mut().ui.recent = vec!["/deckcraft-tests/172/a.deckcraft".into(), "/deckcraft-tests/172/b.deckcraft".into()];
+    harness.state_mut().ui.recent = vec!["/iridium-decks-tests/172/a.iridium-decks".into(), "/iridium-decks-tests/172/b.iridium-decks".into()];
     harness.run_steps(2);
     let removes = harness.get_all_by_label("Remove from Recent").collect::<Vec<_>>();
     assert_eq!(removes.len(), 2);
@@ -964,7 +965,7 @@ fn recent_entry_can_be_removed() {
     assert!(removes[1].rect().right() < 1200.0, "reachable in the 1200-wide window: {:?}", removes[1].rect());
     removes[1].click();
     harness.run_steps(1);
-    assert_eq!(harness.state().ui.recent, vec!["/deckcraft-tests/172/a.deckcraft"]);
+    assert_eq!(harness.state().ui.recent, vec!["/iridium-decks-tests/172/a.iridium-decks"]);
 }
 
 /// The existence probe tells present files from missing ones and never touches remote paths.
@@ -972,11 +973,11 @@ fn recent_entry_can_be_removed() {
 fn recent_exists_tells_missing_from_present() {
     let mut app = SlideApp::new(Session::new(), Services::default());
     let mut path = std::env::temp_dir();
-    path.push(format!("deckcraft-test-172-{}.deckcraft", std::process::id()));
+    path.push(format!("iridium-decks-test-172-{}.iridium-decks", std::process::id()));
     std::fs::write(&path, b"").unwrap();
     assert!(app.recent_exists(&path.to_string_lossy()), "the file exists");
-    assert!(!app.recent_exists("/deckcraft-tests/172/missing.deckcraft"));
-    assert!(app.recent_exists("\\\\server/share/deck.deckcraft"), "UNC paths are never probed");
+    assert!(!app.recent_exists("/iridium-decks-tests/172/missing.iridium-decks"));
+    assert!(app.recent_exists("\\\\server/share/deck.iridium-decks"), "UNC paths are never probed");
     std::fs::remove_file(&path).ok();
 }
 
@@ -1084,7 +1085,7 @@ fn the_language_dialog_marks_the_whole_presentation_with_nothing_selected() {
 /// heading, Enter in a bulleted point, then saving as .pptx and reopening.
 #[test]
 fn editing_notes_in_the_pane_keeps_their_formatting() {
-    use deckcraft_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
+    use iridium_decks_model::text::{Bullet, ParaProps, Paragraph, Run, RunProps, TextBody};
     let point = |runs: Vec<Run>| Paragraph {
         level: 1,
         props: ParaProps {
@@ -1244,8 +1245,8 @@ fn preview_hides_an_entrance_until_it_plays() {
     session.execute("animation.set", &json!({"effect": "fade", "duration": 1000})).unwrap();
     session.execute("animation.options", &json!({"textBuild": "byParagraph"})).unwrap();
     let doc = session.active().unwrap().doc.clone();
-    let tl = deckcraft_anim::ShowState::timeline(&doc, 0);
-    let shape = deckcraft_model::ShapeId(text as u32);
+    let tl = iridium_decks_anim::ShowState::timeline(&doc, 0);
+    let shape = iridium_decks_model::ShapeId(text as u32);
     let para = |time: f64, i: usize| preview::shape_state_at(&tl, shape, time).paras.into_iter().find(|(p, _)| *p == i).map(|(_, s)| s).unwrap();
     assert!(!para(0.0, 0).visible && !para(0.0, 1).visible, "entrances have not started");
     let mid = para(0.25, 0);
@@ -1257,13 +1258,13 @@ fn preview_hides_an_entrance_until_it_plays() {
     session.execute("shape.fill", &json!({"id": id, "color": "#CC2200"})).unwrap();
     session.execute("animation.set", &json!({"effect": "fade", "duration": 1000})).unwrap();
     let doc = session.active().unwrap().doc.clone();
-    let tl = deckcraft_anim::ShowState::timeline(&doc, 0);
+    let tl = iridium_decks_anim::ShowState::timeline(&doc, 0);
     let (w, h) = (doc.slide_size.width.round().max(1.0) as u32, doc.slide_size.height.round().max(1.0) as u32);
     let paint = |time: Option<f64>| {
-        let f = |sid: deckcraft_model::ShapeId| preview::shape_state_at(&tl, sid, time.unwrap_or(0.0));
-        let state: Option<&dyn Fn(deckcraft_model::ShapeId) -> deckcraft_render::ShapeState> = if time.is_some() { Some(&f) } else { None };
-        let opts = deckcraft_render::RenderOpts { scale: 1.0, size: Some((w, h)), state, ..Default::default() };
-        deckcraft_render::render_slide(&doc, 0, &opts).pixel(460, 340)
+        let f = |sid: iridium_decks_model::ShapeId| preview::shape_state_at(&tl, sid, time.unwrap_or(0.0));
+        let state: Option<&dyn Fn(iridium_decks_model::ShapeId) -> iridium_decks_render::ShapeState> = if time.is_some() { Some(&f) } else { None };
+        let opts = iridium_decks_render::RenderOpts { scale: 1.0, size: Some((w, h)), state, ..Default::default() };
+        iridium_decks_render::render_slide(&doc, 0, &opts).pixel(460, 340)
     };
     let rest = paint(None);
     let start = paint(Some(0.0));
@@ -1938,7 +1939,7 @@ fn synthetic_click_is_consumed_on_its_old_target_before_logic_changes_the_docume
     let (tx, rx) = std::sync::mpsc::channel();
     app.control_rx = Some(rx);
     let (req, reply) =
-        ControlRequest::new("engine.execute", json!({"command": "file.openBytes", "params": {"name": "destination.deckcraft", "data": data}}));
+        ControlRequest::new("engine.execute", json!({"command": "file.openBytes", "params": {"name": "destination.iridium-decks", "data": data}}));
     tx.send(req).unwrap();
 
     // `raw_input_hook` admits one pointer event per pass. Every one of those passes must stay

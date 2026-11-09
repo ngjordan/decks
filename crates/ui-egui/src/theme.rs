@@ -32,7 +32,7 @@ pub struct Tokens {
     pub hover: Color32,
     pub pressed: Color32,
     pub selected: Color32,
-    /// Iridium Decks's accent (tabs underline, selected thumbnail, primary buttons).
+    /// Decks's accent (tabs underline, selected thumbnail, primary buttons).
     pub accent: Color32,
     pub accent_text: Color32,
     pub contextual: Color32,
@@ -178,15 +178,15 @@ pub fn install_fonts(ctx: &egui::Context) {
 /// [`install_fonts`], with `extra` faces from the font database after every interface font: the
 /// installed or embedded faces that draw text the interface faces lack (Hangul, Simplified
 /// Chinese, Devanagari…, #101). See [`crate::uifonts`].
-pub fn install_fonts_with(ctx: &egui::Context, extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) {
+pub fn install_fonts_with(ctx: &egui::Context, extra: &[std::sync::Arc<iridium_decks_fonts::FontFace>]) {
     ctx.set_fonts(font_definitions(extra));
 }
 
 /// The interface font definitions; see [`install_fonts_with`].
-pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> FontDefinitions {
+pub fn font_definitions(extra: &[std::sync::Arc<iridium_decks_fonts::FontFace>]) -> FontDefinitions {
     let mut defs = FontDefinitions::default();
     let mut names = vec![];
-    for (i, f) in deckcraft_fonts::CRAFT_FONTS.iter().enumerate() {
+    for (i, f) in iridium_decks_fonts::CRAFT_FONTS.iter().enumerate() {
         let wanted = (f.family == "Inter" && (f.style == "Regular" || f.style == "SemiBold" || f.style == "Bold"))
             || (f.family == "BIZ UDPGothic" && f.style == "Regular")
             // Exact craft-fonts family names: the Korean face is "NanumGothic" (no space), and
@@ -238,7 +238,7 @@ pub fn font_definitions(extra: &[std::sync::Arc<deckcraft_fonts::FontFace>]) -> 
 }
 
 /// Add `faces` after every other font of each interface family (the last fallbacks).
-pub fn add_fallback_faces(defs: &mut FontDefinitions, faces: &[std::sync::Arc<deckcraft_fonts::FontFace>]) {
+pub fn add_fallback_faces(defs: &mut FontDefinitions, faces: &[std::sync::Arc<iridium_decks_fonts::FontFace>]) {
     for f in faces {
         let name = format!("fallback {} {} {}", f.family, f.style, f.id());
         if defs.font_data.contains_key(&name) {
@@ -261,7 +261,7 @@ pub fn font(size: f32) -> egui::FontId {
     egui::FontId::proportional(size)
 }
 
-pub fn to_color32(c: deckcraft_color::Rgba) -> Color32 {
+pub fn to_color32(c: iridium_decks_color::Rgba) -> Color32 {
     Color32::from_rgba_unmultiplied(c.r, c.g, c.b, c.a)
 }
 
@@ -307,7 +307,7 @@ mod tests {
         // dependencies do not propagate. This library enables it (and the test build enables
         // `monochrome_emoji_fonts`) explicitly.
         let defs = FontDefinitions::default();
-        assert!(defs.font_data.contains_key("Hack"), "default_fonts must be enabled by deckcraft-ui-egui itself");
+        assert!(defs.font_data.contains_key("Hack"), "default_fonts must be enabled by iridium-decks-ui-egui itself");
         assert!(defs.font_data.contains_key("Ubuntu-Light"));
         assert!(defs.font_data.contains_key("NotoEmoji-Regular"), "monochrome_emoji_fonts is an explicit test feature");
         assert!(defs.families.contains_key(&FontFamily::Proportional));
@@ -323,7 +323,7 @@ mod tests {
     #[test]
     #[cfg(not(target_arch = "wasm32"))]
     fn native_chinese_fallback_draws_initial_document_labels() {
-        let faces: Vec<_> = deckcraft_fonts::CRAFT_FONTS.iter().filter(|f| f.family == "LXGW WenKai Lite").collect();
+        let faces: Vec<_> = iridium_decks_fonts::CRAFT_FONTS.iter().filter(|f| f.family == "LXGW WenKai Lite").collect();
         if faces.is_empty() {
             assert!(option_env!("CRAFT_FONTS_REQUIRED").is_none(), "required native font input must include the reviewed Chinese fallback");
             eprintln!("optional Chinese input absent: bundled Chinese coverage was not qualified");
@@ -369,7 +369,7 @@ mod tests {
     #[test]
     #[cfg(not(target_arch = "wasm32"))]
     fn native_hebrew_fallback_is_one_regular_face_and_draws_language_labels() {
-        let faces: Vec<_> = deckcraft_fonts::CRAFT_FONTS.iter().filter(|f| f.family == "Noto Sans Hebrew").collect();
+        let faces: Vec<_> = iridium_decks_fonts::CRAFT_FONTS.iter().filter(|f| f.family == "Noto Sans Hebrew").collect();
         if faces.is_empty() {
             assert!(option_env!("CRAFT_FONTS_REQUIRED").is_none(), "required native font input must include Noto Sans Hebrew Regular");
             eprintln!("optional font input absent: native Hebrew coverage was not qualified");
@@ -410,7 +410,7 @@ mod tests {
     #[test]
     #[cfg(not(target_arch = "wasm32"))]
     fn native_hebrew_fallback_keeps_mixed_text_editing_in_logical_order() {
-        if !deckcraft_fonts::CRAFT_FONTS.iter().any(|f| f.family == "Noto Sans Hebrew") {
+        if !iridium_decks_fonts::CRAFT_FONTS.iter().any(|f| f.family == "Noto Sans Hebrew") {
             assert!(option_env!("CRAFT_FONTS_REQUIRED").is_none(), "required native Hebrew face is absent");
             return;
         }

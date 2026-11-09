@@ -3,7 +3,7 @@ use super::{SlideApp, Tokens, Ui, Value, json, run};
 /// SmartArt Text Pane: one line per node, indented by level. Enter adds a line after, Tab and
 /// Shift+Tab demote and promote, Backspace in an empty line removes it.
 pub(super) fn smartart(app: &mut SlideApp, ui: &mut Ui) {
-    let Some((gid, d)) = app.session.active().and_then(deckcraft_engine::cmd::smartart::selected) else {
+    let Some((gid, d)) = app.session.active().and_then(iridium_decks_engine::cmd::smartart::selected) else {
         ui.label("Select a SmartArt graphic to edit its text.");
         return;
     };

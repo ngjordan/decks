@@ -41,7 +41,7 @@ pub(super) fn picture_format(app: &mut SlideApp, ui: &mut Ui) {
             ui.separator();
             ui.label("Recolor");
             let sc = scheme(app);
-            let presets = deckcraft_engine::cmd::recolor::presets();
+            let presets = iridium_decks_engine::cmd::recolor::presets();
             let names: Vec<String> = presets.iter().map(|(_, l)| l.clone()).collect();
             if let Some(i) = widgets::gallery(
                 ui,
@@ -71,7 +71,7 @@ pub(super) fn picture_format(app: &mut SlideApp, ui: &mut Ui) {
             if ui.button("None").clicked() {
                 run(app, "picture.artisticEffect", json!({"effect": "none"}));
             }
-            for (e, l) in deckcraft_engine::cmd::artistic::EFFECTS {
+            for (e, l) in iridium_decks_engine::cmd::artistic::EFFECTS {
                 if ui.button(*l).clicked() {
                     run(app, "picture.artisticEffect", json!({"effect": e}));
                 }
@@ -98,7 +98,7 @@ pub(super) fn picture_format(app: &mut SlideApp, ui: &mut Ui) {
         });
     });
     group(ui, |ui| {
-        use deckcraft_engine::cmd::picture_style::{STYLES, look};
+        use iridium_decks_engine::cmd::picture_style::{STYLES, look};
         let names: Vec<String> = STYLES.iter().map(|(_, l)| l.to_string()).collect();
         let tiles = |ui: &mut Ui, n: usize| {
             widgets::gallery(
@@ -197,7 +197,7 @@ const MIN_INLINE_STYLES: usize = 2;
 /// gallery, never fewer than [`MIN_INLINE_STYLES`]. With all 24 in the row, Crop and Size sat
 /// past the ribbon's edge in any window narrower than about 2500 px.
 fn inline_styles(ui: &Ui) -> usize {
-    use deckcraft_engine::cmd::picture_style::STYLES;
+    use iridium_decks_engine::cmd::picture_style::STYLES;
     // A tile plus the group's 1 pt spacing.
     let step = STYLE_TILE.x + 1.0;
     let id = egui::Id::unique("picture_styles_inline");
@@ -215,7 +215,7 @@ fn inline_styles(ui: &Ui) -> usize {
 }
 
 /// A Picture Styles gallery tile: a landscape "picture" in the style's shape and frame.
-fn paint_picture_style(p: &egui::Painter, r: Rect, lk: Option<deckcraft_engine::cmd::picture_style::Look>) {
+fn paint_picture_style(p: &egui::Painter, r: Rect, lk: Option<iridium_decks_engine::cmd::picture_style::Look>) {
     let Some(lk) = lk else { return };
     let r = r.shrink(7.0);
     if lk.shadow.is_some() {
@@ -255,9 +255,9 @@ fn paint_picture_style(p: &egui::Painter, r: Rect, lk: Option<deckcraft_engine::
 }
 
 /// A Recolor gallery tile: a dark-to-light ramp as the preset would draw it.
-fn paint_recolor(p: &egui::Painter, r: Rect, id: &str, sc: &deckcraft_color::ColorScheme) {
-    let mut adj = deckcraft_model::style::PictureAdjust::default();
-    deckcraft_engine::cmd::recolor::apply(&mut adj, id);
+fn paint_recolor(p: &egui::Painter, r: Rect, id: &str, sc: &iridium_decks_color::ColorScheme) {
+    let mut adj = iridium_decks_model::style::PictureAdjust::default();
+    iridium_decks_engine::cmd::recolor::apply(&mut adj, id);
     let r = r.shrink(3.0);
     let n = 8;
     for k in 0..n {

@@ -186,7 +186,7 @@ pub(super) fn language(s: &mut Session, p: &Value) -> Result<Value> {
 pub(super) fn language_all(s: &mut Session, p: &Value) -> Result<Value> {
     let f = language_edit("format.languageAll", p)?;
     /// Runs, end marks and the body's own list style levels (never creating one).
-    fn body(t: &mut deckcraft_model::text::TextBody, f: &dyn Fn(&mut RunProps)) {
+    fn body(t: &mut iridium_decks_model::text::TextBody, f: &dyn Fn(&mut RunProps)) {
         ed::format_all(t, f);
         t.list_style.levels.iter_mut().flatten().for_each(|lv| f(&mut lv.run));
     }
@@ -200,14 +200,14 @@ pub(super) fn language_all(s: &mut Session, p: &Value) -> Result<Value> {
                 body(t, f);
             }
             match &mut sh.kind {
-                deckcraft_model::ShapeKind::Table(t) => t.rows.iter_mut().flat_map(|r| &mut r.cells).for_each(|c| body(&mut c.text, f)),
-                deckcraft_model::ShapeKind::Group { children, .. } => shapes(children, f, depth + 1),
+                iridium_decks_model::ShapeKind::Table(t) => t.rows.iter_mut().flat_map(|r| &mut r.cells).for_each(|c| body(&mut c.text, f)),
+                iridium_decks_model::ShapeKind::Group { children, .. } => shapes(children, f, depth + 1),
                 _ => {}
             }
         }
     }
     /// A master or presentation text style's levels: what new text inherits.
-    fn styles(l: &mut deckcraft_model::text::ListStyle, f: &dyn Fn(&mut RunProps)) {
+    fn styles(l: &mut iridium_decks_model::text::ListStyle, f: &dyn Fn(&mut RunProps)) {
         // Level 1 always, so a deck without a default text style gets one.
         if l.level(0).is_none() {
             l.set(0, Default::default());
@@ -262,7 +262,7 @@ struct FontEdits {
     bold: Option<bool>,
     italic: Option<bool>,
     underline: Option<String>,
-    color: Option<deckcraft_model::ColorRef>,
+    color: Option<iridium_decks_model::ColorRef>,
     strike: Option<Strike>,
     baseline: Option<f64>,
     caps: Option<Caps>,
@@ -401,8 +401,8 @@ fn font_edits(p: &Value) -> Result<FontEdits> {
 }
 
 /// A colour as a `format.fontDialog` / `format.color` parameter, including transforms.
-fn color_command_value(c: &deckcraft_model::ColorRef) -> Value {
-    use deckcraft_model::ColorBase;
+fn color_command_value(c: &iridium_decks_model::ColorRef) -> Value {
+    use iridium_decks_model::ColorBase;
     let mut o = serde_json::Map::new();
     for m in &c.mods {
         if let Some(v) = m.value() {

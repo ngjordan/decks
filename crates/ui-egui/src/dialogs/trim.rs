@@ -26,7 +26,7 @@ impl TrimSeed {
     fn zeros() -> Self {
         TrimSeed { start: "0".into(), end: "0".into(), fade_in: "0".into(), fade_out: "0".into() }
     }
-    fn from_clip(m: &deckcraft_model::MediaClip) -> Self {
+    fn from_clip(m: &iridium_decks_model::MediaClip) -> Self {
         TrimSeed {
             start: ms_as_seconds(m.trim_start_ms),
             end: ms_as_seconds(m.trim_end_ms),
@@ -38,12 +38,12 @@ impl TrimSeed {
 
 /// The first selected audio or video. Other shapes in the selection are skipped. No media means
 /// the old zeros, which OK then stores.
-pub(super) fn trim_seed(st: Option<&deckcraft_engine::DocState>) -> TrimSeed {
+pub(super) fn trim_seed(st: Option<&iridium_decks_engine::DocState>) -> TrimSeed {
     let Some(st) = st else { return TrimSeed::zeros() };
     st.selected_shapes()
         .into_iter()
         .find_map(|sh| match &sh.kind {
-            deckcraft_model::ShapeKind::Media(m) => Some(TrimSeed::from_clip(m)),
+            iridium_decks_model::ShapeKind::Media(m) => Some(TrimSeed::from_clip(m)),
             _ => None,
         })
         .unwrap_or_else(TrimSeed::zeros)
@@ -53,7 +53,7 @@ pub(super) fn trim_seed(st: Option<&deckcraft_engine::DocState>) -> TrimSeed {
 mod trim_media_tests {
     use std::sync::Arc;
 
-    use deckcraft_model::{MediaClip, Presentation, ShapeId, ShapeKind};
+    use iridium_decks_model::{MediaClip, Presentation, ShapeId, ShapeKind};
 
     use super::{ms_as_seconds, seconds_text_to_ms, trim_seed};
 
@@ -84,7 +84,7 @@ mod trim_media_tests {
             slide.shapes.push(media);
             (title, ShapeId(900))
         };
-        let mut st = deckcraft_engine::DocState::new(doc, None, "t".into());
+        let mut st = iridium_decks_engine::DocState::new(doc, None, "t".into());
         st.selection.shapes = vec![media_id.0];
         assert_eq!(trim_seed(Some(&st)).start, "0", "a title shape is not a clip");
         st.selection.shapes = vec![media_id.0, media_id.1];

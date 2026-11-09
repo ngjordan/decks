@@ -1,9 +1,9 @@
 {
-  "id": "deckcraft",
-  "name": "Iridium Decks",
+  "id": "iridium-decks",
+  "name": "Decks",
   "upgradeCode": "A6856ACB-DD88-5FCB-A708-16449E9C8A77",
   "sources": [
-    "deckcraft.wxs"
+    "iridium-decks.wxs"
   ],
   "icon": "assets/app-icon/iridium-decks.ico",
   "localization": [],
@@ -12,73 +12,73 @@
   ],
   "payloads": [
     "NOTICE",
-    "deckcraft-cli.exe",
-    "deckcraft.exe"
+    "iridium-decks-cli.exe",
+    "iridium-decks.exe"
   ],
   "registry": [
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe",
+      "Software\\Classes\\Applications\\iridium-decks.exe",
       "FriendlyAppName",
-      "Iridium Decks"
+      "Decks"
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
-      ".deckcraft",
+      "Software\\Classes\\Applications\\iridium-decks.exe\\SupportedTypes",
+      ".iridium-decks",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\iridium-decks.exe\\SupportedTypes",
       ".pptx",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\iridium-decks.exe\\SupportedTypes",
       ".potx",
       ""
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\SupportedTypes",
+      "Software\\Classes\\Applications\\iridium-decks.exe\\SupportedTypes",
       ".ppsx",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.pptx\\OpenWithProgids",
-      "Iridium Decks.Presentation",
+      "Decks.Presentation",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.potx\\OpenWithProgids",
-      "Iridium Decks.Presentation",
+      "Decks.Presentation",
       ""
     ],
     [
       "-1",
       "Software\\Classes\\.ppsx\\OpenWithProgids",
-      "Iridium Decks.Presentation",
+      "Decks.Presentation",
       ""
     ],
     [
       "-1",
-      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\deckcraft.exe",
+      "Software\\Microsoft\\Windows\\CurrentVersion\\App Paths\\iridium-decks.exe",
       "",
       "[#DeckcraftExe]"
     ],
     [
       "-1",
-      "Software\\Iridium Decks",
+      "Software\\Decks",
       "InstallDir",
       "[INSTALLFOLDER]"
     ],
     [
       "-1",
-      "Software\\Classes\\Applications\\deckcraft.exe\\shell\\open\\command",
+      "Software\\Classes\\Applications\\iridium-decks.exe\\shell\\open\\command",
       "",
       "\"[#DeckcraftExe]\" \"%1\""
     ]

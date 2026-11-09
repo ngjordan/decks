@@ -6,7 +6,7 @@ use egui_kittest::kittest::Queryable;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
-use deckcraft_engine::Session;
+use iridium_decks_engine::Session;
 
 fn has_reflection(h: &Harness<'_, SlideApp>) -> bool {
     let st = h.state().session.active().unwrap();

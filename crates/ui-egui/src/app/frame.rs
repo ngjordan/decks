@@ -89,7 +89,7 @@ impl SlideApp {
         if self.show.is_none()
             && let Some(d) = self.session.active()
         {
-            let here: Vec<deckcraft_model::ShapeId> = if d.selection.target == deckcraft_engine::Target::Slides {
+            let here: Vec<iridium_decks_model::ShapeId> = if d.selection.target == iridium_decks_engine::Target::Slides {
                 media::slide_media(&d.doc, d.selection.slide).into_iter().map(|m| m.0).collect()
             } else {
                 vec![]

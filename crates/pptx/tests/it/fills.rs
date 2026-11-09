@@ -2,9 +2,9 @@
 
 use std::io::{Cursor, Read, Write};
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::{Fill, PictureFill, PictureMode};
-use deckcraft_model::{Shape, ShapeId, defaults};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::style::{Fill, PictureFill, PictureMode};
+use iridium_decks_model::{Shape, ShapeId, defaults};
 
 /// `bytes` with `edit` applied to every slide part.
 fn edit_slides(bytes: &[u8], edit: impl Fn(String) -> String) -> Vec<u8> {
@@ -46,11 +46,11 @@ fn deck() -> Vec<u8> {
         fill: Some(Fill::Picture(PictureFill { media, ..Default::default() })),
         ..Default::default()
     });
-    deckcraft_pptx::export(&p).expect("export")
+    iridium_decks_pptx::export(&p).expect("export")
 }
 
 fn textured_mode(bytes: &[u8]) -> PictureMode {
-    let q = deckcraft_pptx::import(bytes).expect("import");
+    let q = iridium_decks_pptx::import(bytes).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Textured").expect("shape");
     match &s.fill {
         Some(Fill::Picture(pf)) => pf.mode.clone(),
@@ -84,7 +84,7 @@ fn regex_free_strip(s: &str, open: &str, close: &str) -> String {
 fn a_gradient_without_stops_is_saved_without_stops() {
     // `a:gradFill` with no `a:gsLst` takes its stops from the style's fill in PowerPoint; saving
     // must not turn it into a gradient of its own (it used to become solid white).
-    use deckcraft_model::style::{Gradient, GradientShape};
+    use iridium_decks_model::style::{Gradient, GradientShape};
     let mut p = defaults::new_presentation(None);
     let id = ShapeId(p.alloc_id().expect("ids"));
     let first = p.slides[0].id;
@@ -95,18 +95,18 @@ fn a_gradient_without_stops_is_saved_without_stops() {
         name: "Styled".into(),
         xfrm: Some(Xfrm::new(10.0, 10.0, 200.0, 100.0)),
         fill: Some(Fill::Gradient(own.clone())),
-        style: Some(deckcraft_model::ShapeStyle::accent(deckcraft_color::SchemeSlot::Accent1)),
+        style: Some(iridium_decks_model::ShapeStyle::accent(iridium_decks_color::SchemeSlot::Accent1)),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let q = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
+    let q = iridium_decks_pptx::import(&bytes).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Styled").expect("shape");
     assert_eq!(s.fill, Some(Fill::Gradient(own)));
 }
 
 #[test]
 fn a_fill_overlay_round_trips() {
-    use deckcraft_model::style::{FillOverlay, Gradient, GradientShape, GradientStop};
+    use iridium_decks_model::style::{FillOverlay, Gradient, GradientShape, GradientStop};
     let mut p = defaults::new_presentation(None);
     let id = ShapeId(p.alloc_id().expect("ids"));
     let first = p.slides[0].id;
@@ -115,8 +115,8 @@ fn a_fill_overlay_round_trips() {
         fill: Fill::Gradient(Gradient {
             tile: [0.0; 4],
             stops: vec![
-                GradientStop { pos: 0.0, color: deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent1) },
-                GradientStop { pos: 1.0, color: deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(10, 20, 30)) },
+                GradientStop { pos: 0.0, color: iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent1) },
+                GradientStop { pos: 1.0, color: iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(10, 20, 30)) },
             ],
             shape: GradientShape::Linear { angle: 4.5, scaled: true },
             rotate_with_shape: true,
@@ -127,25 +127,25 @@ fn a_fill_overlay_round_trips() {
         id,
         name: "Overlaid".into(),
         xfrm: Some(Xfrm::new(10.0, 10.0, 200.0, 100.0)),
-        fill: Some(Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::WHITE))),
-        effects: Some(deckcraft_model::Effects { fill_overlay: Some(overlay.clone()), ..Default::default() }),
+        fill: Some(Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::WHITE))),
+        effects: Some(iridium_decks_model::Effects { fill_overlay: Some(overlay.clone()), ..Default::default() }),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let q = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
+    let q = iridium_decks_pptx::import(&bytes).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Overlaid").expect("shape");
     assert_eq!(s.effects.as_ref().and_then(|e| e.fill_overlay.clone()), Some(overlay));
 }
 
 #[test]
 fn a_gradient_tile_rect_is_read_and_round_trips() {
-    use deckcraft_model::style::{Gradient, GradientShape, GradientStop};
+    use iridium_decks_model::style::{Gradient, GradientShape, GradientStop};
     // PowerPoint's "from top-left corner" radial: focus on the corner, tile reaching a box up and
     // to the left so it centres on that corner.
     let g = Gradient {
         stops: vec![
-            GradientStop { pos: 0.0, color: deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0, 128, 255)) },
-            GradientStop { pos: 1.0, color: deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::WHITE) },
+            GradientStop { pos: 0.0, color: iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0, 128, 255)) },
+            GradientStop { pos: 1.0, color: iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::WHITE) },
         ],
         shape: GradientShape::Path { path: "circle".into(), focus: [0.0, 0.0, 1.0, 1.0] },
         rotate_with_shape: true,
@@ -162,14 +162,14 @@ fn a_gradient_tile_rect_is_read_and_round_trips() {
         fill: Some(Fill::Gradient(g.clone())),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let q = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
+    let q = iridium_decks_pptx::import(&bytes).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Corner").expect("shape");
     assert_eq!(s.fill, Some(Fill::Gradient(g)));
     // As written by PowerPoint (attributes it leaves out are 0).
     let edited =
         edit_slides(&bytes, |x| x.replace("<a:tileRect l=\"-100000\" t=\"-100000\" r=\"0\" b=\"0\"/>", "<a:tileRect l=\"-100000\" t=\"-100000\"/>"));
-    let q = deckcraft_pptx::import(&edited).expect("import");
+    let q = iridium_decks_pptx::import(&edited).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Corner").expect("shape");
     assert!(matches!(&s.fill, Some(Fill::Gradient(g)) if g.tile == [-1.0, -1.0, 0.0, 0.0]), "{:?}", s.fill);
 }
@@ -179,21 +179,21 @@ fn a_table_naming_no_style_is_drawn_with_the_table_grid() {
     let mut p = defaults::new_presentation(None);
     let id = ShapeId(p.alloc_id().expect("ids"));
     let first = p.slides[0].id;
-    let mut t = deckcraft_model::Table::new(2, 2, 200.0, 40.0);
+    let mut t = iridium_decks_model::Table::new(2, 2, 200.0, 40.0);
     t.style = "none".into();
     p.slide_mut(first).expect("slide").shapes.push(Shape {
         id,
         name: "Grid".into(),
         xfrm: Some(Xfrm::new(10.0, 10.0, 200.0, 80.0)),
-        kind: deckcraft_model::ShapeKind::Table(t),
+        kind: iridium_decks_model::ShapeKind::Table(t),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
     let style = |bytes: &[u8]| {
-        let q = deckcraft_pptx::import(bytes).expect("import");
+        let q = iridium_decks_pptx::import(bytes).expect("import");
         let s = q.slides[0].shapes.iter().find(|s| s.name == "Grid").expect("shape").clone();
         match s.kind {
-            deckcraft_model::ShapeKind::Table(t) => t.style,
+            iridium_decks_model::ShapeKind::Table(t) => t.style,
             other => panic!("{other:?}"),
         }
     };
@@ -223,8 +223,8 @@ fn black_and_white_and_inverted_alpha_pictures_round_trip() {
         fill: Some(Fill::Picture(pf)),
         ..Default::default()
     });
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let q = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
+    let q = iridium_decks_pptx::import(&bytes).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "BW").expect("shape");
     match &s.fill {
         Some(Fill::Picture(pf)) => assert_eq!((pf.adjust.bilevel, pf.adjust.alpha_inv), (Some(0.3), true)),
@@ -236,12 +236,12 @@ fn black_and_white_and_inverted_alpha_pictures_round_trip() {
 fn an_upright_picture_fill_round_trips() {
     let bytes = deck();
     let edited = edit_slides(&bytes, |x| x.replacen("rotWithShape=\"1\"", "rotWithShape=\"0\"", 1));
-    let q = deckcraft_pptx::import(&edited).expect("import");
+    let q = iridium_decks_pptx::import(&edited).expect("import");
     let s = q.slides[0].shapes.iter().find(|s| s.name == "Textured").expect("shape");
     let Some(Fill::Picture(pf)) = &s.fill else { panic!("{:?}", s.fill) };
     assert!(pf.upright);
-    let again = deckcraft_pptx::export(&q).expect("export");
-    let r = deckcraft_pptx::import(&again).expect("import");
+    let again = iridium_decks_pptx::export(&q).expect("export");
+    let r = iridium_decks_pptx::import(&again).expect("import");
     let s = r.slides[0].shapes.iter().find(|s| s.name == "Textured").expect("shape");
     assert!(matches!(&s.fill, Some(Fill::Picture(pf)) if pf.upright));
     // Rotating with the shape is the default.
@@ -249,6 +249,6 @@ fn an_upright_picture_fill_round_trips() {
 }
 
 fn textured_fill(bytes: &[u8]) -> Option<Fill> {
-    let q = deckcraft_pptx::import(bytes).expect("import");
+    let q = iridium_decks_pptx::import(bytes).expect("import");
     q.slides[0].shapes.iter().find(|s| s.name == "Textured").and_then(|s| s.fill.clone())
 }

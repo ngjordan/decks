@@ -3,10 +3,10 @@
 use std::io::{Cursor, Read};
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::anim::{AnimStart, Animation, TextBuild};
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{Presentation, Shape, ShapeId, defaults};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::anim::{AnimStart, Animation, TextBuild};
+use iridium_decks_model::text::TextBody;
+use iridium_decks_model::{Presentation, Shape, ShapeId, defaults};
 
 fn deck() -> Presentation {
     let mut p = defaults::new_presentation(None);
@@ -25,11 +25,11 @@ fn deck() -> Presentation {
 }
 
 fn round(p: &Presentation) -> Presentation {
-    deckcraft_pptx::import(&deckcraft_pptx::export(p).expect("export")).expect("import")
+    iridium_decks_pptx::import(&iridium_decks_pptx::export(p).expect("export")).expect("import")
 }
 
 fn slide_xml(p: &Presentation) -> String {
-    let bytes = deckcraft_pptx::export(p).expect("export");
+    let bytes = iridium_decks_pptx::export(p).expect("export");
     let mut z = zip::ZipArchive::new(Cursor::new(bytes)).expect("zip");
     let mut xml = String::new();
     z.by_name("ppt/slides/slide1.xml").expect("slide").read_to_string(&mut xml).expect("xml");

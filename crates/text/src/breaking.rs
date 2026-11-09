@@ -2,7 +2,7 @@ use super::style::{Cell, ParaShaped};
 use super::{FontFace, ParaProps};
 
 pub(crate) fn measure_str(face: &FontFace, size: f64, s: &str) -> (f64, Vec<(u32, f64)>) {
-    let g = deckcraft_fonts::shape(face, s, &[], |c| c);
+    let g = iridium_decks_fonts::shape(face, s, &[], |c| c);
     let k = size / face.upem.max(1.0);
     let mut x = 0.0;
     let mut out = vec![];

@@ -31,13 +31,13 @@ pub(super) fn scroll_bar(avail: Rect, inset: f32, overflow: egui::Vec2, offset: 
 
 /// The canvas `avail` in texture pixels (`pixel`: one pixel's size in points) from the slide's
 /// top-left corner.
-pub(super) fn visible_region(avail: Rect, slide: Rect, pixel: egui::Vec2) -> deckcraft_render::Region {
+pub(super) fn visible_region(avail: Rect, slide: Rect, pixel: egui::Vec2) -> iridium_decks_render::Region {
     let px = |v: f32, k: f32| if v.is_finite() && k > 0.0 { (v / k) as f64 } else { 0.0 };
     let (x0, y0) = (px(avail.min.x - slide.min.x, pixel.x).floor(), px(avail.min.y - slide.min.y, pixel.y).floor());
     let (x1, y1) = (px(avail.max.x - slide.min.x, pixel.x).ceil(), px(avail.max.y - slide.min.y, pixel.y).ceil());
     let lim = i32::MAX as f64 / 4.0;
     let (x0, y0) = (x0.clamp(-lim, lim), y0.clamp(-lim, lim));
-    deckcraft_render::Region {
+    iridium_decks_render::Region {
         x: x0 as i32,
         y: y0 as i32,
         w: (x1 - x0).clamp(1.0, u32::MAX as f64) as u32,

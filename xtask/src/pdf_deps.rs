@@ -6,7 +6,7 @@ use std::process::Command;
 
 use serde_json::Value;
 
-const SHARED_REV: &str = "c5a1cbfb5f9049f9270955caffb5bee5997aebf7";
+const SHARED_REV: &str = "04428cee1e5bb2b85c3b6537aeb10ba0da228ff9";
 const REGISTRY: &str = "registry+https://github.com/rust-lang/crates.io-index";
 
 pub fn run(root: &Path) -> Result<(), String> {
@@ -40,7 +40,7 @@ pub fn run(root: &Path) -> Result<(), String> {
                 "--edges",
                 "normal,build",
                 "--package",
-                "deckcraft-pdf",
+                "iridium-decks-pdf",
                 "--depth",
                 "2",
                 "--no-dedupe",
@@ -70,7 +70,7 @@ fn validate(metadata: &Value) -> Result<(), String> {
         }
         matches.first().copied().ok_or_else(|| format!("missing {name}"))
     };
-    let source = format!("git+https://github.com/storytold/craft-libs?rev={SHARED_REV}#{SHARED_REV}");
+    let source = format!("git+https://github.com/ngjordan/craft-libs?rev={SHARED_REV}#{SHARED_REV}");
     for (name, version, expected_source, expected_features) in [
         ("craft-pdf", "0.1.0", source.as_str(), vec!["write", "write-simple-text"]),
         ("krilla", "0.8.2", source.as_str(), vec!["raster-images", "rayon", "simple-text"]),
@@ -92,7 +92,7 @@ fn validate(metadata: &Value) -> Result<(), String> {
     // Metadata includes development dependencies. Follow only normal/build edges from
     // the production exporter so a parser accidentally promoted into it cannot hide there.
     let by_id: HashMap<_, _> = packages.iter().filter_map(|p| p.get("id").and_then(Value::as_str).map(|id| (id, p))).collect();
-    let root = one_package("deckcraft-pdf")?.get("id").and_then(Value::as_str).ok_or("deckcraft-pdf has no id")?;
+    let root = one_package("iridium-decks-pdf")?.get("id").and_then(Value::as_str).ok_or("iridium-decks-pdf has no id")?;
     let mut pending = vec![root];
     let mut seen = BTreeSet::new();
     while let Some(id) = pending.pop() {
@@ -143,10 +143,10 @@ mod tests {
     use serde_json::json;
 
     fn metadata() -> Value {
-        let source = format!("git+https://github.com/storytold/craft-libs?rev={SHARED_REV}#{SHARED_REV}");
+        let source = format!("git+https://github.com/ngjordan/craft-libs?rev={SHARED_REV}#{SHARED_REV}");
         json!({
             "packages": [
-                {"id":"app", "name":"deckcraft-pdf"},
+                {"id":"app", "name":"iridium-decks-pdf"},
                 {"id":"writer", "name":"craft-pdf", "version":"0.1.0", "source":source},
                 {"id":"backend", "name":"krilla", "version":"0.8.2", "source":source},
                 {"id":"parser", "name":"hayro-syntax", "version":"0.7.2", "source":REGISTRY}
@@ -174,7 +174,7 @@ mod tests {
     #[test]
     fn rejects_unpinned_or_duplicate_writer_sources() {
         assert!(validate(&metadata()).is_ok());
-        for source in [Value::Null, json!(REGISTRY), json!("git+https://github.com/storytold/craft-libs#other")] {
+        for source in [Value::Null, json!(REGISTRY), json!("git+https://github.com/ngjordan/craft-libs#other")] {
             let mut m = metadata();
             m["packages"][1]["source"] = source;
             assert!(validate(&m).is_err());

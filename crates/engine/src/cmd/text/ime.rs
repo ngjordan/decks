@@ -325,18 +325,18 @@ pub(super) fn commit(s: &mut Session, p: &Value) -> Result<Value> {
 /// text as laid out on the current slide: where spelling squiggles go.
 pub fn range_underlines(
     st: &DocState,
-    id: deckcraft_model::ShapeId,
+    id: iridium_decks_model::ShapeId,
     ranges: &[(usize, usize, usize)],
-) -> Vec<(deckcraft_geom::Point, deckcraft_geom::Point)> {
+) -> Vec<(iridium_decks_geom::Point, iridium_decks_geom::Point)> {
     let Some(sh) = st.shape(id) else { return vec![] };
     let Some(l) = layout_for(st, &TextSel { shape: id, ..Default::default() }) else { return vec![] };
     let x = xfrm_of(&st.doc, &st.selection, sh);
-    let tr = deckcraft_render::shape_geometry(sh, x.w, x.h).text_rect;
-    let m = deckcraft_render::text_transform(x.affine(), tr, l.rotation);
+    let tr = iridium_decks_render::shape_geometry(sh, x.w, x.h).text_rect;
+    let m = iridium_decks_render::text_transform(x.affine(), tr, l.rotation);
     let mut out = vec![];
     for &(para, a, b) in ranges {
-        for (x0, x1, y) in l.composition_underlines(deckcraft_text::Pos { para, ch: a }, deckcraft_text::Pos { para, ch: b }) {
-            out.push((m * deckcraft_geom::Point::new(x0, y), m * deckcraft_geom::Point::new(x1, y)));
+        for (x0, x1, y) in l.composition_underlines(iridium_decks_text::Pos { para, ch: a }, iridium_decks_text::Pos { para, ch: b }) {
+            out.push((m * iridium_decks_geom::Point::new(x0, y), m * iridium_decks_geom::Point::new(x1, y)));
         }
     }
     out
@@ -345,32 +345,33 @@ pub fn range_underlines(
 /// Like [`range_underlines`], for the text of table `id`'s cell at `row`, `col`.
 pub fn cell_range_underlines(
     st: &DocState,
-    id: deckcraft_model::ShapeId,
+    id: iridium_decks_model::ShapeId,
     row: usize,
     col: usize,
     ranges: &[(usize, usize, usize)],
-) -> Vec<(deckcraft_geom::Point, deckcraft_geom::Point)> {
+) -> Vec<(iridium_decks_geom::Point, iridium_decks_geom::Point)> {
     let Some(sh) = st.shape(id) else { return vec![] };
-    let deckcraft_model::ShapeKind::Table(tb) = &sh.kind else { return vec![] };
+    let iridium_decks_model::ShapeKind::Table(tb) = &sh.kind else { return vec![] };
     let (Some(cell), Some(ctx)) = (tb.cell(row, col), ctx_for(&st.doc, &st.selection)) else { return vec![] };
     let heights = crate::cmd::table_drawn_heights(&st.doc, &st.selection, tb);
-    let Some(rect) = deckcraft_render::table_cell_rects(tb, &heights).into_iter().find(|(r, c, _)| *r == row && *c == col).map(|(_, _, r)| r) else {
+    let Some(rect) = iridium_decks_render::table_cell_rects(tb, &heights).into_iter().find(|(r, c, _)| *r == row && *c == col).map(|(_, _, r)| r)
+    else {
         return vec![];
     };
-    let body = deckcraft_render::table_cell_body(&ctx, tb, row, col, cell);
-    let tmp = deckcraft_model::Shape::table_cell(body.clone());
-    let l = deckcraft_text::layout(
+    let body = iridium_decks_render::table_cell_body(&ctx, tb, row, col, cell);
+    let tmp = iridium_decks_model::Shape::table_cell(body.clone());
+    let l = iridium_decks_text::layout(
         &ctx,
         &tmp,
         &body,
-        &deckcraft_text::Opts { rect, fields: &deckcraft_text::NoFields, prompt_color: None, no_shrink: false },
+        &iridium_decks_text::Opts { rect, fields: &iridium_decks_text::NoFields, prompt_color: None, no_shrink: false },
     );
     let x = xfrm_of(&st.doc, &st.selection, sh);
-    let m = deckcraft_render::text_transform(x.affine(), rect, l.rotation);
+    let m = iridium_decks_render::text_transform(x.affine(), rect, l.rotation);
     let mut out = vec![];
     for &(para, a, b) in ranges {
-        for (x0, x1, y) in l.composition_underlines(deckcraft_text::Pos { para, ch: a }, deckcraft_text::Pos { para, ch: b }) {
-            out.push((m * deckcraft_geom::Point::new(x0, y), m * deckcraft_geom::Point::new(x1, y)));
+        for (x0, x1, y) in l.composition_underlines(iridium_decks_text::Pos { para, ch: a }, iridium_decks_text::Pos { para, ch: b }) {
+            out.push((m * iridium_decks_geom::Point::new(x0, y), m * iridium_decks_geom::Point::new(x1, y)));
         }
     }
     out
@@ -379,7 +380,7 @@ pub fn cell_range_underlines(
 /// Underlines under an input method's composition (#101), in slide coordinates: `(from, to,
 /// thick)` per line, thick under the part being converted. Empty without a composition, or for
 /// notes (an egui text field draws its own composition).
-pub fn composition_underlines(st: &DocState) -> Vec<(deckcraft_geom::Point, deckcraft_geom::Point, bool)> {
+pub fn composition_underlines(st: &DocState) -> Vec<(iridium_decks_geom::Point, iridium_decks_geom::Point, bool)> {
     let (Some(c), Some(t)) = (&st.composition, &st.selection.text) else { return vec![] };
     if t.notes {
         return vec![];
@@ -391,21 +392,21 @@ pub fn composition_underlines(st: &DocState) -> Vec<(deckcraft_geom::Point, deck
     let Some(sh) = st.shape(t.shape) else { return vec![] };
     let Some(l) = layout_for(st, t) else { return vec![] };
     let x = xfrm_of(&st.doc, &st.selection, sh);
-    let tr = deckcraft_render::shape_geometry(sh, x.w, x.h).text_rect;
-    let m = deckcraft_render::text_transform(x.affine(), tr, l.rotation);
+    let tr = iridium_decks_render::shape_geometry(sh, x.w, x.h).text_rect;
+    let m = iridium_decks_render::text_transform(x.affine(), tr, l.rotation);
     underline_segments(&l, m, c)
 }
 
 fn underline_segments(
-    layout: &deckcraft_text::TextLayout,
-    to_slide: deckcraft_geom::Affine,
+    layout: &iridium_decks_text::TextLayout,
+    to_slide: iridium_decks_geom::Affine,
     c: &crate::Composition,
-) -> Vec<(deckcraft_geom::Point, deckcraft_geom::Point, bool)> {
-    let pos = |ch: usize| deckcraft_text::Pos { para: c.start.0, ch: c.start.1 + ch };
+) -> Vec<(iridium_decks_geom::Point, iridium_decks_geom::Point, bool)> {
+    let pos = |ch: usize| iridium_decks_text::Pos { para: c.start.0, ch: c.start.1 + ch };
     let mut out = vec![];
     let mut add = |a: usize, b: usize, thick: bool| {
         for (x0, x1, y) in layout.composition_underlines(pos(a), pos(b)) {
-            out.push((to_slide * deckcraft_geom::Point::new(x0, y), to_slide * deckcraft_geom::Point::new(x1, y), thick));
+            out.push((to_slide * iridium_decks_geom::Point::new(x0, y), to_slide * iridium_decks_geom::Point::new(x1, y), thick));
         }
     };
     add(0, c.len, false);
@@ -433,8 +434,8 @@ mod ime_surrounding_tests {
 
     /// Test helper: return the identified shape's text, or an empty string when it is gone.
     fn text(s: &Session, id: u64) -> String {
-        let id = deckcraft_model::ShapeId(u32::try_from(id).unwrap());
-        s.doc().unwrap().shape(id).and_then(|sh| sh.text.as_ref()).map(deckcraft_model::text::TextBody::text).unwrap_or_default()
+        let id = iridium_decks_model::ShapeId(u32::try_from(id).unwrap());
+        s.doc().unwrap().shape(id).and_then(|sh| sh.text.as_ref()).map(iridium_decks_model::text::TextBody::text).unwrap_or_default()
     }
 
     /// Test helper: set an in-paragraph text selection through the engine command path.

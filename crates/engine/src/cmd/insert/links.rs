@@ -4,7 +4,7 @@ use super::{
 };
 
 pub(super) fn hyperlink(s: &mut Session, p: &Value) -> Result<Value> {
-    use deckcraft_model::text::{Action, Hyperlink};
+    use iridium_decks_model::text::{Action, Hyperlink};
     // `display`: what a caret with nothing to link inserts, the address or the slide's title.
     let (action, display) = if let Some(u) = str_param(p, "url") {
         (Action::Url { url: u.to_string() }, u.strip_prefix("mailto:").unwrap_or(u).to_string())
@@ -36,7 +36,7 @@ pub(super) fn hyperlink(s: &mut Session, p: &Value) -> Result<Value> {
 /// Insert ▸ Action (Action Settings): what clicking the selected shapes, or pointing at them, does
 /// in a show.
 pub(super) fn shape_action(s: &mut Session, p: &Value) -> Result<Value> {
-    use deckcraft_model::text::{Action, Hyperlink};
+    use iridium_decks_model::text::{Action, Hyperlink};
     const CMD: &str = "shape.action";
     let hover = match str_param(p, "on").unwrap_or("click") {
         "click" => false,
@@ -83,7 +83,7 @@ pub(super) fn shape_action(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 pub(super) fn action_button(s: &mut Session, p: &Value) -> Result<Value> {
-    use deckcraft_model::text::{Action, Hyperlink};
+    use iridium_decks_model::text::{Action, Hyperlink};
     let kind = str_param(p, "kind").unwrap_or("custom");
     let (preset, action) = match kind {
         "back" | "previous" => ("actionButtonBackPrevious", Some(Action::PreviousSlide)),

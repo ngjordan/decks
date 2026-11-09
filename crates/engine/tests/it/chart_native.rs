@@ -3,11 +3,11 @@
 use std::io::{Cursor, Read};
 use std::sync::Arc;
 
-use deckcraft_engine::Session;
-use deckcraft_engine::cmd::{base64_decode, base64_encode};
-use deckcraft_geom::Xfrm;
-use deckcraft_model::chart::{Chart, ChartKept, ChartPart, ChartRel, ChartType};
-use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind, defaults};
+use iridium_decks_engine::Session;
+use iridium_decks_engine::cmd::{base64_decode, base64_encode};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::chart::{Chart, ChartKept, ChartPart, ChartRel, ChartType};
+use iridium_decks_model::{Presentation, Shape, ShapeId, ShapeKind, defaults};
 use serde_json::json;
 
 const WORKBOOK: &[u8] = b"original-synthetic-workbook\0\xff\x80";
@@ -30,7 +30,7 @@ fn source() -> Vec<u8> {
         ..Default::default()
     }];
     // Start with our own chart XML, then give it two original, synthetic package parts.
-    let mut p = deckcraft_pptx::import(&deckcraft_pptx::export(&p).expect("export")).expect("import");
+    let mut p = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).expect("export")).expect("import");
     let ShapeKind::Chart(c) = &mut Arc::make_mut(&mut p.slides[0]).shapes[0].kind else { panic!("chart") };
     c.raw = c
         .raw
@@ -68,7 +68,7 @@ fn source() -> Vec<u8> {
             },
         ],
     };
-    deckcraft_pptx::export(&p).expect("PPTX fixture")
+    iridium_decks_pptx::export(&p).expect("PPTX fixture")
 }
 
 fn open(bytes: &[u8], name: &str) -> Session {
@@ -90,7 +90,7 @@ fn pptx_native_edit_save_reopen_keeps_chart_parts() {
     assert_eq!(kept.parts.len(), 2);
     s.execute("file.properties", &json!({"title":"Edited title"})).expect("edit command");
     for _ in 0..2 {
-        s = open(&save(&mut s, "deckcraft"), "owned.deckcraft");
+        s = open(&save(&mut s, "iridium-decks"), "owned.iridium-decks");
         let p = &s.doc().expect("doc").doc;
         assert_eq!(p.props.title, "Edited title");
         assert_eq!(chart(p).kept, kept);
@@ -106,7 +106,7 @@ fn pptx_native_edit_save_reopen_keeps_chart_parts() {
     }
     assert!(payloads.iter().any(|(n, d)| n.starts_with("ppt/embeddings/") && d == WORKBOOK));
     assert!(payloads.iter().any(|(n, d)| n.starts_with("ppt/drawings/") && d == DRAWING));
-    let back = deckcraft_pptx::import(&bytes).expect("reopen PPTX");
+    let back = iridium_decks_pptx::import(&bytes).expect("reopen PPTX");
     assert_eq!(chart(&back).kept.rels.len(), 2);
     for part in &kept.parts {
         assert!(chart(&back).kept.parts.iter().any(|p| p.content_type == part.content_type && p.bytes == part.bytes));
@@ -116,14 +116,14 @@ fn pptx_native_edit_save_reopen_keeps_chart_parts() {
 #[test]
 fn editing_chart_after_native_reopen_does_not_export_a_stale_workbook() {
     let mut s = open(&source(), "owned.pptx");
-    s = open(&save(&mut s, "deckcraft"), "owned.deckcraft");
+    s = open(&save(&mut s, "iridium-decks"), "owned.iridium-decks");
     let doc = s.doc_mut().expect("doc");
     let p = Arc::make_mut(&mut doc.doc);
     let ShapeKind::Chart(c) = &mut Arc::make_mut(&mut p.slides[0]).shapes[0].kind else { panic!("chart") };
     assert_eq!(c.kept.rels.len(), 2);
     c.series[0].values[0] = Some(99.0);
     let bytes = save(&mut s, "pptx");
-    let back = deckcraft_pptx::import(&bytes).expect("PPTX");
+    let back = iridium_decks_pptx::import(&bytes).expect("PPTX");
     assert_eq!(chart(&back).series[0].values[0], Some(99.0));
     assert!(chart(&back).kept.parts.is_empty(), "stale source workbook must not be attached to edited chart data");
 }

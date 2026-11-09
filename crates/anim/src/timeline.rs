@@ -3,9 +3,9 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use deckcraft_model::anim::{BuildRole, TextBuild, paragraph_build_roles};
-use deckcraft_model::style::Fill;
-use deckcraft_model::{AnimClass, AnimStart, Animation, ColorScheme, Rgba, SchemeSlot, Shape, ShapeId, Slide, Xfrm};
+use iridium_decks_model::anim::{BuildRole, TextBuild, paragraph_build_roles};
+use iridium_decks_model::style::Fill;
+use iridium_decks_model::{AnimClass, AnimStart, Animation, ColorScheme, Rgba, SchemeSlot, Shape, ShapeId, Slide, Xfrm};
 
 use crate::AnimState;
 use crate::effects::{EffectSpec, exit_base, motion_path};
@@ -165,7 +165,7 @@ fn sanitize_xfrm(x: Xfrm, sw: f64, sh: f64) -> Xfrm {
 }
 
 fn default_scheme() -> Option<ColorScheme> {
-    deckcraft_model::theme::builtin_color_schemes().into_iter().next()
+    iridium_decks_model::theme::builtin_color_schemes().into_iter().next()
 }
 
 impl Timeline {
@@ -188,11 +188,11 @@ impl Timeline {
                 owned.as_ref()
             }
         };
-        let resolve = |c: &deckcraft_model::ColorRef| -> Rgba {
+        let resolve = |c: &iridium_decks_model::ColorRef| -> Rgba {
             match scheme {
                 Some(s) => c.resolve(s, None),
                 None => match &c.base {
-                    deckcraft_model::ColorBase::Rgb { rgb } => *rgb,
+                    iridium_decks_model::ColorBase::Rgb { rgb } => *rgb,
                     _ => Rgba::rgb(0x15, 0x60, 0x82),
                 },
             }
@@ -603,7 +603,7 @@ fn shape_index(shapes: &[Shape]) -> HashMap<ShapeId, &Shape> {
     out
 }
 
-fn build_spec(a: &Animation, xf: Xfrm, sw: f64, sh: f64, resolve: &dyn Fn(&deckcraft_model::ColorRef) -> Rgba) -> EffectSpec {
+fn build_spec(a: &Animation, xf: Xfrm, sw: f64, sh: f64, resolve: &dyn Fn(&iridium_decks_model::ColorRef) -> Rgba) -> EffectSpec {
     let effect = if a.class == AnimClass::Exit { exit_base(&a.effect).to_string() } else { a.effect.clone() };
     let path = if a.class == AnimClass::Path { Some(motion_path(&a.effect, &a.option, a.path.as_deref())) } else { None };
     EffectSpec {

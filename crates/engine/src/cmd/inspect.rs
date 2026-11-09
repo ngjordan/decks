@@ -1,8 +1,8 @@
 //! Inspection for agents: the deck, slides and shapes as JSON (verify work without screenshots).
 
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::text::Hyperlink;
-use deckcraft_model::{Shape, ShapeKind};
+use iridium_decks_model::resolve::{self, Ctx};
+use iridium_decks_model::text::Hyperlink;
+use iridium_decks_model::{Shape, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, always, bad, cmd, has_doc, id_param, opt_usize_param, str_param, usize_param, xfrm_of};
@@ -53,8 +53,8 @@ pub fn shape_summary(ctx: Option<&Ctx>, sh: &Shape, depth: usize) -> Value {
     let fill = ctx.map(|c| {
         let (f, ph) = resolve::fill(c, sh);
         match f {
-            Some(deckcraft_model::Fill::Solid { color }) => json!(format!("#{}", c.color(&color, ph).hex())),
-            Some(deckcraft_model::Fill::None) | None => json!("none"),
+            Some(iridium_decks_model::Fill::Solid { color }) => json!(format!("#{}", c.color(&color, ph).hex())),
+            Some(iridium_decks_model::Fill::None) | None => json!("none"),
             Some(other) => json!(serde_json::to_value(&other).ok().and_then(|v| v.get("kind").cloned()).unwrap_or_default()),
         }
     });
@@ -118,7 +118,7 @@ fn slide(s: &mut Session, p: &Value) -> Result<Value> {
     let ctx = Ctx::for_slide(&st.doc, sl);
     let shapes: Vec<Value> = sl.shapes.iter().map(|sh| shape_summary(ctx.as_ref(), sh, 0)).collect();
     let bg = ctx.as_ref().map(|c| match resolve::background(c, Some(sl)) {
-        (deckcraft_model::Fill::Solid { color }, ph) => json!(format!("#{}", c.color(&color, ph).hex())),
+        (iridium_decks_model::Fill::Solid { color }, ph) => json!(format!("#{}", c.color(&color, ph).hex())),
         (f, _) => serde_json::to_value(&f).ok().and_then(|v| v.get("kind").cloned()).unwrap_or_default(),
     });
     Ok(json!({
@@ -178,7 +178,7 @@ fn collect_actions(sh: &Shape, path: &mut Vec<Value>, found: &mut Vec<Value>) {
     path.pop();
 }
 
-fn collect_text_actions(text: &deckcraft_model::text::TextBody, owner: &Value, found: &mut Vec<Value>) {
+fn collect_text_actions(text: &iridium_decks_model::text::TextBody, owner: &Value, found: &mut Vec<Value>) {
     for (paragraph_index, paragraph) in text.paragraphs.iter().enumerate() {
         for (run_index, run) in paragraph.runs.iter().enumerate() {
             for (event, link) in [("textLink", run.props.link.as_ref()), ("textHover", run.props.hover.as_ref())] {
@@ -224,10 +224,10 @@ fn commands(s: &mut Session, p: &Value) -> Result<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_geom::Xfrm;
-    use deckcraft_model::table::Row;
-    use deckcraft_model::text::{Action, Paragraph, Run, RunProps, TextBody};
-    use deckcraft_model::{Cell, Shape, ShapeId, ShapeKind, Table};
+    use iridium_decks_geom::Xfrm;
+    use iridium_decks_model::table::Row;
+    use iridium_decks_model::text::{Action, Paragraph, Run, RunProps, TextBody};
+    use iridium_decks_model::{Cell, Shape, ShapeId, ShapeKind, Table};
 
     fn link(action: Action) -> Hyperlink {
         Hyperlink { action, tooltip: String::new(), highlight_click: false, sound: None, stop_sound: false, zoom_return: None }
@@ -239,7 +239,7 @@ mod tests {
         let mut child = Shape { id: ShapeId(12), name: "Child".into(), ..Default::default() };
         child.click = Some(link(Action::NextSlide));
         child.hover = Some(link(Action::Url { url: "https://example.com/hover".into() }));
-        let run_props = RunProps { link: Some(link(Action::Slide { slide: deckcraft_model::SlideId(7) })), ..Default::default() };
+        let run_props = RunProps { link: Some(link(Action::Slide { slide: iridium_decks_model::SlideId(7) })), ..Default::default() };
         let mut paragraph = Paragraph::new("linked");
         paragraph.runs = vec![Run::with("linked", run_props)];
         child.text = Some(TextBody { paragraphs: vec![paragraph], ..Default::default() });

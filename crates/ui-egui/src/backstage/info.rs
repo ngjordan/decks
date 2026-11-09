@@ -4,7 +4,7 @@ use super::{Backstage, Icon, Outcome, Page, RichText, Sense, SlideApp, Tokens, U
 /// Save As and Change File Type: (id for [`SlideApp::export_as`], label, detail).
 pub const SAVE_TYPES: [(&str, &str, &str); 7] = [
     ("pptx", "PowerPoint Presentation (*.pptx)", "Opens in PowerPoint and other presentation apps"),
-    ("deckcraft", "Iridium Decks Presentation (*.deckcraft)", "Iridium Decks's own format: everything is kept"),
+    ("iridium-decks", "Decks Presentation (*.iridium-decks)", "Decks's own format: everything is kept"),
     ("pdf", "PDF (*.pdf)", "A fixed copy that keeps its layout on any device"),
     ("outline", "Outline (*.txt)", "The slide titles and bullet text as plain text"),
     ("rtf", "Outline/RTF (*.rtf)", "The slide titles and bullet text for word processors"),
@@ -145,7 +145,7 @@ pub fn format_bytes(b: u64) -> String {
 }
 
 /// Save As: the file type, then the system Save dialog (desktop) or a download (web). A
-/// presentation saved as .pptx or .deckcraft takes the new file; the other types are copies.
+/// presentation saved as .pptx or .iridium-decks takes the new file; the other types are copies.
 pub(super) fn save_as(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, out: &mut Outcome) {
     let t = Tokens::get(ui.ctx());
     let (title, path) = app.session.active().map(|d| (d.title(), d.path.clone())).unwrap_or_default();
@@ -171,7 +171,7 @@ pub(super) fn save_as(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, out: 
         let save = ui.add(egui::Button::new(RichText::new(label).color(t.accent_text)).fill(t.accent).min_size(vec2(84.0, 26.0)));
         if save.on_hover_text(if web { "Download the file" } else { "Choose where to save" }).clicked() {
             let fmt = bs.file_type;
-            let done = if matches!(fmt, "pptx" | "deckcraft") {
+            let done = if matches!(fmt, "pptx" | "iridium-decks") {
                 let before = app.session.active().map(|d| (d.path.clone(), d.is_dirty()));
                 app.save_as_dialog(fmt);
                 web || app.session.active().map(|d| (d.path.clone(), d.is_dirty())) != before
@@ -201,16 +201,16 @@ pub(super) fn about(app: &mut SlideApp, ui: &mut Ui) {
             ui.horizontal(|ui| {
                 let (r, _) = ui.allocate_exact_size(vec2(40.0, 40.0), Sense::hover());
                 crate::dialogs::paint_logo(ui.painter(), r);
-                ui.label(RichText::new("Iridium Decks").font(theme::bold(24.0)).color(t.text));
+                ui.label(RichText::new("Decks").font(theme::bold(24.0)).color(t.text));
             });
             dim(ui, &crate::dialogs::version_line());
             dim(ui, "Open source under MIT OR Apache-2.0. Not affiliated with Microsoft.");
             ui.add_space(14.0);
-            if task(ui, Icon::Help, "Credits", "Credits", "The people and models who built Iridium Decks.", true) {
+            if task(ui, Icon::Help, "Credits", "Credits", "The people and models who built Decks.", true) {
                 let _ = app.run("app.about", json!({}));
             }
-            ui.hyperlink_to("Join our community on Discord", deckcraft_engine::links::DISCORD);
-            ui.hyperlink_to("Source on GitHub", deckcraft_engine::links::GITHUB);
+            ui.hyperlink_to("Join our community on Discord", iridium_decks_engine::links::DISCORD);
+            ui.hyperlink_to("Source on GitHub", iridium_decks_engine::links::GITHUB);
         });
         ui.add_space(40.0);
         ui.vertical(|ui| {

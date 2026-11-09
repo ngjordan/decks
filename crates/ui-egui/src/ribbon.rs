@@ -1,8 +1,8 @@
 //! Title bar, ribbon tabs and the ribbon card with every tab's groups.
 
-use deckcraft_engine::Target;
-use deckcraft_model::{ShapeId, ShapeKind, anim::AnimClass};
 use egui::{Align2, Color32, CornerRadius, Rect, Sense, Stroke, Ui, pos2, vec2};
+use iridium_decks_engine::Target;
+use iridium_decks_model::{ShapeId, ShapeKind, anim::AnimClass};
 use serde_json::{Value, json};
 
 use crate::SlideApp;
@@ -67,11 +67,11 @@ use view::view;
 /// Is engine command `id` enabled right now?
 /// Whether `id` names an engine or UI command.
 pub fn known(id: &str) -> bool {
-    deckcraft_engine::find_command(id).is_some() || crate::UI_COMMANDS.iter().any(|c| c.0 == id)
+    iridium_decks_engine::find_command(id).is_some() || crate::UI_COMMANDS.iter().any(|c| c.0 == id)
 }
 
 pub fn enabled(app: &SlideApp, id: &str) -> bool {
-    match deckcraft_engine::find_command(id) {
+    match iridium_decks_engine::find_command(id) {
         Some(c) => (c.enabled)(&app.session).is_ok(),
         None => crate::UI_COMMANDS.iter().any(|c| c.0 == id),
     }
@@ -105,7 +105,7 @@ fn contextual(app: &SlideApp) -> Vec<&'static str> {
         v.push("Table Design");
         v.push("Layout");
     }
-    if deckcraft_engine::cmd::smartart::selected(st).is_some() {
+    if iridium_decks_engine::cmd::smartart::selected(st).is_some() {
         v.push("SmartArt Design");
     }
     if shapes.iter().any(|s| matches!(s.kind, ShapeKind::Chart(_))) {
@@ -328,7 +328,8 @@ fn toggle(app: &mut SlideApp, ui: &mut Ui, icon: Icon, label: &str, id: &str, on
 }
 
 fn tip(id: &str, label: &str) -> String {
-    let sc = deckcraft_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| crate::UI_COMMANDS.iter().find(|c| c.0 == id).and_then(|c| c.2));
+    let sc =
+        iridium_decks_engine::find_command(id).and_then(|c| c.shortcut).or_else(|| crate::UI_COMMANDS.iter().find(|c| c.0 == id).and_then(|c| c.2));
     match sc {
         Some(s) => format!("{label} ({})", pretty_shortcut(s)),
         None => label.to_string(),
@@ -343,8 +344,8 @@ pub fn pretty_shortcut(s: &str) -> String {
     }
 }
 
-fn scheme(app: &SlideApp) -> deckcraft_color::ColorScheme {
-    app.session.active().and_then(|d| d.doc.masters.first().map(|m| m.scheme())).unwrap_or_else(|| deckcraft_model::Theme::default().colors)
+fn scheme(app: &SlideApp) -> iridium_decks_color::ColorScheme {
+    app.session.active().and_then(|d| d.doc.masters.first().map(|m| m.scheme())).unwrap_or_else(|| iridium_decks_model::Theme::default().colors)
 }
 
 /// The formatting state at the selection (bold, size…).
@@ -367,7 +368,7 @@ pub fn menu_item(app: &mut SlideApp, ui: &mut Ui, icon: Icon, label: &str, id: &
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_model::anim::TextBuild;
+    use iridium_decks_model::anim::TextBuild;
 
     /// Paints one transition tile and one animation tile and returns the colour of every label.
     fn tile_label_colours(dark: bool) -> Vec<Color32> {

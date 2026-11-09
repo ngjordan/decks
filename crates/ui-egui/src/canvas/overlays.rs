@@ -1,5 +1,5 @@
 use super::{Color32, CornerRadius, Point, Pos2, Rect, SlideApp, Stroke, Tokens, ToolKind, Ui, Xf, Xfrm, box_handles, pos2, theme};
-use deckcraft_engine::DocState;
+use iridium_decks_engine::DocState;
 
 fn poly(p: &egui::Painter, pts: [Pos2; 4], stroke: Stroke) {
     for i in 0..4 {
@@ -12,13 +12,13 @@ fn selection_handles(app: &SlideApp, st: &DocState, painter: &egui::Painter, xf:
     let editing = st.selection.text.clone();
     for id in &st.selection.shapes {
         let Some(sh) = st.shape(*id) else { continue };
-        let x = deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh);
+        let x = iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh);
         let a = x.affine();
         let corners = [Point::new(0.0, 0.0), Point::new(x.w, 0.0), Point::new(x.w, x.h), Point::new(0.0, x.h)].map(|q| xf.to_screen(a * q));
         if sh.is_line() {
             let (p0, p1) = (xf.to_screen(a * Point::new(0.0, 0.0)), xf.to_screen(a * Point::new(x.w, x.h)));
             let glued = match sh.kind {
-                deckcraft_model::ShapeKind::Connector { start, end } => [start.is_some(), end.is_some()],
+                iridium_decks_model::ShapeKind::Connector { start, end } => [start.is_some(), end.is_some()],
                 _ => [false, false],
             };
             for (q, g) in [p0, p1].into_iter().zip(glued) {
@@ -33,7 +33,7 @@ fn selection_handles(app: &SlideApp, st: &DocState, painter: &egui::Painter, xf:
             // Edit Points: the outline's vertices are the handles.
             // No selection box: the outline and its vertices are what's edited.
             if let Some((path, index)) = app.session.tool.edit_vertex
-                && let Some((hin, hout, v)) = deckcraft_engine::cmd::points::slide_handles(&st.doc, &st.selection, sh, path, index)
+                && let Some((hin, hout, v)) = iridium_decks_engine::cmd::points::slide_handles(&st.doc, &st.selection, sh, path, index)
             {
                 for h in [hin, hout].into_iter().flatten() {
                     painter.line_segment([xf.to_screen(v), xf.to_screen(h)], sel_stroke);
@@ -46,7 +46,7 @@ fn selection_handles(app: &SlideApp, st: &DocState, painter: &egui::Painter, xf:
                     );
                 }
             }
-            for q in deckcraft_engine::cmd::points::slide_vertices(&st.doc, &st.selection, sh).into_iter().flatten() {
+            for q in iridium_decks_engine::cmd::points::slide_vertices(&st.doc, &st.selection, sh).into_iter().flatten() {
                 let c = xf.to_screen(q);
                 painter.rect(
                     egui::Rect::from_center_size(c, egui::vec2(7.0, 7.0)),
@@ -85,12 +85,12 @@ fn selection_handles(app: &SlideApp, st: &DocState, painter: &egui::Painter, xf:
             for h in hs {
                 painter.circle(xf.to_screen(h), 4.5, t.handle_fill, Stroke::new(1.0, t.handle_stroke));
             }
-            let geo = deckcraft_render::shape_geometry(sh, x.w, x.h);
+            let geo = iridium_decks_render::shape_geometry(sh, x.w, x.h);
             for hd in &geo.handles {
                 let q = xf.to_screen(a * hd.pos);
                 painter.circle(q, 4.5, Color32::from_rgb(0xFF, 0xD2, 0x3F), Stroke::new(1.0, Color32::from_rgb(0x8A, 0x6A, 0x00)));
             }
-            for hd in deckcraft_engine::tools::wordart_handles(&st.doc, &st.selection, sh, x.w, x.h) {
+            for hd in iridium_decks_engine::tools::wordart_handles(&st.doc, &st.selection, sh, x.w, x.h) {
                 let q = xf.to_screen(a * hd.pos);
                 painter.circle(q, 4.5, Color32::from_rgb(0xFF, 0xD2, 0x3F), Stroke::new(1.0, Color32::from_rgb(0x8A, 0x6A, 0x00)));
             }
@@ -106,16 +106,16 @@ fn text_overlays(st: &DocState, ui: &Ui, painter: &egui::Painter, xf: Xf, t: &To
             painter.add(egui::Shape::convex_polygon(quad.iter().map(|q| xf.to_screen(*q)).collect(), t.text_selection, Stroke::NONE));
         }
         // An input method's composition: underlined in place, thicker under the part being converted.
-        for (a, b, thick) in deckcraft_engine::cmd::text::composition_underlines(st) {
+        for (a, b, thick) in iridium_decks_engine::cmd::text::composition_underlines(st) {
             painter.line_segment([xf.to_screen(a), xf.to_screen(b)], Stroke::new(if thick { 2.0 } else { 1.0 }, t.caret));
         }
         if !ts.is_range() {
             let blink = (ui.input(|i| i.time) * 1.6).fract() < 0.6;
             ui.ctx().request_repaint_after(std::time::Duration::from_millis(300));
             // An empty placeholder shows the caret where typing begins too.
-            if blink && let Some((top, bot)) = deckcraft_engine::cmd::text::caret_line(st, ts) {
+            if blink && let Some((top, bot)) = iridium_decks_engine::cmd::text::caret_line(st, ts) {
                 // In the colour of the text being typed: a black caret is lost on a dark slide.
-                let color = deckcraft_engine::cmd::text::caret_color(st, ts).map_or(t.caret, theme::to_color32);
+                let color = iridium_decks_engine::cmd::text::caret_color(st, ts).map_or(t.caret, theme::to_color32);
                 painter.line_segment([xf.to_screen(top), xf.to_screen(bot)], Stroke::new(1.5, color));
             }
         }
@@ -123,7 +123,7 @@ fn text_overlays(st: &DocState, ui: &Ui, painter: &egui::Painter, xf: Xf, t: &To
     // Table cell editing: outline the cell (merged cells as drawn).
     if let Some(ts) = &editing
         && let (Some((r, c)), Some(sh)) = (ts.cell, st.shape(ts.shape))
-        && let Some(f) = deckcraft_engine::cmd::table::table_frame(st, sh)
+        && let Some(f) = iridium_decks_engine::cmd::table::table_frame(st, sh)
         && let Some(cr) = f.cell_rect(r, c)
     {
         let pts = [Point::new(cr.x0, cr.y0), Point::new(cr.x1, cr.y0), Point::new(cr.x1, cr.y1), Point::new(cr.x0, cr.y1)]
@@ -134,10 +134,10 @@ fn text_overlays(st: &DocState, ui: &Ui, painter: &egui::Painter, xf: Xf, t: &To
     if let Some((id, ..)) = st.selection.cells
         && st.selection.text.is_none()
         && let Some(sh) = st.shape(id)
-        && let deckcraft_model::ShapeKind::Table(table) = &sh.kind
-        && let Some(f) = deckcraft_engine::cmd::table::table_frame(st, sh)
+        && let iridium_decks_model::ShapeKind::Table(table) = &sh.kind
+        && let Some(f) = iridium_decks_engine::cmd::table::table_frame(st, sh)
     {
-        use deckcraft_engine::cmd::table::{in_range, selected_range};
+        use iridium_decks_engine::cmd::table::{in_range, selected_range};
         let range = selected_range(st.selection.cells, id, table);
         for (_, _, cr) in f.cells.iter().filter(|(r, c, _)| range.is_some() && in_range(range, *r, *c)) {
             let pts = [Point::new(cr.x0, cr.y0), Point::new(cr.x1, cr.y0), Point::new(cr.x1, cr.y1), Point::new(cr.x0, cr.y1)];
@@ -181,11 +181,11 @@ pub(super) fn overlays(app: &mut SlideApp, ui: &Ui, painter: &egui::Painter, xf:
     let path = &app.session.tool.path_preview;
     if path.len() > 1 {
         let pts: Vec<Point> = if app.session.tool.path_smooth && path.len() > 2 {
-            let d = deckcraft_engine::cmd::shape::freeform_path(path, false, true);
+            let d = iridium_decks_engine::cmd::shape::freeform_path(path, false, true);
             let mut v = vec![];
-            let bp = deckcraft_render::parse_path(&d);
-            deckcraft_geom::preset_flatten(&bp, &mut |el| match el {
-                deckcraft_geom::PathEl::MoveTo(q) | deckcraft_geom::PathEl::LineTo(q) => v.push(q),
+            let bp = iridium_decks_render::parse_path(&d);
+            iridium_decks_geom::preset_flatten(&bp, &mut |el| match el {
+                iridium_decks_geom::PathEl::MoveTo(q) | iridium_decks_geom::PathEl::LineTo(q) => v.push(q),
                 _ => {}
             });
             v
@@ -211,7 +211,7 @@ pub(super) fn overlays(app: &mut SlideApp, ui: &Ui, painter: &egui::Painter, xf:
         && let ToolKind::Ink { color, width, mode } = &app.session.tool.kind
     {
         let pts = &app.session.tool.ink_preview;
-        let legacy = deckcraft_engine::model::ink_pressure_is_legacy(pts);
+        let legacy = iridium_decks_engine::model::ink_pressure_is_legacy(pts);
         let c = theme::to_color32(*color);
         let c = if mode == "highlighter" { c.gamma_multiply(0.45) } else { c };
         if legacy || mode == "highlighter" {
@@ -221,8 +221,8 @@ pub(super) fn overlays(app: &mut SlideApp, ui: &Ui, painter: &egui::Painter, xf:
         } else {
             for pair in pts.windows(2) {
                 let [q0, q1] = pair else { continue };
-                let a = deckcraft_engine::model::ink_sample_width(*width, q0.2, legacy);
-                let b = deckcraft_engine::model::ink_sample_width(*width, q1.2, legacy);
+                let a = iridium_decks_engine::model::ink_sample_width(*width, q0.2, legacy);
+                let b = iridium_decks_engine::model::ink_sample_width(*width, q1.2, legacy);
                 let sw = ((a + b) * 0.5 * f64::from(xf.scale)).max(1.0) as f32;
                 let p0 = xf.to_screen(Point::new(q0.0, q0.1));
                 let p1 = xf.to_screen(Point::new(q1.0, q1.1));
@@ -238,9 +238,9 @@ pub(crate) struct TextMarks {
     pub selection: Vec<[Point; 4]>,
 }
 
-pub(crate) fn text_marks(st: &deckcraft_engine::DocState, ts: &deckcraft_engine::TextSel) -> Option<TextMarks> {
-    let (l, m) = deckcraft_engine::cmd::text::text_frame(st, ts)?;
-    let pos = |p: (usize, usize)| deckcraft_text::Pos { para: p.0, ch: p.1 };
+pub(crate) fn text_marks(st: &iridium_decks_engine::DocState, ts: &iridium_decks_engine::TextSel) -> Option<TextMarks> {
+    let (l, m) = iridium_decks_engine::cmd::text::text_frame(st, ts)?;
+    let pos = |p: (usize, usize)| iridium_decks_text::Pos { para: p.0, ch: p.1 };
     let (s0, s1) = ts.ordered();
     let selection = l
         .selection_rects(pos(s0), pos(s1))
@@ -270,7 +270,7 @@ fn draw_preview(app: &SlideApp, p: &egui::Painter, xf: Xf, x: Xfrm, t: &Tokens) 
         ToolKind::Shape { preset } => preset.clone(),
         _ => "rect".into(),
     };
-    if preset == deckcraft_engine::tools::DRAW_TABLE {
+    if preset == iridium_decks_engine::tools::DRAW_TABLE {
         // A border inside a table (flat), or the outline of a new table.
         let (a, b) = (xf.to_screen(Point::new(x.x, x.y)), xf.to_screen(Point::new(x.x + x.w, x.y + x.h)));
         if x.w < 0.5 || x.h < 0.5 {
@@ -280,7 +280,7 @@ fn draw_preview(app: &SlideApp, p: &egui::Painter, xf: Xf, x: Xfrm, t: &Tokens) 
         }
         return;
     }
-    if deckcraft_geom::preset::is_line_like(&preset) {
+    if iridium_decks_geom::preset::is_line_like(&preset) {
         let a = x.affine();
         p.line_segment([xf.to_screen(a * Point::new(0.0, 0.0)), xf.to_screen(a * Point::new(x.w, x.h))], Stroke::new(1.5, t.accent));
         return;

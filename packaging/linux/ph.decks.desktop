@@ -1,0 +1,14 @@
+[Desktop Entry]
+Type=Application
+Name=Decks
+GenericName=Presentation
+Comment=Create and present slide decks
+Exec=iridium-decks %F
+TryExec=iridium-decks
+Icon=ph.decks
+Terminal=false
+StartupNotify=true
+StartupWMClass=ph.decks
+Categories=Office;Presentation;
+MimeType=application/x-iridium-decks;application/vnd.openxmlformats-officedocument.presentationml.presentation;application/vnd.openxmlformats-officedocument.presentationml.template;application/vnd.openxmlformats-officedocument.presentationml.slideshow;
+Keywords=presentation;slides;slide show;deck;pptx;keynote;powerpoint;

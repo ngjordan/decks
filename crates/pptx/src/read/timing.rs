@@ -1,7 +1,7 @@
 //! Slide transitions (`p:transition`) and animations (`p:timing`).
 
-use deckcraft_model::anim::{AnimClass, AnimStart, Animation, BuildRole, TextBuild, Transition, build_filled, paragraph_build_roles};
-use deckcraft_model::{Shape, ShapeKind, TextBody, find_shape, find_shape_mut};
+use iridium_decks_model::anim::{AnimClass, AnimStart, Animation, BuildRole, TextBuild, Transition, build_filled, paragraph_build_roles};
+use iridium_decks_model::{Shape, ShapeKind, TextBody, find_shape, find_shape_mut};
 
 use super::shapes::IdCtx;
 use super::{Imp, Part, dml};
@@ -32,7 +32,7 @@ pub fn transition(imp: &mut Imp, part: &Part, t: &El) -> Option<Transition> {
             None => tr.kind = "none".into(),
         },
     }
-    let default_dur = deckcraft_model::anim::TRANSITIONS.iter().find(|x| x.0 == tr.kind).map(|x| x.3).unwrap_or(1000);
+    let default_dur = iridium_decks_model::anim::TRANSITIONS.iter().find(|x| x.0 == tr.kind).map(|x| x.3).unwrap_or(1000);
     // `spd` defaults to "fast" in the schema; PowerPoint omits both attributes for 0.5 s.
     tr.duration_ms = ms_attr(t, "dur").unwrap_or(match t.attr("spd") {
         Some("med") => 750,
@@ -142,7 +142,7 @@ fn place_by_parent_delays(out: &mut [(Animation, u32, String, bool)], at: &[(Opt
             continue;
         }
         let abs: Vec<u32> = idx.iter().map(|&i| at[i].2.saturating_add(out[i].0.delay_ms)).collect();
-        // Only a file that lists effects out of time order needs this: files PowerPoint or Iridium Decks
+        // Only a file that lists effects out of time order needs this: files PowerPoint or Decks
         // save are in order, and their reading stays exactly as before.
         if abs.is_sorted() {
             continue;

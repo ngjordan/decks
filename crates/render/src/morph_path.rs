@@ -1,10 +1,10 @@
 //! Morph of an outline: a frame shape whose geometry turns from the old shape's into its own (a
-//! circle into a star), with the points aligned by `deckcraft_geom::morph`.
+//! circle into a star), with the points aligned by `iridium_decks_geom::morph`.
 
-use deckcraft_geom::Xfrm;
-use deckcraft_geom::morph::{Fade, GeometryMorph};
-use deckcraft_geom::preset::Geometry;
-use deckcraft_model::{Geom, Shape, ShapeId};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_geom::morph::{Fade, GeometryMorph};
+use iridium_decks_geom::preset::Geometry;
+use iridium_decks_model::{Geom, Shape, ShapeId};
 use kurbo::Vec2;
 
 use crate::shape_geometry;

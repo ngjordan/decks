@@ -3,7 +3,7 @@ use super::{NO_ID_SPACE, Result, Session, Value, bad, bool_or, bool_param, edit_
 pub(super) fn crop(s: &mut Session, p: &Value) -> Result<Value> {
     let c = [f64_param(p, "left"), f64_param(p, "top"), f64_param(p, "right"), f64_param(p, "bottom")];
     edit_geometry(s, p, "picture.crop", |sh| {
-        if let deckcraft_model::ShapeKind::Picture { fill } = &mut sh.kind {
+        if let iridium_decks_model::ShapeKind::Picture { fill } = &mut sh.kind {
             for (i, v) in c.iter().enumerate() {
                 if let (Some(v), Some(slot)) = (v, fill.crop.get_mut(i)) {
                     *slot = v.clamp(-10.0, 0.95);
@@ -16,7 +16,7 @@ pub(super) fn crop(s: &mut Session, p: &Value) -> Result<Value> {
 
 pub(super) fn picture_adjust(s: &mut Session, p: &Value) -> Result<Value> {
     edit_shapes(s, p, "picture.adjust", |sh| {
-        if let deckcraft_model::ShapeKind::Picture { fill } = &mut sh.kind {
+        if let iridium_decks_model::ShapeKind::Picture { fill } = &mut sh.kind {
             let a = &mut fill.adjust;
             if bool_or(p, "reset", false) {
                 *a = Default::default();
@@ -43,7 +43,7 @@ pub(super) fn picture_adjust(s: &mut Session, p: &Value) -> Result<Value> {
 
 pub(super) fn picture_reset(s: &mut Session, p: &Value) -> Result<Value> {
     edit_shapes(s, p, "picture.reset", |sh| {
-        if let deckcraft_model::ShapeKind::Picture { fill } = &mut sh.kind {
+        if let iridium_decks_model::ShapeKind::Picture { fill } = &mut sh.kind {
             fill.adjust = Default::default();
             fill.crop = [0.0; 4];
             fill.alpha = None;
@@ -62,7 +62,7 @@ pub(super) fn picture_change(s: &mut Session, p: &Value) -> Result<Value> {
     let ct = crate::cmd::insert::content_type(&name, &bytes);
     let media = s.edit(|doc, _| doc.add_media(&name, ct, bytes).ok_or_else(|| bad("picture.change", NO_ID_SPACE)))?;
     edit_shapes(s, p, "picture.change", |sh| {
-        if let deckcraft_model::ShapeKind::Picture { fill } = &mut sh.kind {
+        if let iridium_decks_model::ShapeKind::Picture { fill } = &mut sh.kind {
             fill.media = media;
             fill.crop = [0.0; 4];
             fill.artistic = None;
@@ -73,7 +73,7 @@ pub(super) fn picture_change(s: &mut Session, p: &Value) -> Result<Value> {
 
 pub(super) fn media_options(s: &mut Session, p: &Value) -> Result<Value> {
     edit_shapes(s, p, "media.options", |sh| {
-        if let deckcraft_model::ShapeKind::Media(m) = &mut sh.kind {
+        if let iridium_decks_model::ShapeKind::Media(m) = &mut sh.kind {
             if let Some(v) = bool_param(p, "autoplay") {
                 m.autoplay = v;
             }

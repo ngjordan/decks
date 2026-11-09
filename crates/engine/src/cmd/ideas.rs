@@ -3,9 +3,9 @@
 //! resizes the slide's own shapes and crops pictures to their new box; it changes only that
 //! slide. Everything is computed here, offline.
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::{Fill, Presentation, Rgba, Shape, ShapeKind};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::resolve::{self, Ctx};
+use iridium_decks_model::{Fill, Presentation, Rgba, Shape, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, cmd, has_slide, opt_usize_param, str_param, xfrm_of};
@@ -123,12 +123,12 @@ fn cover_crop(src: f64, dst: f64) -> [f64; 4] {
 /// The light fill behind the title in the full-bleed idea. Its opacity is an `alpha` transform
 /// (about 220/255), as PPTX stores it, so the fill compares equal after a save and reopen.
 fn band_fill() -> Fill {
-    Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgb(255, 255, 255)).with(deckcraft_model::ColorTransform::Alpha(86274)))
+    Fill::solid(iridium_decks_model::ColorRef::rgb(Rgba::rgb(255, 255, 255)).with(iridium_decks_model::ColorTransform::Alpha(86274)))
 }
 
 /// The band as released versions up to 0.10 stored it (opacity in the colour's own alpha).
 fn legacy_band_fill() -> Fill {
-    Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgba(255, 255, 255, 220)))
+    Fill::solid(iridium_decks_model::ColorRef::rgb(Rgba::rgba(255, 255, 255, 220)))
 }
 
 /// Whether `f` is a Full-bleed band, in the current or the legacy form.
@@ -265,8 +265,8 @@ mod tests {
 
     use std::sync::Arc;
 
-    use deckcraft_model::style::PictureFill;
-    use deckcraft_model::{PhType, Placeholder, ShapeId};
+    use iridium_decks_model::style::PictureFill;
+    use iridium_decks_model::{PhType, Placeholder, ShapeId};
 
     use super::*;
 
@@ -280,14 +280,14 @@ mod tests {
             id: ShapeId(500),
             ph: Some(Placeholder { kind: PhType::Title, ..Default::default() }),
             xfrm: Some(Xfrm::new(50.0, 30.0, 860.0, 90.0)),
-            text: Some(deckcraft_model::text::TextBody::from_text("Harbour at dawn")),
+            text: Some(iridium_decks_model::text::TextBody::from_text("Harbour at dawn")),
             ..Default::default()
         };
         let body = Shape {
             id: ShapeId(501),
             text_box: true,
             xfrm: Some(Xfrm::new(50.0, 140.0, 860.0, 350.0)),
-            text: Some(deckcraft_model::text::TextBody::from_text("one\ntwo")),
+            text: Some(iridium_decks_model::text::TextBody::from_text("one\ntwo")),
             ..Default::default()
         };
         slide.shapes.push(title);
@@ -404,7 +404,7 @@ mod tests {
             hidden: true,
             ph: Some(Placeholder { kind: PhType::Title, ..Default::default() }),
             xfrm: Some(Xfrm::new(50.0, 30.0, 860.0, 90.0)),
-            text: Some(deckcraft_model::text::TextBody::from_text("Old title")),
+            text: Some(iridium_decks_model::text::TextBody::from_text("Old title")),
             ..Default::default()
         };
         slide.shapes.insert(0, hidden);
@@ -420,8 +420,8 @@ mod tests {
     fn switching_ideas_removes_the_band_after_a_pptx_round_trip() {
         let mut s = deck(true);
         s.execute("design.applyIdea", &json!({"id": "fullBleed"})).unwrap();
-        let bytes = deckcraft_pptx::export(&s.doc().unwrap().doc).unwrap();
-        let back = deckcraft_pptx::import(&bytes).unwrap();
+        let bytes = iridium_decks_pptx::export(&s.doc().unwrap().doc).unwrap();
+        let back = iridium_decks_pptx::import(&bytes).unwrap();
         s.doc_mut().unwrap().doc = Arc::new(back);
         let title = s.doc().unwrap().doc.slides[0].shapes.iter().position(|x| x.ph.as_ref().is_some_and(|p| p.kind.is_title())).unwrap();
         let id = s.doc().unwrap().doc.slides[0].shapes[title].id.0;
@@ -433,7 +433,7 @@ mod tests {
     #[test]
     fn switching_ideas_removes_a_band_saved_by_earlier_versions() {
         let mut s = deck(true);
-        let legacy = Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgba(255, 255, 255, 220)));
+        let legacy = Fill::solid(iridium_decks_model::ColorRef::rgb(Rgba::rgba(255, 255, 255, 220)));
         let st = s.doc_mut().unwrap();
         let slide = Arc::make_mut(&mut Arc::make_mut(&mut st.doc).slides[0]);
         slide.shapes.iter_mut().find(|x| x.id == ShapeId(500)).unwrap().fill = Some(legacy);
@@ -472,8 +472,8 @@ mod tests {
         slide.shapes.push(Shape {
             id: ShapeId(510),
             xfrm: Some(Xfrm::new(300.0, 200.0, 200.0, 80.0)),
-            fill: Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgba(200, 80, 20, 255)))),
-            text: Some(deckcraft_model::text::TextBody::from_text("Solar wind")),
+            fill: Some(Fill::solid(iridium_decks_model::ColorRef::rgb(Rgba::rgba(200, 80, 20, 255)))),
+            text: Some(iridium_decks_model::text::TextBody::from_text("Solar wind")),
             ..Default::default()
         });
         assert!(ideas_for(&s.doc().unwrap().doc, 0).is_empty());
@@ -515,7 +515,7 @@ mod tests {
         slide.shapes.push(Shape { id: ShapeId(512), text_box: true, xfrm: Some(Xfrm::new(10.0, 10.0, 100.0, 40.0)), ..Default::default() });
         assert_eq!(ideas_for(&s.doc().unwrap().doc, 0).len(), 3, "invisible and empty: nothing in the way");
         let slide = Arc::make_mut(&mut Arc::make_mut(&mut s.doc_mut().unwrap().doc).slides[0]);
-        slide.shapes[2].fill = Some(Fill::solid(deckcraft_model::ColorRef::rgb(Rgba::rgba(200, 80, 20, 255))));
+        slide.shapes[2].fill = Some(Fill::solid(iridium_decks_model::ColorRef::rgb(Rgba::rgba(200, 80, 20, 255))));
         assert!(ideas_for(&s.doc().unwrap().doc, 0).is_empty(), "a filled empty box would stay on top");
     }
 
@@ -537,7 +537,7 @@ mod tests {
     fn an_empty_box_filled_through_its_style_blocks_ideas() {
         let mut s = deck(false);
         let slide = Arc::make_mut(&mut Arc::make_mut(&mut s.doc_mut().unwrap().doc).slides[0]);
-        let mut style = deckcraft_model::style::ShapeStyle::accent(deckcraft_model::SchemeSlot::Accent1);
+        let mut style = iridium_decks_model::style::ShapeStyle::accent(iridium_decks_model::SchemeSlot::Accent1);
         style.line_ref.0 = 0;
         slide.shapes.push(Shape {
             id: ShapeId(512),

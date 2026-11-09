@@ -6,8 +6,8 @@
 //! `KEEPCASE`, `TRY`, `REP` and `WORDCHARS`. Compounding, `ICONV`/`OCONV` and morphology are not
 //! read; words they would accept are reported as misspelt.
 //!
-//! No dictionary ships with Iridium Decks. They are looked up in the folders the system's own spell
-//! checkers use (and `DECKCRAFT_DICTIONARIES`), so whatever the user installed is used.
+//! No dictionary ships with Decks. They are looked up in the folders the system's own spell
+//! checkers use (and `IRIDIUM_DECKS_DICTIONARIES`), so whatever the user installed is used.
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -496,19 +496,19 @@ fn strip_start(w: &[char], add: &str, strip: &str) -> Option<Vec<char>> {
 /// The folders searched for dictionaries, in order.
 pub fn search_dirs() -> Vec<PathBuf> {
     let mut out = vec![];
-    if let Some(v) = std::env::var_os("DECKCRAFT_DICTIONARIES") {
+    if let Some(v) = std::env::var_os("IRIDIUM_DECKS_DICTIONARIES") {
         out.extend(std::env::split_paths(&v));
     }
     let home = std::env::var_os("HOME").map(PathBuf::from);
     if cfg!(target_os = "macos") {
-        out.extend(home.iter().map(|h| h.join("Library/Application Support/Iridium Decks/Dictionaries")));
+        out.extend(home.iter().map(|h| h.join("Library/Application Support/Decks/Dictionaries")));
         out.extend(home.iter().map(|h| h.join("Library/Spelling")));
         out.push("/Library/Spelling".into());
     } else if cfg!(target_os = "windows") {
-        out.extend(std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("Iridium Decks").join("Dictionaries")));
+        out.extend(std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("Decks").join("Dictionaries")));
     } else {
         let data = std::env::var_os("XDG_DATA_HOME").map(PathBuf::from).or_else(|| home.as_ref().map(|h| h.join(".local/share")));
-        out.extend(data.iter().map(|d| d.join("deckcraft/dictionaries")));
+        out.extend(data.iter().map(|d| d.join("iridium-decks/dictionaries")));
         out.extend(data.iter().map(|d| d.join("hunspell")));
         for d in ["/usr/share/hunspell", "/usr/share/myspell", "/usr/share/myspell/dicts", "/usr/local/share/hunspell", "/app/share/hunspell"] {
             out.push(d.into());
@@ -595,7 +595,7 @@ pub fn dictionary(lang: &str) -> Option<Arc<Dictionary>> {
     loaded
 }
 
-/// Where Add to Dictionary keeps words: `user.dic` in Iridium Decks's own dictionaries folder, one
+/// Where Add to Dictionary keeps words: `user.dic` in Decks's own dictionaries folder, one
 /// word per line (the Hunspell `.dic` format without a count).
 pub fn user_dictionary_path() -> Option<PathBuf> {
     if let Ok(p) = user_override().lock()
@@ -605,14 +605,14 @@ pub fn user_dictionary_path() -> Option<PathBuf> {
     }
     let home = std::env::var_os("HOME").map(PathBuf::from);
     let dir = if cfg!(target_os = "macos") {
-        home.map(|h| h.join("Library/Application Support/Iridium Decks/Dictionaries"))
+        home.map(|h| h.join("Library/Application Support/Decks/Dictionaries"))
     } else if cfg!(target_os = "windows") {
-        std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("Iridium Decks").join("Dictionaries"))
+        std::env::var_os("APPDATA").map(|a| PathBuf::from(a).join("Decks").join("Dictionaries"))
     } else {
         std::env::var_os("XDG_DATA_HOME")
             .map(PathBuf::from)
             .or_else(|| home.map(|h| h.join(".local/share")))
-            .map(|d| d.join("deckcraft/dictionaries"))
+            .map(|d| d.join("iridium-decks/dictionaries"))
     };
     dir.map(|d| d.join("user.dic"))
 }
@@ -703,14 +703,14 @@ pub struct Word {
 /// The words of `p`, each with its run's language (`lang` on the run, else `default`). Words
 /// with digits are skipped; apostrophes inside a word belong to it; hyphenated words are checked
 /// part by part.
-pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
+pub fn paragraph_words(p: &iridium_decks_model::Paragraph, default: &str) -> Vec<Word> {
     let mut chars: Vec<(char, usize)> = vec![];
     for (ri, r) in p.runs.iter().enumerate() {
         chars.extend(r.content().chars().map(|c| (c, ri)));
     }
     let lang_of = |ri: usize| p.runs.get(ri).and_then(|r| r.props.lang.clone()).filter(|l| !l.is_empty()).unwrap_or_else(|| default.to_string());
     // Combining marks (decomposed accents) belong to the letter before them.
-    let inside = |c: char| c.is_alphanumeric() || deckcraft_model::words::is_combining_mark(c) || c == '\'' || c == '’' || c == '-';
+    let inside = |c: char| c.is_alphanumeric() || iridium_decks_model::words::is_combining_mark(c) || c == '\'' || c == '’' || c == '-';
     let mut out = vec![];
     let mut i = 0;
     while i < chars.len() {
@@ -729,7 +729,7 @@ pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Wor
         // Trim back to the last letter or digit, keeping only the marks that sit on it
         // (a mark on a trailing apostrophe goes with the apostrophe).
         while b > a {
-            let k = (a..b).rev().find(|&k| !deckcraft_model::words::is_combining_mark(chars[k].0)).unwrap_or(a);
+            let k = (a..b).rev().find(|&k| !iridium_decks_model::words::is_combining_mark(chars[k].0)).unwrap_or(a);
             if chars[k].0.is_alphanumeric() {
                 break;
             }
@@ -759,7 +759,7 @@ pub fn paragraph_words(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Wor
 
 /// Words that repeat the word just before them (`the the`), with only spaces between, as
 /// PowerPoint flags them. Hyphenated parts and different languages don't count.
-pub fn repeated(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
+pub fn repeated(p: &iridium_decks_model::Paragraph, default: &str) -> Vec<Word> {
     let words = paragraph_words(p, default);
     let chars: Vec<char> = p.runs.iter().flat_map(|r| r.content().chars()).collect();
     let mut out = vec![];
@@ -779,7 +779,7 @@ pub fn repeated(p: &deckcraft_model::Paragraph, default: &str) -> Vec<Word> {
 
 /// The misspelt and repeated words of `p`, each checked in its own language (languages with no dictionary
 /// installed are skipped), leaving out `ignore` (lower-case).
-pub fn misspelt(p: &deckcraft_model::Paragraph, default: &str, ignore: &[String]) -> Vec<Word> {
+pub fn misspelt(p: &iridium_decks_model::Paragraph, default: &str, ignore: &[String]) -> Vec<Word> {
     let mut dicts: HashMap<String, Option<Arc<Dictionary>>> = HashMap::new();
     paragraph_words(p, default)
         .into_iter()
@@ -828,14 +828,14 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn nfd_word_not_split() {
-        let p = deckcraft_model::Paragraph::new("Das na\u{ef}ve Caf\u{e9} und cafe\u{301} na\u{308}ive");
+        let p = iridium_decks_model::Paragraph::new("Das na\u{ef}ve Caf\u{e9} und cafe\u{301} na\u{308}ive");
         let w: Vec<String> = paragraph_words(&p, "en-US").into_iter().map(|w| w.text).collect();
         assert_eq!(w, ["Das", "na\u{ef}ve", "Caf\u{e9}", "und", "cafe\u{301}", "na\u{308}ive"]);
     }
 
     #[test]
     fn a_mark_on_trailing_punctuation_is_trimmed_with_it() {
-        let p = deckcraft_model::Paragraph::new("word'\u{301} cafe\u{301}' x");
+        let p = iridium_decks_model::Paragraph::new("word'\u{301} cafe\u{301}' x");
         let w: Vec<String> = paragraph_words(&p, "en-US").into_iter().map(|w| w.text).collect();
         assert_eq!(w, ["word", "cafe\u{301}", "x"]);
     }
@@ -860,7 +860,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn a_language_tag_cannot_leave_the_dictionary_folders() {
-        let dir = std::env::temp_dir().join(format!("deckcraft-dict-lang-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("iridium-decks-dict-lang-{}", std::process::id()));
         let inner = dir.join("dicts");
         std::fs::create_dir_all(&inner).unwrap();
         std::fs::write(dir.join("evil.aff"), "SET UTF-8\n").unwrap();
@@ -916,7 +916,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn runs_give_words_their_language() {
-        use deckcraft_model::{Paragraph, Run, RunProps};
+        use iridium_decks_model::{Paragraph, Run, RunProps};
         let p = Paragraph {
             runs: vec![
                 Run::with("Hello wor", RunProps { lang: Some("en-GB".into()), ..Default::default() }),
@@ -941,7 +941,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn repeated_words_and_no_proof_runs() {
-        use deckcraft_model::{Paragraph, Run, RunProps};
+        use iridium_decks_model::{Paragraph, Run, RunProps};
         let p = Paragraph::new("See the the plan, plan. The THE end");
         let r: Vec<(usize, usize, Option<usize>)> = repeated(&p, "en-US").iter().map(|w| (w.start, w.end, w.repeated)).collect();
         assert_eq!(r, vec![(8, 11, Some(7)), (28, 31, Some(27))]);
@@ -965,7 +965,7 @@ SFX D Y 1\nSFX D 0 ed/S .\n";
 
     #[test]
     fn dictionaries_are_found_by_locale_then_language() {
-        let dir = std::env::temp_dir().join(format!("deckcraft-dict-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("iridium-decks-dict-{}", std::process::id()));
         let _ = std::fs::create_dir_all(&dir);
         for n in ["en_GB", "de_DE"] {
             let _ = std::fs::write(dir.join(format!("{n}.aff")), "");

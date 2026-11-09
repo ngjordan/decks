@@ -69,7 +69,7 @@ pub(super) fn format_elapsed(secs: f64) -> String {
 
 /// Local wall clock for presenter view. `--:--` where there is no clock (wasm).
 pub(super) fn wall_clock() -> String {
-    match deckcraft_text::datetime::DateTime::now_local() {
+    match iridium_decks_text::datetime::DateTime::now_local() {
         Some(t) if t.hour < 24 && t.minute < 60 => format!("{:02}:{:02}", t.hour, t.minute),
         _ => "--:--".to_string(),
     }
@@ -78,7 +78,7 @@ pub(super) fn wall_clock() -> String {
 /// The Presenter View's preview of slide `n`, `size` pixels.
 fn render_preview(doc: &Presentation, n: usize, size: (u32, u32), threads: u16) -> egui::ColorImage {
     let opts = RenderOpts { scale: size.0 as f64 / doc.slide_size.width.max(1.0), size: Some(size), threads, ..Default::default() };
-    crate::textures::to_color_image(&deckcraft_render::render_slide(doc, n, &opts), false)
+    crate::textures::to_color_image(&iridium_decks_render::render_slide(doc, n, &opts), false)
 }
 
 /// Render the presenter window and set `keep` false when the user ends or closes the show.
@@ -136,7 +136,7 @@ pub(super) fn presenter_window(ctx: &egui::Context, show: &mut Show, doc: &std::
         }
     }
     let next_tex = show.next_tex.as_ref().filter(|(d, k, _)| next.is_some_and(|n| is(d, *k, n))).map(|(_, _, t)| t.clone());
-    let no_notes = deckcraft_model::text::TextBody::default();
+    let no_notes = iridium_decks_model::text::TextBody::default();
     let notes = doc.slides.get(cur).map_or(&no_notes, |s| &s.notes);
     let clock = wall_clock();
     // The presenter clock only moves when this window is drawn again.
@@ -147,8 +147,8 @@ pub(super) fn presenter_window(ctx: &egui::Context, show: &mut Show, doc: &std::
         ui.add(egui::Button::new(egui::RichText::new(s).size(15.0).color(Color32::WHITE)).fill(Color32::from_gray(60)).min_size(vec2(0.0, 30.0)))
     };
     ctx.show_viewport_immediate(
-        egui::ViewportId::from_hash_of("deckcraft_presenter"),
-        egui::ViewportBuilder::default().with_title("Presenter View — Iridium Decks").with_inner_size([1100.0, 700.0]),
+        egui::ViewportId::from_hash_of("iridium_decks_presenter"),
+        egui::ViewportBuilder::default().with_title("Presenter View — Decks").with_inner_size([1100.0, 700.0]),
         |ui, _| {
             if !keyboard(ui.ctx(), show, doc, now, true) {
                 *keep = false;
@@ -291,7 +291,7 @@ pub(super) fn presenter_window(ctx: &egui::Context, show: &mut Show, doc: &std::
 }
 
 /// The current slide's notes in the presenter's notes pane, `px` for 12 pt text.
-pub(super) fn presenter_notes(ui: &mut Ui, notes: &deckcraft_model::text::TextBody, px: f32) -> egui::Response {
+pub(super) fn presenter_notes(ui: &mut Ui, notes: &iridium_decks_model::text::TextBody, px: f32) -> egui::Response {
     let color = Color32::from_gray(230);
     if notes.text().is_empty() {
         ui.label(egui::RichText::new("No notes.").size(px).color(color))

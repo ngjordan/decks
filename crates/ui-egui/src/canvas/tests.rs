@@ -2,10 +2,10 @@
 
 use std::sync::Arc;
 
-use deckcraft_engine::Session;
 use egui::{Event, Modifiers, MouseWheelUnit, Pos2, TouchPhase, pos2, vec2};
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use iridium_decks_engine::Session;
 
 use super::*;
 use crate::{Services, SlideApp};
@@ -20,7 +20,7 @@ fn resize_cursor_tracks_rotation() {
     // rotation cleanly moves the cursor to the next of the four resize directions.
     let id = s.execute("shape.insert", &serde_json::json!({"preset": "rect", "rect": [100.0, 100.0, 100.0, 100.0]})).unwrap()["id"].as_u64().unwrap()
         as u32;
-    let sid = deckcraft_model::ShapeId(id);
+    let sid = iridium_decks_model::ShapeId(id);
     // Unrotated: the NW handle (0) drags the NW-SE diagonal.
     assert_eq!(resize_cursor(&s, sid, 0), egui::CursorIcon::ResizeNwSe);
     assert_eq!(resize_cursor(&s, sid, 4), egui::CursorIcon::ResizeNwSe);
@@ -65,7 +65,7 @@ fn a_wide_shape_keeps_its_corner_cursors_diagonal() {
     let mut s = Session::with_new();
     let id = s.execute("shape.insert", &serde_json::json!({"preset": "rect", "rect": [100.0, 100.0, 400.0, 80.0]})).unwrap()["id"].as_u64().unwrap()
         as u32;
-    let sid = deckcraft_model::ShapeId(id);
+    let sid = iridium_decks_model::ShapeId(id);
     assert_eq!(resize_cursor(&s, sid, 0), egui::CursorIcon::ResizeNwSe, "the NW corner drags NW-SE");
     assert_eq!(resize_cursor(&s, sid, 4), egui::CursorIcon::ResizeNwSe, "the SE corner drags NW-SE");
     assert_eq!(resize_cursor(&s, sid, 2), egui::CursorIcon::ResizeNeSw, "the NE corner drags NE-SW");
@@ -309,11 +309,11 @@ fn a_fitted_slide_has_no_scroll_bars() {
     assert!(marquee, "the drag selects on the canvas");
 }
 
-fn app_with_table() -> (egui_kittest::Harness<'static, SlideApp>, deckcraft_model::ShapeId) {
+fn app_with_table() -> (egui_kittest::Harness<'static, SlideApp>, iridium_decks_model::ShapeId) {
     let mut s = Session::with_new();
     let data = json!([["Hello world", "b"], ["c", ""]]);
     let r = s.execute("insert.table", &json!({"rows": 2, "cols": 2, "rect": [100.0, 100.0, 400.0, 80.0], "data": data})).unwrap();
-    let id = deckcraft_model::ShapeId(r["id"].as_u64().unwrap() as u32);
+    let id = iridium_decks_model::ShapeId(r["id"].as_u64().unwrap() as u32);
     s.execute("edit.deselect", &json!({})).unwrap();
     let mut harness = egui_kittest::Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_ui_state(
         |ui, app: &mut SlideApp| {
@@ -349,10 +349,13 @@ fn empty_bullet_preview_follows_click_type_enter_and_toggle() {
     h.state_mut().run("slide.new", json!({"layout": "titleAndContent"})).unwrap();
     h.run_steps(3);
     let st = h.state().session.active().unwrap();
-    let sh =
-        st.shapes().iter().find(|s| s.ph_type() == Some(deckcraft_model::PhType::Body) || s.ph_type() == Some(deckcraft_model::PhType::Obj)).unwrap();
+    let sh = st
+        .shapes()
+        .iter()
+        .find(|s| s.ph_type() == Some(iridium_decks_model::PhType::Body) || s.ph_type() == Some(iridium_decks_model::PhType::Obj))
+        .unwrap();
     let id = sh.id;
-    let x = deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh);
+    let x = iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh);
     let p = screen(h.state(), x.x + 40.0, x.y + 20.0);
     click(&mut h, p);
     h.run_steps(3);
@@ -360,7 +363,7 @@ fn empty_bullet_preview_follows_click_type_enter_and_toggle() {
         let st = h.state().session.active().unwrap();
         let ts = st.selection.text.as_ref().expect("click starts typing");
         assert_eq!(ts.shape, id);
-        deckcraft_engine::cmd::text::caret_line(st, ts).unwrap().0
+        iridium_decks_engine::cmd::text::caret_line(st, ts).unwrap().0
     };
     let first = caret(&h);
     h.event(Event::Text("First point".into()));
@@ -371,7 +374,7 @@ fn empty_bullet_preview_follows_click_type_enter_and_toggle() {
     assert!((first.x - second.x).abs() < 0.01, "empty lines retain the bullet indent");
     assert!(second.y > first.y);
     let st = h.state().session.active().unwrap();
-    let l = deckcraft_engine::cmd::text::layout_for(st, st.selection.text.as_ref().unwrap()).unwrap();
+    let l = iridium_decks_engine::cmd::text::layout_for(st, st.selection.text.as_ref().unwrap()).unwrap();
     assert_eq!(l.empty_bullets.len(), 1);
     assert_eq!(l.empty_bullets[0].para, 1);
     let renders = h.state().textures.canvas_renders;
@@ -384,14 +387,14 @@ fn empty_bullet_preview_follows_click_type_enter_and_toggle() {
     h.run_steps(3);
     let st = h.state().session.active().unwrap();
     let ts = st.selection.text.as_ref().unwrap();
-    assert_eq!(deckcraft_engine::cmd::text::body_of(st, ts).unwrap().text(), "First point\nSecond point");
-    assert!(deckcraft_engine::cmd::text::layout_for(st, ts).unwrap().empty_bullets.is_empty());
+    assert_eq!(iridium_decks_engine::cmd::text::body_of(st, ts).unwrap().text(), "First point\nSecond point");
+    assert!(iridium_decks_engine::cmd::text::layout_for(st, ts).unwrap().empty_bullets.is_empty());
     h.key_press(egui::Key::Enter);
     h.run_steps(3);
     h.state_mut().run("format.bullets", json!({})).unwrap();
     h.run_steps(3);
     let st = h.state().session.active().unwrap();
-    assert!(deckcraft_engine::cmd::text::layout_for(st, st.selection.text.as_ref().unwrap()).unwrap().empty_bullets.is_empty());
+    assert!(iridium_decks_engine::cmd::text::layout_for(st, st.selection.text.as_ref().unwrap()).unwrap().empty_bullets.is_empty());
 }
 
 /// Double-clicking a table cell edits it with the caret drawn in that cell, where clicked.
@@ -409,7 +412,7 @@ fn double_click_in_a_table_cell_shows_the_caret_there() {
     let ts = st.selection.text.clone().expect("editing the cell");
     assert_eq!((ts.shape, ts.cell), (id, Some((1, 1))));
     assert!(text_marks(st, &ts).is_some_and(|m| m.selection.is_empty()), "no range");
-    let (top, bottom) = deckcraft_engine::cmd::text::caret_line(st, &ts).expect("the cell's text has a caret");
+    let (top, bottom) = iridium_decks_engine::cmd::text::caret_line(st, &ts).expect("the cell's text has a caret");
     for q in [top, bottom] {
         assert!(q.x > 300.0 && q.x < 500.0 && q.y >= 140.0 && q.y <= 180.0, "caret {q:?} outside cell (1, 1)");
     }
@@ -420,7 +423,7 @@ fn double_click_in_a_table_cell_shows_the_caret_there() {
     let st = harness.state().session.active().unwrap();
     let ts = st.selection.text.clone().unwrap();
     assert_eq!((ts.cell, ts.caret), (Some((0, 0)), (0, 0)));
-    let (top, _) = deckcraft_engine::cmd::text::caret_line(st, &ts).unwrap();
+    let (top, _) = iridium_decks_engine::cmd::text::caret_line(st, &ts).unwrap();
     assert!(top.x > 100.0 && top.x < 120.0 && top.y >= 100.0 && top.y < 140.0, "caret {top:?} at the start of cell (0, 0)");
 }
 
@@ -443,7 +446,7 @@ fn table_borders_resize_with_the_pointer() {
     harness.drop_at(q);
     harness.run_steps(2);
     let st = harness.state().session.active().unwrap();
-    let deckcraft_model::ShapeKind::Table(t) = &st.shape(id).unwrap().kind else { panic!("not a table") };
+    let iridium_decks_model::ShapeKind::Table(t) = &st.shape(id).unwrap().kind else { panic!("not a table") };
     assert!((t.cols[0] - 240.0).abs() < 0.5 && (t.cols[1] - 160.0).abs() < 0.5, "{:?}", t.cols);
 }
 

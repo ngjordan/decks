@@ -219,7 +219,7 @@ fn arm_pyramid(l: &L, out: &mut Vec<Item>) {
         let path = format!("M {it:.2} 0 L {:.2} 0 L {:.2} {bh:.2} L {ib:.2} {bh:.2} Z", w - it, w - ib);
         let mut sh = text_shape("rect", Xfrm::new(x, area.y + i as f64 * h, w, bh), &l.nodes(g), true);
         sh.geom = Geom::Custom {
-            paths: vec![deckcraft_model::CustomPath { w, h: bh, d: path, fill: deckcraft_geom::preset::FillMode::Norm, stroke: true }],
+            paths: vec![iridium_decks_model::CustomPath { w, h: bh, d: path, fill: iridium_decks_geom::preset::FillMode::Norm, stroke: true }],
         };
         // Keep the text inside the sloped sides: inset it to a bit past the band's mid width.
         // The tip band is a triangle: its text sits at the wide end, inset to the width there.
@@ -229,7 +229,7 @@ fn arm_pyramid(l: &L, out: &mut Vec<Item>) {
             b.body.inset_l = Some(inset);
             b.body.inset_r = Some(inset);
             if tip {
-                b.body.anchor = Some(if inverted { deckcraft_model::text::Anchor::Top } else { deckcraft_model::text::Anchor::Bottom });
+                b.body.anchor = Some(if inverted { iridium_decks_model::text::Anchor::Top } else { iridium_decks_model::text::Anchor::Bottom });
             }
         }
         paint(d, &mut sh, i, false);
@@ -414,7 +414,7 @@ fn arm_cycle_matrix(l: &L, out: &mut Vec<Item>) {
                 // Text in the box's outer part, clear of the circle.
                 body.body.inset_l = Some(if sx > 0.0 { b * 0.35 } else { 6.0 });
                 body.body.inset_r = Some(if sx < 0.0 { b * 0.35 } else { 6.0 });
-                body.body.anchor = Some(if sy < 0.0 { deckcraft_model::text::Anchor::Top } else { deckcraft_model::text::Anchor::Bottom });
+                body.body.anchor = Some(if sy < 0.0 { iridium_decks_model::text::Anchor::Top } else { iridium_decks_model::text::Anchor::Bottom });
             }
             out.push((sh, g[1..].to_vec()));
         }
@@ -459,17 +459,23 @@ fn arm_segmented_pyramid(l: &L, out: &mut Vec<Item>) {
                 format!("M {:.2} 0 L {tw:.2} {th:.2} L 0 {th:.2} Z", tw / 2.0)
             };
             sh.geom = Geom::Custom {
-                paths: vec![deckcraft_model::CustomPath { w: tw, h: th, d: path, fill: deckcraft_geom::preset::FillMode::Norm, stroke: true }],
+                paths: vec![iridium_decks_model::CustomPath {
+                    w: tw,
+                    h: th,
+                    d: path,
+                    fill: iridium_decks_geom::preset::FillMode::Norm,
+                    stroke: true,
+                }],
             };
             if let Some(b) = &mut sh.text {
                 // The text in the triangle's wide half.
                 b.body.inset_l = Some(tw * 0.22);
                 b.body.inset_r = Some(tw * 0.22);
                 if c % 2 == 1 {
-                    b.body.anchor = Some(deckcraft_model::text::Anchor::Top);
+                    b.body.anchor = Some(iridium_decks_model::text::Anchor::Top);
                     b.body.inset_b = Some(th * 0.35);
                 } else {
-                    b.body.anchor = Some(deckcraft_model::text::Anchor::Bottom);
+                    b.body.anchor = Some(iridium_decks_model::text::Anchor::Bottom);
                     b.body.inset_t = Some(th * 0.35);
                 }
             }
@@ -516,7 +522,7 @@ fn arm_trapezoid_list(l: &L, out: &mut Vec<Item>) {
         let x = Xfrm::new(area.x + k as f64 * w + w * 0.02, area.y + top, w * 0.96, area.h - top);
         let mut sh = text_shape(if table { "rect" } else { "trapezoid" }, x, &l.nodes(g), true);
         if let Some(b) = &mut sh.text {
-            b.body.anchor = Some(deckcraft_model::text::Anchor::Top);
+            b.body.anchor = Some(iridium_decks_model::text::Anchor::Top);
             if !table {
                 b.body.inset_l = Some(x.w * 0.2);
                 b.body.inset_r = Some(x.w * 0.2);
@@ -732,7 +738,7 @@ fn arm_picture_h_list(l: &L, out: &mut Vec<Item>) {
         out.push((picture_shape(d, "rect", Xfrm::new(x, area.y, bw, ph), i, g[0]), vec![]));
         let mut sh = text_shape("rect", Xfrm::new(x, area.y + ph, bw, area.h - ph), &l.nodes(g), true);
         if let Some(b) = &mut sh.text {
-            b.body.anchor = Some(deckcraft_model::text::Anchor::Top);
+            b.body.anchor = Some(iridium_decks_model::text::Anchor::Top);
         }
         paint(d, &mut sh, i, false);
         out.push((sh, g.clone()));
@@ -759,7 +765,7 @@ fn arm_timeline(l: &L, out: &mut Vec<Item>) {
         let y = if i % 2 == 0 { area.y } else { mid + bar * 1.6 };
         let mut t = text_shape("rect", Xfrm::new(cx - w * 0.48, y, w * 0.96, th.max(1.0)), &l.nodes(g), true);
         if let Some(b) = &mut t.text {
-            b.body.anchor = Some(if i % 2 == 0 { deckcraft_model::text::Anchor::Bottom } else { deckcraft_model::text::Anchor::Top });
+            b.body.anchor = Some(if i % 2 == 0 { iridium_decks_model::text::Anchor::Bottom } else { iridium_decks_model::text::Anchor::Top });
         }
         paint(d, &mut t, i, true);
         t.fill = Some(Fill::None);

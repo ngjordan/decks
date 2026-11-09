@@ -3,7 +3,7 @@
 //! Escape) gives the window back at once; the abandoned read finishes on its thread and is dropped.
 
 use crate::SlideApp;
-use deckcraft_engine::cmd::file::LoadedFile;
+use iridium_decks_engine::cmd::file::LoadedFile;
 use std::sync::mpsc::{Receiver, TryRecvError};
 
 /// A presentation being read on a background thread.
@@ -49,8 +49,8 @@ impl SlideApp {
         {
             let (tx, rx) = std::sync::mpsc::channel();
             let p = path.to_string();
-            let spawned = std::thread::Builder::new().name("deckcraft-open".into()).spawn(move || {
-                let r = deckcraft_engine::cmd::file::read_presentation_file(&p).map_err(|e| e.to_string());
+            let spawned = std::thread::Builder::new().name("iridium-decks-open".into()).spawn(move || {
+                let r = iridium_decks_engine::cmd::file::read_presentation_file(&p).map_err(|e| e.to_string());
                 let _ = tx.send(r);
             });
             match spawned {
@@ -103,7 +103,7 @@ impl SlideApp {
         let name = o.name();
         let secs = ((crate::now_ms() - o.started_ms) / 1000.0).max(0.0);
         let mut cancel = false;
-        egui::Modal::new(egui::Id::unique("deckcraft-opening")).show(ctx, |ui| {
+        egui::Modal::new(egui::Id::unique("iridium-decks-opening")).show(ctx, |ui| {
             ui.set_width(320.0);
             ui.horizontal(|ui| {
                 ui.add(egui::Spinner::new().size(18.0));
@@ -128,14 +128,14 @@ mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
 
     use super::*;
-    use deckcraft_engine::Session;
+    use iridium_decks_engine::Session;
 
     fn saved_deck(name: &str, slides: usize) -> String {
         let mut s = Session::with_new();
         for _ in 1..slides {
             s.execute("slide.new", &serde_json::json!({})).unwrap();
         }
-        let path = std::env::temp_dir().join(format!("deckcraft-opening-{}-{name}.deckcraft", std::process::id()));
+        let path = std::env::temp_dir().join(format!("iridium-decks-opening-{}-{name}.iridium-decks", std::process::id()));
         let path = path.to_string_lossy().to_string();
         s.execute("file.saveAs", &serde_json::json!({"path": path})).unwrap();
         path
@@ -183,8 +183,8 @@ mod tests {
     #[test]
     fn errors_are_shown_and_a_second_open_waits() {
         let mut app = SlideApp::new(Session::new(), crate::Services::default());
-        app.open_path_in_background("/nonexistent/deckcraft/missing.pptx");
-        app.open_path_in_background("/nonexistent/deckcraft/other.pptx");
+        app.open_path_in_background("/nonexistent/iridium-decks/missing.pptx");
+        app.open_path_in_background("/nonexistent/iridium-decks/other.pptx");
         assert!(app.status.as_ref().is_some_and(|(m, _)| m.starts_with("Still opening missing.pptx")));
         wait(&mut app);
         assert!(app.session.documents().is_empty());
@@ -221,7 +221,7 @@ mod tests {
         for _ in 1..slides {
             s.execute("slide.new", &serde_json::json!({})).unwrap();
         }
-        let dir = std::env::temp_dir().join(format!("deckcraft-opening-{}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("iridium-decks-opening-{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join(file).to_string_lossy().to_string();
         s.execute("file.saveAs", &serde_json::json!({"path": path})).unwrap();

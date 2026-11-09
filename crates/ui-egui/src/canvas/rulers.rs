@@ -3,14 +3,14 @@ use super::{Align2, Color32, CornerRadius, Point, Pos2, Rect, Sense, SlideApp, S
 /// The ruler's numbered step in points and the ticks per step: quarter inches, or half
 /// centimetres. Any other unit (only a hand-edited `prefs.json` gives one) keeps inches, since a
 /// tick per point or pixel would be a solid bar.
-pub(crate) fn ruler_steps(unit: deckcraft_geom::Unit) -> (f64, u32) {
+pub(crate) fn ruler_steps(unit: iridium_decks_geom::Unit) -> (f64, u32) {
     match unit {
-        deckcraft_geom::Unit::Centimeters => (unit.points_per_unit(), 2),
+        iridium_decks_geom::Unit::Centimeters => (unit.points_per_unit(), 2),
         _ => (72.0, 4),
     }
 }
 
-pub(super) fn ruler(p: &egui::Painter, avail: Rect, slide: Rect, scale: f32, unit: deckcraft_geom::Unit, t: &Tokens) {
+pub(super) fn ruler(p: &egui::Painter, avail: Rect, slide: Rect, scale: f32, unit: iridium_decks_geom::Unit, t: &Tokens) {
     let top = Rect::from_min_max(avail.min, pos2(avail.max.x, avail.min.y + 16.0));
     let left = Rect::from_min_max(avail.min, pos2(avail.min.x + 16.0, avail.max.y));
     p.rect_filled(top, CornerRadius::ZERO, t.card);

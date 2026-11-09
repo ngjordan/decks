@@ -3,8 +3,8 @@
 
 use std::collections::{BTreeMap, HashMap};
 
-use deckcraft_model::text::{Action, Hyperlink};
-use deckcraft_model::{Presentation, SlideId};
+use iridium_decks_model::text::{Action, Hyperlink};
+use iridium_decks_model::{Presentation, SlideId};
 
 use crate::Timeline;
 use crate::interact::SlideRun;
@@ -30,7 +30,7 @@ pub enum ShowAction {
 }
 
 // Which links the show opens on a click; PDF export writes the same ones.
-pub use deckcraft_model::text::safe_url;
+pub use iridium_decks_model::text::safe_url;
 
 /// What a clicked link does in the show (`ShowState::follow`).
 #[derive(Clone, Debug, PartialEq, Eq)]

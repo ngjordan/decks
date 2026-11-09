@@ -4,7 +4,7 @@ use super::{
 };
 
 /// A new-presentation tile: a theme preview drawn in code (or a blank slide) over its name.
-fn tile(ui: &mut Ui, label: &str, theme: Option<&deckcraft_model::Theme>, big: bool) -> egui::Response {
+fn tile(ui: &mut Ui, label: &str, theme: Option<&iridium_decks_model::Theme>, big: bool) -> egui::Response {
     let t = Tokens::get(ui.ctx());
     let thumb_w = if big { 200.0 } else { 160.0 };
     let (rect, resp) = ui.allocate_exact_size(vec2(thumb_w + 16.0, thumb_w * 9.0 / 16.0 + 44.0), Sense::click());
@@ -33,8 +33,8 @@ fn tile(ui: &mut Ui, label: &str, theme: Option<&deckcraft_model::Theme>, big: b
 /// `blank`); at most `limit` theme tiles. False when nothing matched.
 fn new_tiles(app: &mut SlideApp, ui: &mut Ui, query: &str, limit: usize, blank: bool) -> bool {
     let q = query.trim().to_lowercase();
-    let themes: Vec<deckcraft_model::Theme> =
-        deckcraft_model::theme::builtin_themes().into_iter().filter(|th| q.is_empty() || th.name.to_lowercase().contains(&q)).collect();
+    let themes: Vec<iridium_decks_model::Theme> =
+        iridium_decks_model::theme::builtin_themes().into_iter().filter(|th| q.is_empty() || th.name.to_lowercase().contains(&q)).collect();
     let sample = q.is_empty() || "sample deck northern lights".contains(&q);
     if themes.is_empty() && !sample {
         return false;
@@ -55,9 +55,9 @@ fn new_tiles(app: &mut SlideApp, ui: &mut Ui, query: &str, limit: usize, blank: 
             shown += 1;
         }
         if sample && shown < limit {
-            let th = deckcraft_model::theme::builtin_themes().into_iter().find(|t| t.name == "Iridium Decks");
+            let th = iridium_decks_model::theme::builtin_themes().into_iter().find(|t| t.name == "Decks");
             if tile(ui, "Sample deck: Northern Lights", th.as_ref(), false).clicked()
-                && let Err(e) = deckcraft_engine::sample::open_sample(&mut app.session)
+                && let Err(e) = iridium_decks_engine::sample::open_sample(&mut app.session)
             {
                 app.set_status(e.to_string());
             }
@@ -68,14 +68,14 @@ fn new_tiles(app: &mut SlideApp, ui: &mut Ui, query: &str, limit: usize, blank: 
 
 /// Starter decks whose name, summary, theme or a slide title matches `query`, at most `limit` tiles.
 fn template_tiles(app: &mut SlideApp, ui: &mut Ui, query: &str, limit: usize) -> bool {
-    let list = deckcraft_engine::templates::matching(query);
+    let list = iridium_decks_engine::templates::matching(query);
     if list.is_empty() {
         return false;
     }
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing = vec2(10.0, 10.0);
         for starter in list.into_iter().take(limit) {
-            let theme = deckcraft_model::theme::builtin_themes().into_iter().find(|th| th.name == starter.theme);
+            let theme = iridium_decks_model::theme::builtin_themes().into_iter().find(|th| th.name == starter.theme);
             if tile(ui, starter.name, theme.as_ref(), false).on_hover_text(starter.summary).clicked() {
                 let _ = app.run("file.new", json!({"template": starter.name}));
             }
@@ -203,14 +203,14 @@ pub(super) fn task(ui: &mut Ui, icon: Icon, button: &str, title: &str, detail: &
 
 // ---------------------------------------------------------------- pages
 
-/// Home: Iridium Decks's mark, new presentations (the first themes, with a link to New) and recent
+/// Home: Decks's mark, new presentations (the first themes, with a link to New) and recent
 /// presentations (with a link to Open). The same page is the start screen.
 pub(super) fn home(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, out: &mut Outcome) {
     let t = Tokens::get(ui.ctx());
     ui.horizontal(|ui| {
         let (r, _) = ui.allocate_exact_size(vec2(36.0, 36.0), Sense::hover());
         crate::dialogs::paint_logo(ui.painter(), r);
-        ui.label(RichText::new("Iridium Decks").font(theme::bold(24.0)).color(t.text));
+        ui.label(RichText::new("Decks").font(theme::bold(24.0)).color(t.text));
     });
     ui.add_space(18.0);
     ui.horizontal(|ui| {
@@ -252,7 +252,7 @@ pub(super) fn home(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, out: &mu
         });
     }
     ui.add_space(30.0);
-    ui.hyperlink_to("Iridium community", deckcraft_engine::links::DISCORD);
+    ui.hyperlink_to("Iridium community", iridium_decks_engine::links::DISCORD);
 }
 
 /// New: a blank presentation, then every theme and starter template, with a search box.
@@ -270,7 +270,7 @@ pub(super) fn new_page(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage) {
     ui.add_space(14.0);
     let q = bs.query.clone();
     let themes = new_tiles(app, ui, &q, usize::MAX, false);
-    let templates = if q.trim().is_empty() || !deckcraft_engine::templates::matching(&q).is_empty() {
+    let templates = if q.trim().is_empty() || !iridium_decks_engine::templates::matching(&q).is_empty() {
         ui.add_space(18.0);
         heading(ui, "Templates");
         template_tiles(app, ui, &q, usize::MAX)

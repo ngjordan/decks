@@ -20,18 +20,18 @@ const RESOURCE_NOT_FOUND: i64 = -32002;
 /// Keep request frames in step with the connected backend's reply limit.
 const MAX_FRAME_BYTES: usize = 16 * 1024 * 1024;
 
-const INSTRUCTIONS: &str = "Iridium Decks is a presentation app (a PowerPoint clone). Coordinates are points on the \
+const INSTRUCTIONS: &str = "Decks is a presentation app (a PowerPoint clone). Coordinates are points on the \
 current slide (y down; the default 16:9 slide is 960×540). Every action is a command: find ids and parameters with \
 list_commands and run them with run_command (or several with batch). Typical flow: new_presentation → add_slide \
 {layout:\"titleAndContent\", title, body} → add_shape / add_text_box / insert_picture / insert_chart → \
 inspect_slide to read back ids, boxes and text → render_slide to look at the result. Shape ids are looked up on the \
 current slide. An inserted shape is selected; run_command edit.select {ids:[…]} selects others. format.* acts on \
 the selected text or shapes; shape.fill, shape.line and the other shape commands whose parameters list `ids` act on \
-those shapes, else on the selected ones. Save with save_presentation (.deckcraft or .pptx).";
+those shapes, else on the selected ones. Save with save_presentation (.iridium-decks or .pptx).";
 
 /// Resource URIs.
-pub const DOC_URI: &str = "deckcraft://document";
-pub const COMMANDS_URI: &str = "deckcraft://commands";
+pub const DOC_URI: &str = "iridium-decks://document";
+pub const COMMANDS_URI: &str = "iridium-decks://commands";
 
 /// An MCP server bound to one backend.
 pub struct Server {
@@ -145,13 +145,13 @@ impl Server {
                 Ok(json!({
                     "protocolVersion": version,
                     "capabilities": {"tools": {}, "resources": {}},
-                    "serverInfo": {"name": "deckcraft", "title": "Iridium Decks", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": deckcraft_engine::links::APP_PAGE},
+                    "serverInfo": {"name": "iridium-decks", "title": "Decks", "version": env!("CARGO_PKG_VERSION"), "websiteUrl": iridium_decks_engine::links::APP_PAGE},
                     "instructions": format!(
                         "{INSTRUCTIONS} Backend: {}. Community: {} (Discord), {} (app page), {} (source). The `app.links` command returns these links.",
                         self.backend.describe(),
-                        deckcraft_engine::links::DISCORD,
-                        deckcraft_engine::links::APP_PAGE,
-                        deckcraft_engine::links::GITHUB
+                        iridium_decks_engine::links::DISCORD,
+                        iridium_decks_engine::links::APP_PAGE,
+                        iridium_decks_engine::links::GITHUB
                     ),
                 }))
             }

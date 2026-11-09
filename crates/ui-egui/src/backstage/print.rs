@@ -6,12 +6,12 @@ use super::{
 };
 
 /// The slides the Print page prints, in order (0-based).
-pub fn print_slides(doc: &deckcraft_model::Presentation, bs: &Backstage, current: usize) -> Result<Vec<usize>, String> {
+pub fn print_slides(doc: &iridium_decks_model::Presentation, bs: &Backstage, current: usize) -> Result<Vec<usize>, String> {
     let n = doc.slides.len();
     let mut v: Vec<usize> = match bs.print_scope {
         PrintScope::All => (0..n).collect(),
         PrintScope::Current => vec![current.min(n.saturating_sub(1))],
-        PrintScope::Custom => deckcraft_engine::cmd::file::parse_slide_range(&bs.print_range, n).map_err(|e| e.to_string())?,
+        PrintScope::Custom => iridium_decks_engine::cmd::file::parse_slide_range(&bs.print_range, n).map_err(|e| e.to_string())?,
     };
     if !bs.print_hidden && bs.print_scope != PrintScope::Current {
         v.retain(|i| doc.slides.get(*i).is_some_and(|s| !s.hidden));
@@ -44,11 +44,11 @@ pub fn print_params(bs: &Backstage, slides: &[usize]) -> Value {
 }
 
 /// The printed page size in points: the slide size for full-page slides, else the chosen paper.
-pub fn print_page_size(bs: &Backstage, doc: &deckcraft_model::Presentation) -> (f32, f32) {
+pub fn print_page_size(bs: &Backstage, doc: &iridium_decks_model::Presentation) -> (f32, f32) {
     if bs.print_layout == "slides" {
         return (doc.slide_size.width as f32, doc.slide_size.height as f32);
     }
-    let (w, h) = deckcraft_engine::cmd::file::paper_size(bs.print_paper, bs.print_landscape).unwrap_or((612.0, 792.0));
+    let (w, h) = iridium_decks_engine::cmd::file::paper_size(bs.print_paper, bs.print_landscape).unwrap_or((612.0, 792.0));
     (w as f32, h as f32)
 }
 
@@ -84,9 +84,9 @@ pub(super) fn print(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage) {
             dim(
                 ui,
                 if app.services.pick_save.is_some() {
-                    "Iridium Decks prints through a PDF: it opens in your PDF viewer, where you choose the printer."
+                    "Decks prints through a PDF: it opens in your PDF viewer, where you choose the printer."
                 } else {
-                    "Iridium Decks prints through a PDF: it downloads, ready to print from your browser or PDF viewer."
+                    "Decks prints through a PDF: it downloads, ready to print from your browser or PDF viewer."
                 },
             );
             ui.add_space(14.0);
@@ -132,12 +132,12 @@ pub(super) fn print(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage) {
             // PowerPoint prints full-page slides on slide-shaped pages; paper and orientation are
             // for notes pages and handouts.
             ui.add_enabled_ui(bs.print_layout != "slides", |ui| {
-                let paper = deckcraft_engine::cmd::file::PAPERS.iter().find(|p| p.0 == bs.print_paper).map_or("Letter", |p| p.1);
+                let paper = iridium_decks_engine::cmd::file::PAPERS.iter().find(|p| p.0 == bs.print_paper).map_or("Letter", |p| p.1);
                 craft_ui::ComboBox::from_id_salt("backstage_print_paper")
                     .width(240.0)
                     .selected_text(paper)
                     .show_ui(ui, |ui| {
-                        for (id, label, _) in deckcraft_engine::cmd::file::PAPERS {
+                        for (id, label, _) in iridium_decks_engine::cmd::file::PAPERS {
                             if ui.selectable_label(bs.print_paper == id, label).clicked() {
                                 bs.print_paper = id;
                             }
@@ -183,7 +183,7 @@ pub(super) fn print(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage) {
 }
 
 /// One printed page in miniature, with a pager under it.
-fn preview(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, doc: &deckcraft_model::Presentation, slides: &[usize]) {
+fn preview(app: &mut SlideApp, ui: &mut Ui, bs: &mut Backstage, doc: &iridium_decks_model::Presentation, slides: &[usize]) {
     let t = Tokens::get(ui.ctx());
     let per = match bs.print_layout {
         "slides" | "notes" => 1,

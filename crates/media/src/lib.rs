@@ -1,4 +1,4 @@
-//! Iridium Decks media: everything between embedded media bytes and the speakers / the screen.
+//! Decks media: everything between embedded media bytes and the speakers / the screen.
 //!
 //! - [`probe`]: container, duration, audio channels / sample rate, video size / frame rate.
 //! - [`audio::decode`]: every common audio format to interleaved f32 [`audio::Pcm`] — MP3, AAC

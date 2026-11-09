@@ -17,7 +17,7 @@
 
 use std::sync::mpsc::Sender;
 
-use deckcraft_engine::{Mods, PointerEvent};
+use iridium_decks_engine::{Mods, PointerEvent};
 use serde_json::{Value, json};
 
 use crate::SlideApp;
@@ -152,7 +152,7 @@ pub fn handle(app: &mut SlideApp, ctx: &egui::Context, req: &ControlRequest) -> 
             let mut last = Value::Null;
             for e in events {
                 let kind = e.get("kind").and_then(Value::as_str).unwrap_or("");
-                let Some(kind) = deckcraft_mcp_kind(kind) else { return err(format!("unknown pointer kind `{kind}`")) };
+                let Some(kind) = iridium_decks_mcp_kind(kind) else { return err(format!("unknown pointer kind `{kind}`")) };
                 let (Some(x), Some(y)) = (e.get("x").and_then(Value::as_f64), e.get("y").and_then(Value::as_f64)) else {
                     return err("pointer events need x and y");
                 };
@@ -309,7 +309,7 @@ pub fn handle(app: &mut SlideApp, ctx: &egui::Context, req: &ControlRequest) -> 
             if i >= d.doc.slides.len() {
                 return err(format!("no slide {i}"));
             }
-            let (png, w, h) = deckcraft_engine::cmd::file::render_png(
+            let (png, w, h) = iridium_decks_engine::cmd::file::render_png(
                 &d.doc,
                 i,
                 p.get("scale").and_then(Value::as_f64).unwrap_or(1.0),
@@ -321,7 +321,7 @@ pub fn handle(app: &mut SlideApp, ctx: &egui::Context, req: &ControlRequest) -> 
                     Some(Err(e)) => err(e),
                     None => err("no writer"),
                 },
-                None => ok(json!({"png": deckcraft_engine::cmd::base64_encode(&png), "width": w, "height": h, "slide": i})),
+                None => ok(json!({"png": iridium_decks_engine::cmd::base64_encode(&png), "width": w, "height": h, "slide": i})),
             }
         }
         "ui.resize" => {
@@ -382,8 +382,8 @@ fn mods_from(p: &Value) -> Mods {
     Mods { shift: b("shift"), alt: b("alt"), cmd: b("cmd") || b("ctrl") }
 }
 
-fn deckcraft_mcp_kind(k: &str) -> Option<deckcraft_engine::PointerKind> {
-    use deckcraft_engine::PointerKind::*;
+fn iridium_decks_mcp_kind(k: &str) -> Option<iridium_decks_engine::PointerKind> {
+    use iridium_decks_engine::PointerKind::*;
     Some(match k {
         "down" => Down,
         "drag" => Drag,
@@ -396,17 +396,17 @@ fn deckcraft_mcp_kind(k: &str) -> Option<deckcraft_engine::PointerKind> {
     })
 }
 
-pub fn tool_kind(name: &str, preset: Option<&str>) -> Option<deckcraft_engine::ToolKind> {
-    use deckcraft_engine::ToolKind;
+pub fn tool_kind(name: &str, preset: Option<&str>) -> Option<iridium_decks_engine::ToolKind> {
+    use iridium_decks_engine::ToolKind;
     Some(match name {
         "select" | "selection" => ToolKind::Select,
         "textBox" | "text" => ToolKind::TextBox,
         "shape" => ToolKind::Shape { preset: preset.unwrap_or("rect").into() },
-        "pen" => ToolKind::Ink { mode: "pen".into(), color: deckcraft_color::Rgba::BLACK, width: 2.0 },
-        "highlighter" => ToolKind::Ink { mode: "highlighter".into(), color: deckcraft_color::Rgba::rgb(255, 230, 0), width: 10.0 },
-        "eraser" => ToolKind::Ink { mode: "eraser".into(), color: deckcraft_color::Rgba::BLACK, width: 2.0 },
-        other if deckcraft_geom::preset::info(other).is_some() => ToolKind::Shape { preset: other.into() },
-        other if deckcraft_engine::tools::is_freeform_tool(other) => ToolKind::Shape { preset: other.into() },
+        "pen" => ToolKind::Ink { mode: "pen".into(), color: iridium_decks_color::Rgba::BLACK, width: 2.0 },
+        "highlighter" => ToolKind::Ink { mode: "highlighter".into(), color: iridium_decks_color::Rgba::rgb(255, 230, 0), width: 10.0 },
+        "eraser" => ToolKind::Ink { mode: "eraser".into(), color: iridium_decks_color::Rgba::BLACK, width: 2.0 },
+        other if iridium_decks_geom::preset::info(other).is_some() => ToolKind::Shape { preset: other.into() },
+        other if iridium_decks_engine::tools::is_freeform_tool(other) => ToolKind::Shape { preset: other.into() },
         _ => return None,
     })
 }
@@ -435,7 +435,7 @@ pub fn save_screenshot(app: &mut SlideApp, image: &egui::ColorImage, path: Optio
         return json!({"ok": false, "error": "the screenshot has no usable image size"});
     };
     let rgba: Vec<u8> = image.pixels.iter().flat_map(|c| c.to_array()).collect();
-    let img = deckcraft_render::Image { width, height, pixels: rgba };
+    let img = iridium_decks_render::Image { width, height, pixels: rgba };
     let png = img.to_png();
     if png.is_empty() {
         return json!({"ok": false, "error": "the screenshot could not be encoded"});
@@ -444,7 +444,7 @@ pub fn save_screenshot(app: &mut SlideApp, image: &egui::ColorImage, path: Optio
         return json!({"ok": false, "error": "the screenshot PNG exceeded its reserved budget"});
     }
     let Some(path) = path else {
-        return json!({"ok": true, "result": {"width": w, "height": h, "png": deckcraft_engine::cmd::base64_encode(&png)}});
+        return json!({"ok": true, "result": {"width": w, "height": h, "png": iridium_decks_engine::cmd::base64_encode(&png)}});
     };
     match app.services.write.as_mut() {
         Some(wr) => match wr(path, &png) {
@@ -467,7 +467,7 @@ mod tests {
     fn screenshot_reply_is_path_only_or_explicitly_inline() {
         use std::sync::{Arc, Mutex};
 
-        let mut app = SlideApp::new(deckcraft_engine::Session::with_new(), crate::Services::default());
+        let mut app = SlideApp::new(iridium_decks_engine::Session::with_new(), crate::Services::default());
         let written = Arc::new(Mutex::new(Vec::new()));
         let sink = Arc::clone(&written);
         app.services.write = Some(Box::new(move |_path, bytes| {
@@ -485,7 +485,7 @@ mod tests {
         let inline = save_screenshot(&mut app, &image, None);
         assert_eq!(inline["ok"], true, "{inline}");
         let text = inline["result"]["png"].as_str().expect("inline base64");
-        let decoded = deckcraft_engine::cmd::base64_decode(text).expect("valid base64");
+        let decoded = iridium_decks_engine::cmd::base64_decode(text).expect("valid base64");
         assert_eq!(decoded, png, "the inline reply is the same PNG");
     }
 

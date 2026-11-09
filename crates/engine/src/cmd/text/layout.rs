@@ -20,14 +20,14 @@ pub fn fit_text_box(s: &mut Session, id: ShapeId) -> Result<()> {
         return Ok(());
     }
     let x = xfrm_of(&doc, &sel, &sh);
-    let geo = deckcraft_render::shape_geometry(&sh, x.w, x.h);
-    let fields = deckcraft_text::NoFields;
+    let geo = iridium_decks_render::shape_geometry(&sh, x.w, x.h);
+    let fields = iridium_decks_text::NoFields;
     let mut nx = x;
     if bp.wrap == Some(false) {
-        nx.w = deckcraft_text::fit_width(&ctx, &sh, &body, geo.text_rect, &fields).max(20.0);
+        nx.w = iridium_decks_text::fit_width(&ctx, &sh, &body, geo.text_rect, &fields).max(20.0);
     }
-    let geo = deckcraft_render::shape_geometry(&sh, nx.w, nx.h);
-    let need = deckcraft_text::fit_height(&ctx, &sh, &body, geo.text_rect, &fields);
+    let geo = iridium_decks_render::shape_geometry(&sh, nx.w, nx.h);
+    let need = iridium_decks_text::fit_height(&ctx, &sh, &body, geo.text_rect, &fields);
     let extra = (nx.h - geo.text_rect.height()).max(0.0);
     nx.h = (need + extra).max(8.0);
     if (nx.h - x.h).abs() < 0.01 && (nx.w - x.w).abs() < 0.01 && sh.xfrm.is_some() {
@@ -37,7 +37,7 @@ pub fn fit_text_box(s: &mut Session, id: ShapeId) -> Result<()> {
     let st = s.doc_mut()?;
     let mut d = (*st.doc).clone();
     if let Some(list) = crate::shapes_mut(&mut d, &st.selection)
-        && let Some(target) = deckcraft_model::find_shape_mut(list, id)
+        && let Some(target) = iridium_decks_model::find_shape_mut(list, id)
     {
         target.xfrm = Some(nx);
     }
@@ -47,7 +47,7 @@ pub fn fit_text_box(s: &mut Session, id: ShapeId) -> Result<()> {
 }
 
 /// Store the shrink-on-overflow scale the layout computes for `id`, so a save keeps
-/// `fontScale`/`lnSpcReduction` in step with what Iridium Decks draws (#724). Runs after a text
+/// `fontScale`/`lnSpcReduction` in step with what Decks draws (#724). Runs after a text
 /// change: a body with no meaningful saved scale — a file's bare `<a:normAutofit/>` (`None`) or
 /// the reset an edit leaves (`1.0`, no reduction) — is fitted afresh; a scale the file saved is
 /// left as it is, as PowerPoint draws it.
@@ -63,13 +63,13 @@ fn fit_shrink_scale(s: &mut Session, id: ShapeId) -> Result<()> {
     let sel = st.selection.clone();
     let Some(ctx) = ctx_for(&doc, &sel) else { return Ok(()) };
     let x = xfrm_of(&doc, &sel, &sh);
-    let tr = deckcraft_render::shape_geometry(&sh, x.w, x.h).text_rect;
+    let tr = iridium_decks_render::shape_geometry(&sh, x.w, x.h).text_rect;
     // Lay out as if the scale had just been reset, so the fit is computed even for `None` (which
     // is drawn at 100 % and only fitted again when its text changes).
     let mut probe = body.clone();
     probe.body.autofit = Some(AutoFit::Shrink { font_scale: Some(1.0), line_reduction: 0.0 });
-    let opts = deckcraft_text::Opts { rect: tr, fields: &deckcraft_text::NoFields, prompt_color: None, no_shrink: false };
-    let l = deckcraft_text::layout(&ctx, &sh, &probe, &opts);
+    let opts = iridium_decks_text::Opts { rect: tr, fields: &iridium_decks_text::NoFields, prompt_color: None, no_shrink: false };
+    let l = iridium_decks_text::layout(&ctx, &sh, &probe, &opts);
     if l.font_scale >= 1.0 && l.line_reduction <= 0.0 {
         return Ok(());
     }
@@ -77,7 +77,7 @@ fn fit_shrink_scale(s: &mut Session, id: ShapeId) -> Result<()> {
     let st = s.doc_mut()?;
     let mut d = (*st.doc).clone();
     let stored = if let Some(list) = crate::shapes_mut(&mut d, &st.selection)
-        && let Some(target) = deckcraft_model::find_shape_mut(list, id)
+        && let Some(target) = iridium_decks_model::find_shape_mut(list, id)
         && let Some(t) = target.text.as_mut()
         && let Some(AutoFit::Shrink { font_scale, line_reduction }) = &mut t.body.autofit
     {
@@ -103,21 +103,26 @@ pub(crate) fn ctx_for<'a>(doc: &'a Presentation, sel: &Selection) -> Option<Ctx<
 }
 
 /// Lay out the text being edited (for vertical caret movement and hit testing).
-pub fn layout_for(st: &DocState, t: &TextSel) -> Option<deckcraft_text::TextLayout> {
+pub fn layout_for(st: &DocState, t: &TextSel) -> Option<iridium_decks_text::TextLayout> {
     text_frame(st, t).map(|f| f.0)
 }
 
 /// The text being edited as it is drawn: its layout, and the transform from layout space to the
 /// slide (flips don't mirror text, vertical text is turned). Shapes and table cells alike; the
 /// caret, the text selection, hit testing and caret movement all use it. `None` for notes.
-pub fn text_frame(st: &DocState, t: &TextSel) -> Option<(deckcraft_text::TextLayout, Affine)> {
+pub fn text_frame(st: &DocState, t: &TextSel) -> Option<(iridium_decks_text::TextLayout, Affine)> {
     if t.notes {
         return None;
     }
     let sh = st.shape(t.shape)?;
     let ctx = ctx_for(&st.doc, &st.selection)?;
     let lay = |s: &Shape, body: &TextBody, rect: Rect| {
-        deckcraft_text::layout(&ctx, s, body, &deckcraft_text::Opts { rect, fields: &deckcraft_text::NoFields, prompt_color: None, no_shrink: false })
+        iridium_decks_text::layout(
+            &ctx,
+            s,
+            body,
+            &iridium_decks_text::Opts { rect, fields: &iridium_decks_text::NoFields, prompt_color: None, no_shrink: false },
+        )
     };
     if let Some((r, c)) = t.cell {
         // A cell's text is laid out in the cell's rect with the cell's margins, anchor and the
@@ -127,9 +132,9 @@ pub fn text_frame(st: &DocState, t: &TextSel) -> Option<(deckcraft_text::TextLay
     }
     let body = sh.text.as_ref()?;
     let x = xfrm_of(&st.doc, &st.selection, sh);
-    let tr = deckcraft_render::shape_geometry(sh, x.w, x.h).text_rect;
+    let tr = iridium_decks_render::shape_geometry(sh, x.w, x.h).text_rect;
     let l = lay(sh, body, tr);
-    let m = deckcraft_render::text_transform(x.affine(), tr, l.rotation);
+    let m = iridium_decks_render::text_transform(x.affine(), tr, l.rotation);
     Some((l, m))
 }
 
@@ -148,41 +153,41 @@ pub fn text_pos_at(st: &DocState, t: &TextSel, p: Point) -> Pos {
 /// vertical text as drawn). Text with no paragraph yet (a placeholder about to be typed in) is
 /// measured as one empty paragraph, so the caret shows where typing begins. `None` for notes,
 /// which are an egui text field.
-pub fn caret_line(st: &DocState, t: &TextSel) -> Option<(deckcraft_geom::Point, deckcraft_geom::Point)> {
+pub fn caret_line(st: &DocState, t: &TextSel) -> Option<(iridium_decks_geom::Point, iridium_decks_geom::Point)> {
     if t.notes {
         return None;
     }
     if let Some((row, col)) = t.cell {
         let placed = cell_on_slide(st, t.shape, row, col)?;
-        let aff = if t.at_line_end() { deckcraft_text::Affinity::Upstream } else { deckcraft_text::Affinity::Downstream };
-        let (cx, top, bot) = placed.layout.caret_drawn(deckcraft_text::Pos { para: t.caret.0, ch: t.caret.1 }, aff)?;
-        return Some((placed.to_slide * deckcraft_geom::Point::new(cx, top), placed.to_slide * deckcraft_geom::Point::new(cx, bot)));
+        let aff = if t.at_line_end() { iridium_decks_text::Affinity::Upstream } else { iridium_decks_text::Affinity::Downstream };
+        let (cx, top, bot) = placed.layout.caret_drawn(iridium_decks_text::Pos { para: t.caret.0, ch: t.caret.1 }, aff)?;
+        return Some((placed.to_slide * iridium_decks_geom::Point::new(cx, top), placed.to_slide * iridium_decks_geom::Point::new(cx, bot)));
     }
     let sh = st.shape(t.shape)?;
     let ctx = ctx_for(&st.doc, &st.selection)?;
     let x = xfrm_of(&st.doc, &st.selection, sh);
-    let geo = deckcraft_render::shape_geometry(sh, x.w, x.h);
+    let geo = iridium_decks_render::shape_geometry(sh, x.w, x.h);
     let mut body = sh.text.clone().unwrap_or_default();
     if body.paragraphs.is_empty() {
-        body.paragraphs.push(deckcraft_model::text::Paragraph::default());
+        body.paragraphs.push(iridium_decks_model::text::Paragraph::default());
     }
-    let l = deckcraft_text::layout(
+    let l = iridium_decks_text::layout(
         &ctx,
         sh,
         &body,
-        &deckcraft_text::Opts { rect: geo.text_rect, fields: &deckcraft_text::NoFields, prompt_color: None, no_shrink: false },
+        &iridium_decks_text::Opts { rect: geo.text_rect, fields: &iridium_decks_text::NoFields, prompt_color: None, no_shrink: false },
     );
     // After End on a wrapped line the caret is drawn at that line's end.
-    let aff = if t.at_line_end() { deckcraft_text::Affinity::Upstream } else { deckcraft_text::Affinity::Downstream };
-    let (cx, top, bot) = l.caret_drawn(deckcraft_text::Pos { para: t.caret.0, ch: t.caret.1 }, aff)?;
-    let m = deckcraft_render::text_transform(x.affine(), geo.text_rect, l.rotation);
-    Some((m * deckcraft_geom::Point::new(cx, top), m * deckcraft_geom::Point::new(cx, bot)))
+    let aff = if t.at_line_end() { iridium_decks_text::Affinity::Upstream } else { iridium_decks_text::Affinity::Downstream };
+    let (cx, top, bot) = l.caret_drawn(iridium_decks_text::Pos { para: t.caret.0, ch: t.caret.1 }, aff)?;
+    let m = iridium_decks_render::text_transform(x.affine(), geo.text_rect, l.rotation);
+    Some((m * iridium_decks_geom::Point::new(cx, top), m * iridium_decks_geom::Point::new(cx, bot)))
 }
 
 /// The colour of text typed at the caret. The canvas draws the caret in it, so the caret shows
 /// wherever the text does: light on a dark slide, dark on a light one. `None` when that text
 /// has no fill to take a colour from.
-pub fn caret_color(st: &DocState, t: &TextSel) -> Option<deckcraft_color::Rgba> {
+pub fn caret_color(st: &DocState, t: &TextSel) -> Option<iridium_decks_color::Rgba> {
     if t.notes || t.cell.is_some() {
         return None;
     }

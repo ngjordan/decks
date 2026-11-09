@@ -11,11 +11,11 @@ const DATE_LANGS: &[(&str, &str)] = &[
 /// Samples `field_text` can compute for `lang`. Named months and AM/PM exist for English only;
 /// other languages keep the numeric date and the 24-hour times.
 pub(super) fn date_rows(lang: &str) -> Vec<(&'static str, String)> {
-    let now = deckcraft_text::datetime::DateTime::now_local();
+    let now = iridium_decks_text::datetime::DateTime::now_local();
     let mut rows = Vec::new();
     for kind in DATE_KINDS {
         if let Some(now) = now
-            && let Some(sample) = deckcraft_text::datetime::field_text(kind, Some(lang), now)
+            && let Some(sample) = iridium_decks_text::datetime::field_text(kind, Some(lang), now)
         {
             rows.push((kind, sample));
         }
@@ -73,8 +73,8 @@ pub(super) fn date_time_dialog(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) 
     if ok {
         let lang = d.get("language", "en-US");
         let mut format = d.get("format", "datetime1");
-        let probe = deckcraft_text::datetime::DateTime::new(2026, 10, 9, 20, 5, 7);
-        if deckcraft_text::datetime::field_text(&format, Some(&lang), probe).is_none() {
+        let probe = iridium_decks_text::datetime::DateTime::new(2026, 10, 9, 20, 5, 7);
+        if iridium_decks_text::datetime::field_text(&format, Some(&lang), probe).is_none() {
             format = "datetime1".into();
         }
         return app.run("insert.dateTime", json!({"format": format, "update": update, "language": lang})).is_ok();

@@ -53,7 +53,7 @@ impl SlideApp {
             Target::Handout => (3, 0, 0),
             Target::NotesMaster => (4, 0, 0),
         };
-        let owner = egui::Id::unique(("deckcraft-ime", st.uid, target, shape.0, cell, notes));
+        let owner = egui::Id::unique(("iridium-decks-ime", st.uid, target, shape.0, cell, notes));
         Some(egui::ime_context::ImeTarget::new(owner, 0))
     }
 
@@ -66,7 +66,7 @@ impl SlideApp {
     fn ime_receipt_stamp(&self) -> Option<egui::ime_context::ImeMutationStamp> {
         let st = self.session.active()?;
         self.ime_target()?;
-        Some(st.selection.text.as_ref().and_then(|t| deckcraft_engine::cmd::text::ime_surrounding(st, t)).map_or_else(
+        Some(st.selection.text.as_ref().and_then(|t| iridium_decks_engine::cmd::text::ime_surrounding(st, t)).map_or_else(
             || egui::ime_context::ImeMutationStamp::unavailable_at_revision(st.revision),
             |s| egui::ime_context::ImeMutationStamp::from_committed(&s.text, s.cursor, s.anchor, None),
         ))
@@ -481,7 +481,7 @@ impl SlideApp {
     }
 
     /// Apply the document mutation an IME event asks for, before any receipt or tracker state.
-    fn apply_ime_event(&mut self, e: &egui::ImeEvent) -> deckcraft_engine::Result<Value> {
+    fn apply_ime_event(&mut self, e: &egui::ImeEvent) -> iridium_decks_engine::Result<Value> {
         match e {
             egui::ImeEvent::Preedit { text, active_range_chars } => {
                 self.session.compose_text(text, active_range_chars.as_ref().map(|r| (r.start, r.end)))
@@ -663,7 +663,7 @@ impl SlideApp {
             self.ime_tracker.end_viewport(old);
             let _ = self.ime_reset.remove(&old);
         }
-        let committed = st.selection.text.as_ref().and_then(|t| deckcraft_engine::cmd::text::ime_surrounding(st, t));
+        let committed = st.selection.text.as_ref().and_then(|t| iridium_decks_engine::cmd::text::ime_surrounding(st, t));
         let mut observation =
             egui::ime_context::ImeObservation::new(ctx.cumulative_frame_nr_for(viewport), ctx.cumulative_pass_nr_for(viewport), target)
                 .purpose(egui::IMEPurpose::Normal)

@@ -74,7 +74,7 @@ struct ShapeDraw<'a, 'ctx> {
     h: f64,
     depth: usize,
     geo: Geometry,
-    fades: Vec<deckcraft_geom::morph::Fade>,
+    fades: Vec<iridium_decks_geom::morph::Fade>,
     fill: Option<Fill>,
     fill_ph: Option<Rgba>,
     line: Line,
@@ -88,8 +88,8 @@ struct ShapeDraw<'a, 'ctx> {
 
 impl ShapeDraw<'_, '_> {
     /// How much of the fill and stroke of path `i` shows (morphing outlines fade).
-    fn fade(&self, i: usize) -> deckcraft_geom::morph::Fade {
-        self.fades.get(i).copied().unwrap_or(deckcraft_geom::morph::Fade { fill: 1.0, stroke: 1.0 })
+    fn fade(&self, i: usize) -> iridium_decks_geom::morph::Fade {
+        self.fades.get(i).copied().unwrap_or(iridium_decks_geom::morph::Fade { fill: 1.0, stroke: 1.0 })
     }
 }
 
@@ -100,7 +100,7 @@ struct FxSource<'a> {
     fill: &'a Option<Fill>,
     fill_alpha: Option<f64>,
     outline: Option<Caster<'a>>,
-    content: Option<&'a deckcraft_model::style::PictureFill>,
+    content: Option<&'a iridium_decks_model::style::PictureFill>,
     m: Affine,
     w: f64,
     h: f64,
@@ -432,7 +432,7 @@ impl Renderer {
         match &s.kind {
             ShapeKind::Group { children, child } => {
                 let ch = Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
-                let gm = parent * deckcraft_geom::group_child_affine(&x, ch);
+                let gm = parent * iridium_decks_geom::group_child_affine(&x, ch);
                 // A group's own fill (a group filled with its parent's passes that on).
                 let own = match &s.fill {
                     Some(Fill::Group) | None => self.group_fill.clone(),
@@ -487,10 +487,10 @@ impl Renderer {
             }
             ShapeKind::Ink { strokes } => {
                 for sk in strokes {
-                    let legacy = deckcraft_model::ink_pressure_is_legacy(&sk.points);
+                    let legacy = iridium_decks_model::ink_pressure_is_legacy(&sk.points);
                     let pen = if sk.width.is_finite() { sk.width.abs() } else { 0.0 };
                     for (px, py, pr) in &sk.points {
-                        let w = deckcraft_model::ink_sample_width(pen, *pr, legacy);
+                        let w = iridium_decks_model::ink_sample_width(pen, *pr, legacy);
                         self.track(parent, Rect::new(*px, *py, *px, *py).inflate(w, w));
                     }
                     let pts: Vec<(f64, f64, f32)> = sk.points.iter().copied().filter(|p| p.0.is_finite() && p.1.is_finite()).collect();
@@ -522,8 +522,8 @@ impl Renderer {
                         bp.move_to((p0.0, p0.1));
                         bp.line_to((p1.0, p1.1));
                         bp.apply_affine(rel);
-                        let a = deckcraft_model::ink_sample_width(pen, p0.2, legacy);
-                        let b = deckcraft_model::ink_sample_width(pen, p1.2, legacy);
+                        let a = iridium_decks_model::ink_sample_width(pen, p0.2, legacy);
+                        let b = iridium_decks_model::ink_sample_width(pen, p1.2, legacy);
                         ctx.set_stroke(kurbo::Stroke::new(((a + b) * 0.5).max(0.1)).with_caps(kurbo::Cap::Round).with_join(kurbo::Join::Round));
                         ctx.stroke_path(&bp);
                     }
@@ -551,7 +551,7 @@ impl Renderer {
         (w, h): (f64, f64),
         m: Affine,
         per_point: (f64, f64),
-        fade: &dyn Fn(usize) -> deckcraft_geom::morph::Fade,
+        fade: &dyn Fn(usize) -> iridium_decks_geom::morph::Fade,
     ) {
         for (i, sp) in geo.paths.iter().enumerate() {
             if sp.fill == FillMode::None || fade(i).fill <= 0.0 {
@@ -615,7 +615,7 @@ impl Renderer {
         let outline = geo.outline();
         // Placeholders in the editor: dashed outline and prompt, nothing else when empty.
         let empty_ph = s.ph.is_some() && s.text.as_ref().is_none_or(TextBody::is_empty) && !is_pic && !matches!(s.kind, ShapeKind::Media(_));
-        let fill = if let Some(t) = st.tint { Some(Fill::solid(deckcraft_model::ColorRef::rgb(t))) } else { fill };
+        let fill = if let Some(t) = st.tint { Some(Fill::solid(iridium_decks_model::ColorRef::rgb(t))) } else { fill };
         let d = ShapeDraw { f, rctx, s, st, m, w, h, depth, geo, fades, fill, fill_ph, line, line_ph, effects, fx_ph, outline, is_pic, empty_ph };
         self.cast_effects(ctx, &d);
         let soft = d.effects.as_ref().and_then(|e| e.soft_edge).filter(|r| *r > 0.0);
@@ -772,7 +772,7 @@ impl Renderer {
                 paint::picture(ctx, f.pres, &paint::resolved(rctx, &pf, None), bounds, m, t);
                 ctx.pop_layer();
             }
-            // An object Iridium Decks doesn't model (an embedded OLE object, an unknown graphic): its
+            // An object Decks doesn't model (an embedded OLE object, an unknown graphic): its
             // preview picture, stretched over the frame, as PowerPoint draws it.
             ShapeKind::Opaque { preview: Some(media), .. } => {
                 // An embedded object's fallback picture can carry a fill (old equation objects
@@ -783,14 +783,14 @@ impl Renderer {
                     self.fill_geometry(ctx, f, rctx, fl, fill_ph, geo, (w, h), m, pt_xy, &fade);
                 }
                 ctx.set_transform(m);
-                let pf = deckcraft_model::style::PictureFill { media: *media, ..Default::default() };
+                let pf = iridium_decks_model::style::PictureFill { media: *media, ..Default::default() };
                 paint::picture(ctx, f.pres, &pf, Rect::new(0.0, 0.0, w, h), m, None);
             }
             ShapeKind::Media(mc) => {
                 ctx.set_transform(m);
                 let bounds = Rect::new(0.0, 0.0, w, h);
                 if let Some(p) = mc.poster {
-                    let pf = deckcraft_model::style::PictureFill { media: p, crop: mc.crop, ..Default::default() };
+                    let pf = iridium_decks_model::style::PictureFill { media: p, crop: mc.crop, ..Default::default() };
                     ctx.push_clip_layer(outline);
                     paint::picture(ctx, f.pres, &pf, bounds, m, None);
                     ctx.pop_layer();
@@ -893,7 +893,7 @@ impl Renderer {
         // Some presets' outlines default to sharp corners (PowerPoint's own per-shape default).
         let line = match (&s.geom, line.join) {
             (Geom::Preset { name, .. }, None) if preset::mitred_by_default(name) => {
-                Line { join: Some(deckcraft_model::style::LineJoin::Miter), ..line }
+                Line { join: Some(iridium_decks_model::style::LineJoin::Miter), ..line }
             }
             _ => line,
         };
@@ -920,7 +920,7 @@ impl Renderer {
                     ctx.set_transform(Affine::IDENTITY);
                     ctx.push_layer(None, None, Some(c.a as f32 / 255.0), None, None);
                     std::borrow::Cow::Owned(Line {
-                        fill: Some(Fill::solid(deckcraft_model::style::ColorRef::rgb(c.with_alpha(255)))),
+                        fill: Some(Fill::solid(iridium_decks_model::style::ColorRef::rgb(c.with_alpha(255)))),
                         ..line.clone()
                     })
                 }
@@ -1065,7 +1065,7 @@ impl Renderer {
                 } else {
                     body
                 };
-                let mut l = deckcraft_text::layout(rctx, s, body, &Opts { rect: tr, fields: &f.fields, prompt_color: None, no_shrink: false });
+                let mut l = iridium_decks_text::layout(rctx, s, body, &Opts { rect: tr, fields: &f.fields, prompt_color: None, no_shrink: false });
                 if editing {
                     preview_empty_bullets(&mut l);
                 }
@@ -1158,7 +1158,7 @@ impl Renderer {
             }
             // … and the outline (a picture's border too).
             if let Some(o) = &outline {
-                let cast = Line { fill: Some(Fill::solid(deckcraft_model::style::ColorRef::rgb(c.with_alpha(255)))), ..o.line.as_ref().clone() };
+                let cast = Line { fill: Some(Fill::solid(iridium_decks_model::style::ColorRef::rgb(c.with_alpha(255)))), ..o.line.as_ref().clone() };
                 let lw = o.line.width.unwrap_or(0.75).max(0.0);
                 for sp in geo.paths.iter().filter(|sp| sp.stroke) {
                     let mut path = sp.path.clone();

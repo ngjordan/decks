@@ -6,9 +6,9 @@
 //! rig and material, and the sides are drawn farthest first. Without a turned camera an extrusion
 //! points at the viewer and nothing of it shows.
 
-use deckcraft_color::{Rgba, SchemeSlot};
-use deckcraft_model::ColorRef;
-use deckcraft_model::resolve::Ctx;
+use iridium_decks_color::{Rgba, SchemeSlot};
+use iridium_decks_model::ColorRef;
+use iridium_decks_model::resolve::Ctx;
 use kurbo::{Affine, BezPath, Vec2};
 use vello_cpu::RenderContext;
 

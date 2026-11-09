@@ -29,7 +29,7 @@ jobs:
       - name: Check out craft-fonts
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          repository: storytold/craft-fonts
+          repository: ngjordan/craft-fonts
           ref: ${{ env.CRAFT_FONTS_REF }}
           path: craft-fonts
       - name: Font pin gate
@@ -51,7 +51,7 @@ jobs:
   gate:
     needs: font-pin
     # Tracks @main so suite-wide CI fixes reach every app without a PR in each repository.
-    uses: storytold/craft-common-actions/.github/workflows/gate.yml@main
+    uses: ngjordan/craft-common-actions/.github/workflows/gate.yml@main
     with:
       # Same craft-fonts commit as release.yml.
       craft-fonts-ref: 37827adc41fd165f9a9234ac40f94dbad353aa69

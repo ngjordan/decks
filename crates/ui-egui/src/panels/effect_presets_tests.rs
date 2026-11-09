@@ -1,10 +1,10 @@
 //! Format Shape ▸ Effects: the Shadow, Glow and Soft Edges preset tiles.
 
-use deckcraft_engine::Session;
-use deckcraft_model::style::Effects;
 use egui::accesskit::Toggled;
 use egui_kittest::Harness;
 use egui_kittest::kittest::{NodeT, Queryable};
+use iridium_decks_engine::Session;
+use iridium_decks_model::style::Effects;
 use serde_json::json;
 
 use crate::{Services, SlideApp};

@@ -1,12 +1,12 @@
-//! Slide Show: full-screen playback with transitions and animations (`deckcraft-anim`),
+//! Slide Show: full-screen playback with transitions and animations (`iridium-decks-anim`),
 //! keyboard/mouse navigation, pen, black/white screens, See All Slides, zoom, presenter view
 //! and rehearsed timings.
 
-use deckcraft_anim::{Click, HitShape, Layer, LinkJump, ShowAction, ShowState, Source, StepStamp, Timeline, TriggerPlay};
-use deckcraft_model::text::Hyperlink;
-use deckcraft_model::{Presentation, ShapeId};
-use deckcraft_render::{ParaState, PlacedLink, PlacedShape, RenderOpts, ShapeState};
 use egui::{Align2, Color32, CornerRadius, Mesh, Pos2, Rect, Sense, Stroke, TextureHandle, Ui, pos2, vec2};
+use iridium_decks_anim::{Click, HitShape, Layer, LinkJump, ShowAction, ShowState, Source, StepStamp, Timeline, TriggerPlay};
+use iridium_decks_model::text::Hyperlink;
+use iridium_decks_model::{Presentation, ShapeId};
+use iridium_decks_render::{ParaState, PlacedLink, PlacedShape, RenderOpts, ShapeState};
 use serde_json::json;
 
 use crate::SlideApp;
@@ -153,8 +153,8 @@ struct Backdrop {
     /// a later edit while the backdrop is kept.
     doc: std::sync::Arc<Presentation>,
     key: BackKey,
-    img: Option<std::sync::Arc<deckcraft_render::Image>>,
-    rx: Option<std::sync::mpsc::Receiver<deckcraft_render::Image>>,
+    img: Option<std::sync::Arc<iridium_decks_render::Image>>,
+    rx: Option<std::sync::mpsc::Receiver<iridium_decks_render::Image>>,
 }
 
 struct Transition {
@@ -437,7 +437,7 @@ impl Show {
 
     /// The backdrop for `key`: kept from earlier, waited for if it is being rendered ahead of
     /// time, or rendered now.
-    fn backdrop(&mut self, doc: &std::sync::Arc<Presentation>, key: BackKey) -> std::sync::Arc<deckcraft_render::Image> {
+    fn backdrop(&mut self, doc: &std::sync::Arc<Presentation>, key: BackKey) -> std::sync::Arc<iridium_decks_render::Image> {
         if let Some(b) = self.backdrop.as_mut().filter(|b| b.key == key && std::sync::Arc::ptr_eq(&b.doc, doc)) {
             if b.img.is_none() {
                 b.img = b.rx.take().and_then(|rx| rx.recv().ok()).map(std::sync::Arc::new);
@@ -591,7 +591,7 @@ fn state_for(tl: &Timeline, id: ShapeId, step: usize, t: f64, plays: &[TriggerPl
     ShapeState {
         visible: a.visible,
         opacity: a.opacity,
-        offset: deckcraft_geom::Vec2::new(a.offset_x, a.offset_y),
+        offset: iridium_decks_geom::Vec2::new(a.offset_x, a.offset_y),
         scale: (a.scale_x, a.scale_y),
         rotate: a.rotate,
         clip: a.clip,
@@ -601,7 +601,7 @@ fn state_for(tl: &Timeline, id: ShapeId, step: usize, t: f64, plays: &[TriggerPl
             .into_iter()
             .map(|p| {
                 let a = tl.state(id, Some(p), step, t);
-                (p, ParaState { visible: a.visible, opacity: a.opacity, offset: deckcraft_geom::Vec2::new(a.offset_x, a.offset_y) })
+                (p, ParaState { visible: a.visible, opacity: a.opacity, offset: iridium_decks_geom::Vec2::new(a.offset_x, a.offset_y) })
             })
             .collect(),
     }

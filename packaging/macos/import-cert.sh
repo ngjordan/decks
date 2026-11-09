@@ -18,10 +18,10 @@ if [[ -z "${APPLE_CERTIFICATE:-}" ]]; then
 fi
 
 TMP_BASE="${RUNNER_TEMP:-${TMPDIR:-/tmp}}"
-TMP_DIR="$(mktemp -d "$TMP_BASE/deckcraft-cert.XXXXXX")"
+TMP_DIR="$(mktemp -d "$TMP_BASE/iridium-decks-cert.XXXXXX")"
 chmod 0700 "$TMP_DIR"
-KEYCHAIN="$TMP_DIR/deckcraft-signing.keychain-db"
-CERT="$TMP_DIR/deckcraft-signing.p12"
+KEYCHAIN="$TMP_DIR/iridium-decks-signing.keychain-db"
+CERT="$TMP_DIR/iridium-decks-signing.p12"
 KC_PASS="${KEYCHAIN_PASSWORD:-$(openssl rand -hex 24)}"
 
 # Remove only the decoded certificate: the keychain lives in the same directory and codesign

@@ -1,5 +1,5 @@
-# Iridium Decks's built-in thesaurus: headword|synonym, synonym, ...
-# Written for Iridium Decks (no third-party word list). Lowercase; one meaning group per line;
+# Decks's built-in thesaurus: headword|synonym, synonym, ...
+# Written for Decks (no third-party word list). Lowercase; one meaning group per line;
 # a headword may appear on several lines (one per sense).
 ability|capability, capacity, skill, competence, talent
 able|capable, competent, qualified, skilled

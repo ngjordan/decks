@@ -1,10 +1,10 @@
 //! Insert › Date and Time, driven like a person: the ribbon opens the dialog, a format is
 //! chosen, OK inserts it in one undo, Cancel leaves the slide alone.
 
-use deckcraft_engine::Session;
-use deckcraft_model::text::RunKind;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
+use iridium_decks_model::text::RunKind;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
@@ -23,7 +23,7 @@ fn harness() -> Harness<'static, SlideApp> {
     h
 }
 
-fn date_run(h: &Harness<'_, SlideApp>) -> Option<deckcraft_model::Run> {
+fn date_run(h: &Harness<'_, SlideApp>) -> Option<iridium_decks_model::Run> {
     h.state()
         .session
         .active()
@@ -32,7 +32,7 @@ fn date_run(h: &Harness<'_, SlideApp>) -> Option<deckcraft_model::Run> {
         .unwrap()
         .shapes
         .iter()
-        .find(|x| x.ph_type() == Some(deckcraft_model::PhType::Date))
+        .find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date))
         .and_then(|x| x.text.as_ref())
         .and_then(|t| t.paragraphs.first())
         .and_then(|p| p.runs.first())
@@ -48,8 +48,8 @@ fn insert_opens_the_dialog_and_ok_inserts_one_field() {
     assert_eq!(h.state().dialog.as_ref().map(|d| d.id.as_str()), Some("dateTime"));
     let _ = h.get_by_label("Update automatically");
     assert_eq!(h.get_by_role_and_label(egui::accesskit::Role::ComboBox, "Language").value().as_deref(), Some("English (United States)"));
-    let now = deckcraft_text::datetime::DateTime::now_local().unwrap();
-    let sample = deckcraft_text::datetime::field_text("datetime2", Some("en-US"), now).unwrap();
+    let now = iridium_decks_text::datetime::DateTime::now_local().unwrap();
+    let sample = iridium_decks_text::datetime::field_text("datetime2", Some("en-US"), now).unwrap();
     h.get_by_label(&sample).click();
     h.run_steps(1);
     h.get_by_label("OK").click();

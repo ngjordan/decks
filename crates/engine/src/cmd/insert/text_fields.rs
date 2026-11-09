@@ -10,7 +10,7 @@ pub(super) fn word_art(s: &mut Session, p: &Value) -> Result<Value> {
     let mut shape = new_text_box(Xfrm::new(size.width * 0.2, size.height * 0.4, size.width * 0.6, 80.0), text);
     if let Some(t) = shape.text.as_mut() {
         for para in &mut t.paragraphs {
-            para.props.align = Some(deckcraft_model::text::Align::Center);
+            para.props.align = Some(iridium_decks_model::text::Align::Center);
             for r in &mut para.runs {
                 r.props.size = Some(54.0);
                 r.props.bold = Some(style % 2 == 1);
@@ -21,7 +21,7 @@ pub(super) fn word_art(s: &mut Session, p: &Value) -> Result<Value> {
                     _ => SchemeSlot::Accent4,
                 })));
                 if style % 3 == 2 {
-                    r.props.outline = Some(deckcraft_model::Line::solid(ColorRef::scheme(SchemeSlot::Bg1), 1.0));
+                    r.props.outline = Some(iridium_decks_model::Line::solid(ColorRef::scheme(SchemeSlot::Bg1), 1.0));
                 }
             }
         }
@@ -112,7 +112,7 @@ fn date_opts(p: &Value) -> Result<DateOpts> {
 /// The text `format` shows now in `lang`. Errors when that language has no names for the format
 /// (month names and AM/PM are English only). An empty string where there is no clock (wasm).
 fn date_sample(format: &str, lang: Option<&str>) -> Result<String> {
-    use deckcraft_text::datetime::{DateTime, field_text};
+    use iridium_decks_text::datetime::{DateTime, field_text};
     let probe = DateTime::new(2026, 10, 9, 20, 5, 7);
     if field_text(format, lang, probe).is_none() {
         return Err(bad("insert.dateTime", "this format isn't available in that language"));
@@ -171,7 +171,8 @@ fn write_master_date(s: &mut Session, o: &DateOpts) -> Result<Value> {
     let (format, sample, lang, update) = (o.format.clone(), o.sample.clone(), o.lang.clone(), o.update);
     let has_date = {
         let st = s.doc()?;
-        crate::page_master(&st.doc, st.selection.target).is_some_and(|m| m.shapes.iter().any(|x| x.ph_type() == Some(deckcraft_model::PhType::Date)))
+        crate::page_master(&st.doc, st.selection.target)
+            .is_some_and(|m| m.shapes.iter().any(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date)))
     };
     if !has_date {
         return Err(bad(
@@ -185,7 +186,7 @@ fn write_master_date(s: &mut Session, o: &DateOpts) -> Result<Value> {
     s.edit(|doc, sel| {
         let Some(m) = crate::page_master_mut(doc, sel.target) else { return Ok(false) };
         let m = std::sync::Arc::make_mut(m);
-        let date = |x: &deckcraft_model::Shape| x.ph_type() == Some(deckcraft_model::PhType::Date);
+        let date = |x: &iridium_decks_model::Shape| x.ph_type() == Some(iridium_decks_model::PhType::Date);
         let chosen = sel.shapes.iter().find_map(|id| m.shapes.iter().position(|x| x.id == *id && date(x)));
         let Some(i) = chosen.or_else(|| m.shapes.iter().position(date)) else { return Ok(false) };
         let Some(sh) = m.shapes.get_mut(i) else { return Ok(false) };
@@ -202,7 +203,7 @@ fn write_master_date(s: &mut Session, o: &DateOpts) -> Result<Value> {
         let body = sh.text.clone().unwrap_or_default();
         let mut para = body.paragraphs.first().cloned().unwrap_or_default();
         written.clone_from(&text);
-        para.runs = vec![deckcraft_model::Run { text, props, kind }];
+        para.runs = vec![iridium_decks_model::Run { text, props, kind }];
         sh.text = Some(TextBody { paragraphs: vec![para], ..body });
         Ok(true)
     })?;
@@ -218,7 +219,7 @@ fn write_date_placeholder(s: &mut Session, o: &DateOpts) -> Result<bool> {
     s.edit(|doc, sel| {
         let Some(sl) = doc.slides.get_mut(sel.slide) else { return Ok(false) };
         let sl = std::sync::Arc::make_mut(sl);
-        let Some(sh) = sl.shapes.iter_mut().find(|x| x.ph_type() == Some(deckcraft_model::PhType::Date)) else {
+        let Some(sh) = sl.shapes.iter_mut().find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date)) else {
             return Ok(false);
         };
         let mut props = sh.text.as_ref().and_then(|t| t.paragraphs.first()).and_then(|p| p.runs.first()).map(|r| r.props.clone()).unwrap_or_default();
@@ -226,7 +227,7 @@ fn write_date_placeholder(s: &mut Session, o: &DateOpts) -> Result<bool> {
             props.lang = Some(lang);
         }
         let kind = if update { RunKind::Field { field: format } } else { RunKind::Text };
-        let para = deckcraft_model::Paragraph { runs: vec![deckcraft_model::Run { text: sample, props, kind }], ..Default::default() };
+        let para = iridium_decks_model::Paragraph { runs: vec![iridium_decks_model::Run { text: sample, props, kind }], ..Default::default() };
         let body = sh.text.clone().unwrap_or_default();
         sh.text = Some(TextBody { paragraphs: vec![para], ..body });
         Ok(true)
@@ -255,12 +256,12 @@ fn insert_plain(s: &mut Session, text: &str, lang: Option<&str>) -> Result<()> {
     let lang = lang.map(str::to_string);
     crate::cmd::text::edit_text(s, move |body, t| {
         let (a, b) = t.ordered();
-        let at = deckcraft_model::edit::delete(body, a, b);
-        let mut props = deckcraft_model::edit::props_at(body, at);
+        let at = iridium_decks_model::edit::delete(body, a, b);
+        let mut props = iridium_decks_model::edit::props_at(body, at);
         if let Some(lang) = lang.clone() {
             props.lang = Some(lang);
         }
-        let c = deckcraft_model::edit::insert(body, at, &text, Some(props));
+        let c = iridium_decks_model::edit::insert(body, at, &text, Some(props));
         t.anchor = c;
         t.caret = c;
     })?;

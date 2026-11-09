@@ -3,8 +3,8 @@
 
 use std::sync::Arc;
 
-use deckcraft_model::text::Action;
-use deckcraft_model::{AnimClass, AnimStart, Animation, Presentation, Shape, ShapeId, Slide, SlideId, Transition, Xfrm};
+use iridium_decks_model::text::Action;
+use iridium_decks_model::{AnimClass, AnimStart, Animation, Presentation, Shape, ShapeId, Slide, SlideId, Transition, Xfrm};
 
 use crate::{Click, HitShape, LinkJump, ShowAction, ShowState, Target, Timeline};
 

@@ -8,8 +8,8 @@ use egui_kittest::kittest::Queryable;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
-use deckcraft_engine::Session;
-use deckcraft_geom::Unit;
+use iridium_decks_engine::Session;
+use iridium_decks_geom::Unit;
 
 fn harness(app: SlideApp) -> Harness<'static, SlideApp> {
     Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_ui_state(
@@ -35,10 +35,10 @@ fn text_values(h: &Harness<'_, SlideApp>) -> Vec<String> {
     h.query_all_by_role(Role::TextInput).filter_map(|n| n.value()).collect()
 }
 
-fn selected_xfrm(app: &SlideApp) -> deckcraft_geom::Xfrm {
+fn selected_xfrm(app: &SlideApp) -> iridium_decks_geom::Xfrm {
     let st = app.session.active().unwrap();
     let sh = st.shape(*st.selection.shapes.first().unwrap()).unwrap();
-    deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)
+    iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)
 }
 
 #[test]

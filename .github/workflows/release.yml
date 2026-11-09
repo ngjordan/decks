@@ -31,10 +31,10 @@ concurrency:
 jobs:
   release:
     # Intentionally tracked at @main (not SHA-pinned) so org-wide CI improvements, security fixes, and build optimizations propagate without PR churn across all craftapp repos.
-    uses: storytold/craft-common-actions/.github/workflows/release.yml@main
+    uses: ngjordan/craft-common-actions/.github/workflows/release.yml@main
     with:
       app-name: iridium-decks
-      app-title: Iridium Decks
+      app-title: Decks
       # Keep identical to ci.yml and freebsd.yml. The shared release workflow sets
       # CRAFT_FONTS_REQUIRED=1 in its packaging steps, so a pin without the reviewed Chinese
       # manifest fails the release instead of silently skipping it.

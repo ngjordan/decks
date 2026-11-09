@@ -2,9 +2,9 @@
 
 use std::io::{Cursor, Read, Write};
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::anim::{AnimClass, Animation};
-use deckcraft_model::{Shape, ShapeId, defaults};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::anim::{AnimClass, Animation};
+use iridium_decks_model::{Shape, ShapeId, defaults};
 
 fn deck_with(effect: &str, behaviour: &str) -> Vec<bool> {
     let mut p = defaults::new_presentation(None);
@@ -13,7 +13,7 @@ fn deck_with(effect: &str, behaviour: &str) -> Vec<bool> {
     let sl = std::sync::Arc::make_mut(&mut p.slides[0]);
     sl.shapes = vec![shape];
     sl.animations.push(Animation { shape: id, class: AnimClass::Emphasis, effect: effect.into(), duration_ms: 1000, ..Default::default() });
-    let mut z = zip::ZipArchive::new(Cursor::new(deckcraft_pptx::export(&p).expect("export"))).expect("zip");
+    let mut z = zip::ZipArchive::new(Cursor::new(iridium_decks_pptx::export(&p).expect("export"))).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     for i in 0..z.len() {
         let mut f = z.by_index(i).expect("entry");
@@ -29,7 +29,7 @@ fn deck_with(effect: &str, behaviour: &str) -> Vec<bool> {
         out.start_file(name, zip::write::SimpleFileOptions::default()).expect("start");
         out.write_all(&d).expect("write");
     }
-    let q = deckcraft_pptx::import(&out.finish().expect("finish").into_inner()).expect("import");
+    let q = iridium_decks_pptx::import(&out.finish().expect("finish").into_inner()).expect("import");
     q.slides[0].animations.iter().map(|a| a.auto_reverse).collect()
 }
 

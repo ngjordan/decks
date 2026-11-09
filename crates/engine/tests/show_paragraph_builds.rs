@@ -5,11 +5,11 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_anim::{ShowAction, ShowState};
-use deckcraft_geom::Xfrm;
-use deckcraft_model::anim::{AnimStart, Animation, TextBuild};
-use deckcraft_model::text::TextBody;
-use deckcraft_model::{LayoutType, Presentation, Shape, ShapeId, defaults};
+use iridium_decks_anim::{ShowAction, ShowState};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::anim::{AnimStart, Animation, TextBuild};
+use iridium_decks_model::text::TextBody;
+use iridium_decks_model::{LayoutType, Presentation, Shape, ShapeId, defaults};
 use zip::write::SimpleFileOptions;
 
 fn shape(p: &mut Presentation, name: &str, text: &str, y: f64) -> Shape {
@@ -45,7 +45,7 @@ fn saved(body: &str, levels: &[u8]) -> Vec<u8> {
         s.animations = animations;
         p.slides.push(Arc::new(s));
     }
-    deckcraft_pptx::export(&p).expect("export")
+    iridium_decks_pptx::export(&p).expect("export")
 }
 
 fn spid(xml: &str, name: &str) -> String {
@@ -139,7 +139,7 @@ fn a_paragraph_build_split_by_another_shapes_effect_takes_powerpoints_clicks() {
         let e2 = effect(ids, body, Some(2), "clickEffect");
         vec![click(ids, &[e0, ep]), click(ids, &[e1]), click(ids, &[e2])]
     });
-    let pres = deckcraft_pptx::import(&bytes).expect("import");
+    let pres = iridium_decks_pptx::import(&bytes).expect("import");
     assert_eq!(ShowState::steps(&pres, 0), 3, "three click steps, as in the file");
     assert_eq!(clicks_to_second_slide(&pres), 4, "three builds and one click to move on");
 }
@@ -155,7 +155,7 @@ fn a_build_by_second_level_paragraphs_takes_a_click_per_paragraph() {
         let ep = effect(ids, pic, None, "withEffect");
         vec![click(ids, &[e0]), click(ids, &[e1]), click(ids, &[e2, ep])]
     });
-    let pres = deckcraft_pptx::import(&bytes).expect("import");
+    let pres = iridium_decks_pptx::import(&bytes).expect("import");
     assert_eq!(ShowState::steps(&pres, 0), 3, "three click steps, as in the file");
 }
 
@@ -185,7 +185,7 @@ fn first_level_build() -> Vec<u8> {
 
 #[test]
 fn a_whole_first_level_build_still_reads_as_one_by_paragraph_animation() {
-    let pres = deckcraft_pptx::import(&first_level_build()).expect("import");
+    let pres = iridium_decks_pptx::import(&first_level_build()).expect("import");
     assert_eq!(effects(&pres)[0], (None, AnimStart::OnClick, TextBuild::ByParagraph));
     assert_eq!(pres.slides[0].animations.len(), 2, "Body's build and Picture");
     assert_eq!(ShowState::steps(&pres, 0), 2);
@@ -193,8 +193,8 @@ fn a_whole_first_level_build_still_reads_as_one_by_paragraph_animation() {
 
 #[test]
 fn a_by_paragraph_build_with_sub_points_survives_saving() {
-    let pres = deckcraft_pptx::import(&first_level_build()).expect("import");
-    let again = deckcraft_pptx::import(&deckcraft_pptx::export(&pres).expect("export")).expect("reimport");
+    let pres = iridium_decks_pptx::import(&first_level_build()).expect("import");
+    let again = iridium_decks_pptx::import(&iridium_decks_pptx::export(&pres).expect("export")).expect("reimport");
     assert_eq!(effects(&again), effects(&pres));
     assert_eq!(ShowState::steps(&again, 0), 2, "the sub-point still comes in with its parent");
 }
@@ -208,15 +208,15 @@ fn paragraph_effects_save_as_powerpoint_writes_them_and_read_back_unchanged() {
         let e2 = effect(ids, body, Some(2), "clickEffect");
         vec![click(ids, &[e0, ep]), click(ids, &[e1]), click(ids, &[e2])]
     });
-    let pres = deckcraft_pptx::import(&bytes).expect("import");
-    let saved = deckcraft_pptx::export(&pres).expect("export");
+    let pres = iridium_decks_pptx::import(&bytes).expect("import");
+    let saved = iridium_decks_pptx::export(&pres).expect("export");
     let xml = slide_xml(&saved);
     let body = spid(&xml, "Body");
     let blds: Vec<&str> = xml.split("<p:bldP ").skip(1).filter(|b| b.starts_with(&format!(r#"spid="{body}""#))).collect();
     // ¶0 is its own build (Picture sits between), ¶1 and ¶2 share one.
     assert_eq!(blds.len(), 2, "{blds:?}");
     assert!(blds.iter().all(|b| b.contains(r#"build="p""#) && !b.contains("animBg")), "{blds:?}");
-    let again = deckcraft_pptx::import(&saved).expect("reimport");
+    let again = iridium_decks_pptx::import(&saved).expect("reimport");
     assert_eq!(effects(&again), effects(&pres));
     assert_eq!(ShowState::steps(&again, 0), 3);
 }
@@ -237,7 +237,7 @@ fn three_paragraphs(effects: impl Fn(&mut u32, &str) -> Vec<String>) -> Presenta
         clicks.push(click(ids, &[ep]));
         clicks
     });
-    deckcraft_pptx::import(&bytes).expect("import")
+    iridium_decks_pptx::import(&bytes).expect("import")
 }
 
 #[test]

@@ -5,11 +5,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-use deckcraft_engine::Session;
 use egui::accesskit::Role;
 use egui::{Key, Modifiers};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::backstage::{Backstage, NAV_W, Nav, Page, PrintScope, entries, format_bytes, print_page_size, print_params, print_slides, split_path};
@@ -34,7 +34,7 @@ fn new_app() -> SlideApp {
 
 /// A folder of its own for one test's files.
 fn temp_dir(name: &str) -> std::path::PathBuf {
-    let d = std::env::temp_dir().join(format!("deckcraft-backstage-{}-{name}", std::process::id()));
+    let d = std::env::temp_dir().join(format!("iridium-decks-backstage-{}-{name}", std::process::id()));
     let _ = std::fs::remove_dir_all(&d);
     std::fs::create_dir_all(&d).unwrap();
     d
@@ -159,7 +159,7 @@ fn alt_f_arrows_enter_and_esc_drive_the_side_menu() {
 #[test]
 fn every_page_renders() {
     let mut h = harness(new_app());
-    let last_theme = deckcraft_model::theme::builtin_themes().last().map(|t| t.name.clone()).unwrap();
+    let last_theme = iridium_decks_model::theme::builtin_themes().last().map(|t| t.name.clone()).unwrap();
     let checks: [(Page, &str); 8] = [
         (Page::Home, "Recent"),
         (Page::New, &last_theme),
@@ -193,7 +193,7 @@ fn new_tiles_keep_the_right_margin_in_a_narrow_window() {
     );
     h.state_mut().run("app.backstage", json!({"page": "new"})).unwrap();
     h.run_steps(3);
-    let tiles = ["Iridium Decks", "Harbor", "Ember", "Meadow", "Nocturne", "Paper", "Briefing"];
+    let tiles = ["Decks", "Harbor", "Ember", "Meadow", "Nocturne", "Paper", "Briefing"];
     for label in tiles {
         let r = h.get_by_label(label).rect();
         assert!(r.right() <= 1000.0 - 36.0, "{label} ends at {}, inside the 36pt right margin", r.right());
@@ -226,7 +226,7 @@ fn new_creates_a_presentation() {
     assert_eq!(h.state().session.documents().len(), 2);
     assert!(h.state().backstage.is_none(), "the new presentation shows");
 
-    let theme = deckcraft_model::theme::builtin_themes().into_iter().nth(1).unwrap();
+    let theme = iridium_decks_model::theme::builtin_themes().into_iter().nth(1).unwrap();
     h.state_mut().run("app.backstage", json!({})).unwrap();
     h.run_steps(3);
     h.get_by_label(&theme.name).click();
@@ -344,7 +344,7 @@ fn change_file_type_png_can_leave_the_background_transparent() {
     h.run_steps(3);
     let title = h.state().session.active().unwrap().title();
     let png = std::fs::read(dir.join(format!("{title}.png"))).unwrap();
-    let img = deckcraft_render::decode_image(&png).unwrap();
+    let img = iridium_decks_render::decode_image(&png).unwrap();
     assert_eq!(img.get_pixel(2, 2).0[3], 0, "the background is left out");
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -596,7 +596,7 @@ fn a_file_that_cant_be_opened_says_why() {
     }
     h.run_steps(2);
     assert!(h.state().session.documents().is_empty());
-    assert!(h.query_by_label_contains("not a presentation Iridium Decks can read").is_some(), "the error is on screen");
+    assert!(h.query_by_label_contains("not a presentation Decks can read").is_some(), "the error is on screen");
     let _ = std::fs::remove_dir_all(&dir);
 }
 
@@ -647,7 +647,7 @@ fn print_previews_pages_and_prints_a_pdf() {
             _ => None,
         })
         .expect("Print emits an egui OpenUrl command");
-    assert!(url.contains("deckcraft-print-"), "print preview uses its private directory: {url}");
+    assert!(url.contains("iridium-decks-print-"), "print preview uses its private directory: {url}");
     let path = url.strip_prefix("file://").expect("print preview URL is a file URL");
     #[cfg(windows)]
     let path = path.strip_prefix('/').unwrap_or(path);

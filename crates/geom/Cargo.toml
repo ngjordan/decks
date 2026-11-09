@@ -1,9 +1,9 @@
 [package]
-name = "deckcraft-geom"
+name = "iridium-decks-geom"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Iridium Decks geometry: units (EMU/pt), transforms, preset shape generators, adjust handles, hit testing"
+description = "Decks geometry: units (EMU/pt), transforms, preset shape generators, adjust handles, hit testing"
 
 [lints]
 workspace = true

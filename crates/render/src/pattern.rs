@@ -7,7 +7,7 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
+use iridium_decks_color::Rgba;
 use kurbo::{Affine, BezPath};
 use vello_cpu::{Pixmap, RenderContext, peniko};
 

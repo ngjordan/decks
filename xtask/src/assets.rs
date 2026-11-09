@@ -34,7 +34,7 @@ const ASSET_EXT: &[&str] = &[
     "idml",
     "aco",
     "abr",
-    "deckcraft",
+    "iridium-decks",
     "pptx",
     "potx",
     "ppsx",

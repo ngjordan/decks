@@ -5,11 +5,11 @@
 //! child rectangle, so the diagram keeps its size and place. Text typed straight into a diagram
 //! shape is read back into the nodes before each regeneration.
 
-use deckcraft_color::SchemeSlot;
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::{Gradient, GradientShape, GradientStop, Shadow};
-use deckcraft_model::text::{Align, AutoFit, Paragraph, TextBody};
-use deckcraft_model::{
+use iridium_decks_color::SchemeSlot;
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::style::{Gradient, GradientShape, GradientStop, Shadow};
+use iridium_decks_model::text::{Align, AutoFit, Paragraph, TextBody};
+use iridium_decks_model::{
     ColorRef, ColorTransform, Diagram, DiagramNode, Effects, Fill, Geom, Line, Presentation, Shape, ShapeId, ShapeKind, ShapeStyle,
 };
 use serde_json::{Value, json};
@@ -37,7 +37,7 @@ pub const MAX_LEVEL: u8 = 8;
 /// Most top-level shapes a layout draws.
 const MAX_SHAPES: usize = 40;
 
-/// Iridium Decks's layouts, with the names PowerPoint's gallery gives them.
+/// Decks's layouts, with the names PowerPoint's gallery gives them.
 pub const LAYOUTS: [(&str, &str); 45] = [
     ("list", "Vertical Bullet List"),
     ("blockList", "Basic Block List"),

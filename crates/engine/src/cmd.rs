@@ -31,8 +31,8 @@ pub mod three_d;
 pub mod transition;
 pub mod zoom;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::ShapeId;
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::ShapeId;
 use serde::Serialize;
 use serde_json::Value;
 
@@ -378,42 +378,42 @@ pub(crate) fn ok() -> Result<Value> {
 /// Parse a colour param: `"#RRGGBB"`, `"accent1"`…, or `{"scheme":"accent2","lumMod":75000}`.
 /// A preset or system colour keeps its base: `{"preset":"red"}`,
 /// `{"system":"windowText","last":"#000000"}`.
-pub(crate) fn color_param(p: &Value, key: &str) -> Option<deckcraft_model::ColorRef> {
+pub(crate) fn color_param(p: &Value, key: &str) -> Option<iridium_decks_model::ColorRef> {
     let v = p.get(key)?;
     color_value(v)
 }
 
-pub(crate) fn color_value(v: &Value) -> Option<deckcraft_model::ColorRef> {
-    use deckcraft_model::ColorRef;
+pub(crate) fn color_value(v: &Value) -> Option<iridium_decks_model::ColorRef> {
+    use iridium_decks_model::ColorRef;
     match v {
         Value::String(s) => {
-            if let Some(slot) = deckcraft_color::SchemeSlot::from_xml(s) {
+            if let Some(slot) = iridium_decks_color::SchemeSlot::from_xml(s) {
                 return Some(ColorRef::scheme(slot));
             }
-            if let Some(c) = deckcraft_color::Rgba::from_hex(s) {
+            if let Some(c) = iridium_decks_color::Rgba::from_hex(s) {
                 return Some(ColorRef::rgb(c));
             }
-            deckcraft_color::preset(s).map(ColorRef::rgb)
+            iridium_decks_color::preset(s).map(ColorRef::rgb)
         }
         Value::Object(o) => {
             let mut c = if let Some(s) = o.get("scheme").and_then(Value::as_str) {
-                ColorRef::scheme(deckcraft_color::SchemeSlot::from_xml(s)?)
+                ColorRef::scheme(iridium_decks_color::SchemeSlot::from_xml(s)?)
             } else if let Some(name) = o.get("preset").and_then(Value::as_str) {
-                if !deckcraft_color::is_preset_name(name) {
+                if !iridium_decks_color::is_preset_name(name) {
                     return None;
                 }
-                ColorRef { base: deckcraft_model::ColorBase::Preset { name: name.to_string() }, mods: vec![] }
+                ColorRef { base: iridium_decks_model::ColorBase::Preset { name: name.to_string() }, mods: vec![] }
             } else if let Some(name) = o.get("system").and_then(Value::as_str) {
-                if !deckcraft_color::is_system_name(name) {
+                if !iridium_decks_color::is_system_name(name) {
                     return None;
                 }
-                let last = deckcraft_color::Rgba::from_hex(o.get("last").and_then(Value::as_str)?)?;
-                ColorRef { base: deckcraft_model::ColorBase::System { name: name.to_string(), last }, mods: vec![] }
+                let last = iridium_decks_color::Rgba::from_hex(o.get("last").and_then(Value::as_str)?)?;
+                ColorRef { base: iridium_decks_model::ColorBase::System { name: name.to_string(), last }, mods: vec![] }
             } else {
-                ColorRef::rgb(deckcraft_color::Rgba::from_hex(o.get("rgb").and_then(Value::as_str)?)?)
+                ColorRef::rgb(iridium_decks_color::Rgba::from_hex(o.get("rgb").and_then(Value::as_str)?)?)
             };
             for (k, val) in o {
-                if let Some(t) = deckcraft_color::ColorTransform::from_xml(k, val.as_i64().and_then(|x| i32::try_from(x).ok())) {
+                if let Some(t) = iridium_decks_color::ColorTransform::from_xml(k, val.as_i64().and_then(|x| i32::try_from(x).ok())) {
                     c.mods.push(t);
                 }
             }
@@ -424,15 +424,15 @@ pub(crate) fn color_value(v: &Value) -> Option<deckcraft_model::ColorRef> {
 }
 
 /// Look a shape up by id in the edited tree.
-pub(crate) fn shape_of(s: &Session, id: ShapeId) -> Result<deckcraft_model::Shape> {
+pub(crate) fn shape_of(s: &Session, id: ShapeId) -> Result<iridium_decks_model::Shape> {
     s.doc()?.shape(id).cloned().ok_or_else(|| EngineError::Other(format!("no shape {id}")))
 }
 
 /// Effective box of a shape (placeholders inherit theirs). A table's box is at least as tall as its
 /// rows are drawn (rows grow to fit their text), so handles and hit tests match what is shown.
-pub fn xfrm_of(doc: &deckcraft_model::Presentation, sel: &crate::Selection, shape: &deckcraft_model::Shape) -> Xfrm {
+pub fn xfrm_of(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, shape: &iridium_decks_model::Shape) -> Xfrm {
     let mut x = shape.xfrm.unwrap_or_else(|| ctx_xfrm(doc, sel, shape));
-    if let deckcraft_model::ShapeKind::Table(t) = &shape.kind {
+    if let iridium_decks_model::ShapeKind::Table(t) = &shape.kind {
         let drawn: f64 = table_drawn_heights(doc, sel, t).iter().sum();
         if drawn.is_finite() && drawn > x.h {
             x.h = drawn;
@@ -442,15 +442,15 @@ pub fn xfrm_of(doc: &deckcraft_model::Presentation, sel: &crate::Selection, shap
 }
 
 /// Row heights of table `t` as drawn: a stored height is a minimum, rows grow to fit their text.
-pub fn table_drawn_heights(doc: &deckcraft_model::Presentation, sel: &crate::Selection, t: &deckcraft_model::Table) -> Vec<f64> {
+pub fn table_drawn_heights(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, t: &iridium_decks_model::Table) -> Vec<f64> {
     match text::ctx_for(doc, sel) {
-        Some(ctx) => deckcraft_render::table_row_heights(&ctx, t, &deckcraft_text::NoFields),
+        Some(ctx) => iridium_decks_render::table_row_heights(&ctx, t, &iridium_decks_text::NoFields),
         None => t.rows.iter().map(|r| r.height).collect(),
     }
 }
 
-fn ctx_xfrm(doc: &deckcraft_model::Presentation, sel: &crate::Selection, shape: &deckcraft_model::Shape) -> Xfrm {
-    use deckcraft_model::resolve::{self, Ctx};
+fn ctx_xfrm(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, shape: &iridium_decks_model::Shape) -> Xfrm {
+    use iridium_decks_model::resolve::{self, Ctx};
     match sel.target {
         crate::Target::Slides => doc.slides.get(sel.slide).and_then(|s| Ctx::for_slide(doc, s)).map(|c| resolve::xfrm(&c, shape)),
         crate::Target::Master { master } => doc.masters.get(master).map(|m| resolve::xfrm(&Ctx::for_master(doc, m), shape)),
@@ -465,21 +465,21 @@ fn ctx_xfrm(doc: &deckcraft_model::Presentation, sel: &crate::Selection, shape: 
 }
 
 /// Run `f` on each target shape (copy-on-write), materialising inherited boxes first.
-pub(crate) fn edit_shapes(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut deckcraft_model::Shape) -> Result<()>) -> Result<Value> {
+pub(crate) fn edit_shapes(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut iridium_decks_model::Shape) -> Result<()>) -> Result<Value> {
     let ids = targets(s, p)?;
     if ids.is_empty() {
         return Err(bad(cmd, "no shapes selected"));
     }
     s.edit(|doc, sel| {
         let boxes: Vec<(ShapeId, Xfrm)> = {
-            let st_shapes: Vec<deckcraft_model::Shape> =
-                ids.iter().filter_map(|id| current_shapes(doc, sel).and_then(|v| deckcraft_model::find_shape(v, *id)).cloned()).collect();
+            let st_shapes: Vec<iridium_decks_model::Shape> =
+                ids.iter().filter_map(|id| current_shapes(doc, sel).and_then(|v| iridium_decks_model::find_shape(v, *id)).cloned()).collect();
             st_shapes.iter().map(|sh| (sh.id, xfrm_of(doc, sel, sh))).collect()
         };
         let shapes = crate::shapes_mut(doc, sel).ok_or_else(|| bad(cmd, "no slide"))?;
         let mut n = 0;
         for id in &ids {
-            if let Some(sh) = deckcraft_model::find_shape_mut(shapes, *id) {
+            if let Some(sh) = iridium_decks_model::find_shape_mut(shapes, *id) {
                 if sh.xfrm.is_none() {
                     sh.xfrm = boxes.iter().find(|(i, _)| i == id).map(|(_, x)| *x);
                 }
@@ -496,7 +496,7 @@ pub(crate) fn edit_shapes(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut
 
 /// [`edit_shapes`] for edits a locked object refuses (move, size, rotate, flip, reshape, crop):
 /// locked targets are left out, and when every target is locked nothing changes.
-pub(crate) fn edit_geometry(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut deckcraft_model::Shape) -> Result<()>) -> Result<Value> {
+pub(crate) fn edit_geometry(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut iridium_decks_model::Shape) -> Result<()>) -> Result<Value> {
     let ids = targets(s, p)?;
     let st = s.doc()?;
     let free: Vec<u32> = ids.iter().filter(|id| !st.shape(**id).is_some_and(|x| x.locked)).map(|id| id.0).collect();
@@ -506,7 +506,7 @@ pub(crate) fn edit_geometry(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&m
     edit_shapes(s, &with_param(p, "ids", Value::from(free)), cmd, f)
 }
 
-pub(crate) fn current_shapes<'a>(doc: &'a deckcraft_model::Presentation, sel: &crate::Selection) -> Option<&'a Vec<deckcraft_model::Shape>> {
+pub(crate) fn current_shapes<'a>(doc: &'a iridium_decks_model::Presentation, sel: &crate::Selection) -> Option<&'a Vec<iridium_decks_model::Shape>> {
     match sel.target {
         crate::Target::Slides => doc.slides.get(sel.slide).map(|s| &s.shapes),
         crate::Target::Master { master } => doc.masters.get(master).map(|m| &m.shapes),
@@ -517,11 +517,11 @@ pub(crate) fn current_shapes<'a>(doc: &'a deckcraft_model::Presentation, sel: &c
 
 /// Every name on the slide, group members included, and the number of shapes (which exceeds the
 /// number of names when two shapes share one).
-pub(crate) fn current_names(doc: &deckcraft_model::Presentation, sel: &crate::Selection) -> (std::collections::HashSet<String>, usize) {
+pub(crate) fn current_names(doc: &iridium_decks_model::Presentation, sel: &crate::Selection) -> (std::collections::HashSet<String>, usize) {
     let mut names = std::collections::HashSet::new();
     let mut count = 0;
     if let Some(v) = current_shapes(doc, sel) {
-        deckcraft_model::walk(v, &mut |sh, _| {
+        iridium_decks_model::walk(v, &mut |sh, _| {
             names.insert(sh.name.clone());
             count += 1;
         });
@@ -674,8 +674,8 @@ mod tests {
 
     #[test]
     fn preset_and_system_colors_keep_their_base() {
-        use deckcraft_color::{ColorTransform, Rgba};
-        use deckcraft_model::{ColorBase, ColorRef};
+        use iridium_decks_color::{ColorTransform, Rgba};
+        use iridium_decks_model::{ColorBase, ColorRef};
         use serde_json::json;
         let preset = color_value(&json!({"preset": "red", "lumMod": 50_000}));
         assert_eq!(preset, Some(ColorRef { base: ColorBase::Preset { name: "red".into() }, mods: vec![ColorTransform::LumMod(50_000)] }));

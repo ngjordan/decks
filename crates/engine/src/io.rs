@@ -46,7 +46,7 @@ pub fn write_file(path: &str, bytes: &[u8]) -> Result<(), String> {
     let mut attempts = 0;
     let (tmp, mut file) = loop {
         // A short fixed-size name: appending to the target's name could exceed the file name limit.
-        let tmp_name = format!(".deckcraft.{}.{}.saving", std::process::id(), COUNTER.fetch_add(1, Ordering::Relaxed));
+        let tmp_name = format!(".iridium-decks.{}.{}.saving", std::process::id(), COUNTER.fetch_add(1, Ordering::Relaxed));
         let tmp = target_path.with_file_name(tmp_name);
         match std::fs::OpenOptions::new().write(true).create_new(true).open(&tmp) {
             Ok(f) => break (tmp, f),
@@ -98,7 +98,7 @@ mod tests {
 
     #[test]
     fn write_file_preserves_permissions_and_writes_content() {
-        let tmp_dir = std::env::temp_dir().join("deckcraft_io_test");
+        let tmp_dir = std::env::temp_dir().join("iridium_decks_io_test");
         let _ = std::fs::create_dir_all(&tmp_dir);
         let test_file = tmp_dir.join("test_write.txt");
         let path_str = test_file.to_str().unwrap();
@@ -124,7 +124,7 @@ mod tests {
 
     #[test]
     fn write_file_overwrites_file_with_name_near_the_length_limit() {
-        let dir = std::env::temp_dir().join("deckcraft_io_long_name_test");
+        let dir = std::env::temp_dir().join("iridium_decks_io_long_name_test");
         let _ = std::fs::create_dir_all(&dir);
         let file = dir.join(format!("{}.pptx", "a".repeat(250)));
         std::fs::write(&file, b"old").unwrap();

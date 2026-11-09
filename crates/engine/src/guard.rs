@@ -99,10 +99,10 @@ mod tests {
     fn a_panicking_command_keeps_the_remembered_point_type() {
         let mut s = Session::new();
         s.execute("file.new", &json!({})).unwrap();
-        let kept = Some((deckcraft_model::ShapeId(1), 0, 0, "straight".to_string()));
+        let kept = Some((iridium_decks_model::ShapeId(1), 0, 0, "straight".to_string()));
         s.tool.vertex_kind = kept.clone();
         let r = s.guarded("test.panic", |s| {
-            s.tool.vertex_kind = Some((deckcraft_model::ShapeId(1), 0, 0, "corner".to_string()));
+            s.tool.vertex_kind = Some((iridium_decks_model::ShapeId(1), 0, 0, "corner".to_string()));
             panic!("boom");
         });
         assert!(r.is_err());
@@ -111,7 +111,7 @@ mod tests {
         // one from before names a shape of the other document.
         let r = s.guarded("test.panic", |s| {
             s.execute("file.new", &json!({}))?;
-            s.tool.vertex_kind = Some((deckcraft_model::ShapeId(1), 0, 0, "corner".to_string()));
+            s.tool.vertex_kind = Some((iridium_decks_model::ShapeId(1), 0, 0, "corner".to_string()));
             panic!("boom");
         });
         assert!(r.is_err());

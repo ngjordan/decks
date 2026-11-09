@@ -10,7 +10,7 @@ pub(super) fn thesaurus(app: &mut SlideApp, ui: &mut Ui) {
         app.thesaurus_query = q.clone();
     }
     ui.add_space(6.0);
-    let senses = deckcraft_engine::thesaurus::lookup(&q);
+    let senses = iridium_decks_engine::thesaurus::lookup(&q);
     if q.trim().is_empty() {
         ui.label(egui::RichText::new("Select a word on the slide, or type one above.").color(t.text_dim));
         return;

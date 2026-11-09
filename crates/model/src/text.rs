@@ -751,7 +751,7 @@ impl TextBody {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_color::Rgba;
+    use iridium_decks_color::Rgba;
 
     #[test]
     fn alternate_language_inherits_and_native_input_is_bounded() {

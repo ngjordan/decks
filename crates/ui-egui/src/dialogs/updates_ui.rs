@@ -70,7 +70,7 @@ mod tests {
 
     #[test]
     fn an_offered_release_opens_the_prompt() {
-        let mut app = SlideApp::new(deckcraft_engine::Session::new(), crate::Services::default());
+        let mut app = SlideApp::new(iridium_decks_engine::Session::new(), crate::Services::default());
         let ctx = egui::Context::default();
         assert!(!app.updates_rt.updater.prompt_open());
         app.updates_rt.updater.offer(craft_update::Release { tag: "v99.0.0".into(), ..Default::default() });

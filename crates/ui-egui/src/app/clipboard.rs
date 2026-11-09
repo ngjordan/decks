@@ -15,7 +15,7 @@ impl SlideApp {
     /// Offer the copy or cut on the system clipboard.
     ///
     /// Slides go out as plain text. Text goes out as HTML plus the same plain words, so a paste
-    /// back into Iridium Decks still uses the internal clipboard. A textless shape leaves the
+    /// back into Decks still uses the internal clipboard. A textless shape leaves the
     /// invisible [`OBJECTS_MARKER`] rather than a picture: with only an image on the clipboard
     /// egui-winit drops Ctrl+V, and the shortcut could no longer paste the shape here (#182).
     pub(super) fn publish_clipboard(&mut self, ctx: &egui::Context, cut: bool) {

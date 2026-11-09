@@ -7,10 +7,10 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_geom::Rect;
-use deckcraft_model::{Master, Presentation, ShapeId, Slide};
-use deckcraft_render::{Image, Region, RenderOpts};
 use egui::{ColorImage, TextureFilter, TextureHandle, TextureOptions, TextureWrapMode};
+use iridium_decks_geom::Rect;
+use iridium_decks_model::{Master, Presentation, ShapeId, Slide};
+use iridium_decks_render::{Image, Region, RenderOpts};
 
 #[derive(Clone, PartialEq)]
 struct Key {
@@ -69,10 +69,10 @@ impl Textures {
     pub fn smartart(
         &mut self,
         ctx: &egui::Context,
-        p: &deckcraft_model::Presentation,
+        p: &iridium_decks_model::Presentation,
         slide: usize,
         (kind, style, colors): (&str, &str, &str),
-        nodes: Option<&[deckcraft_model::DiagramNode]>,
+        nodes: Option<&[iridium_decks_model::DiagramNode]>,
         width_px: u32,
     ) -> Option<TextureHandle> {
         let mut key = format!("{kind}|{style}|{colors}|{width_px}");
@@ -88,10 +88,10 @@ impl Textures {
             return Some(t.clone());
         }
         let mut s = p.slides.get(slide).or_else(|| p.slides.first())?.as_ref().clone();
-        let g = deckcraft_engine::cmd::smartart::preview(kind, style, colors, nodes);
+        let g = iridium_decks_engine::cmd::smartart::preview(kind, style, colors, nodes);
         let id = g.id;
         s.shapes = vec![g];
-        let img = deckcraft_render::render_shape(p, &s, id, width_px as f64 / 336.0)?;
+        let img = iridium_decks_render::render_shape(p, &s, id, width_px as f64 / 336.0)?;
         let tex = upload(ctx, format!("smartart-{key}"), to_color_image(&img, false));
         if self.smartart.len() > 300 {
             self.smartart.clear();
@@ -236,7 +236,7 @@ fn same(a: &Option<Arc<Master>>, b: &Option<Arc<Master>>) -> bool {
 
 /// Mix the preview playhead into the canvas cache key. Zero means "no preview", so a playhead of
 /// 0s still misses the at-rest texture (entrances start hidden).
-fn anim_key(anim: Option<(&deckcraft_anim::Timeline, f64)>) -> u64 {
+fn anim_key(anim: Option<(&iridium_decks_anim::Timeline, f64)>) -> u64 {
     let Some((_, t)) = anim else { return 0 };
     let ms = if t.is_finite() { (t * 1000.0).clamp(0.0, 1.0e12) as u64 } else { 0 };
     ms.wrapping_add(1).wrapping_mul(0x9E37_79B9_7F4A_7C15)
@@ -264,7 +264,7 @@ impl Textures {
         grayscale: bool,
         gif_times: &[(ShapeId, f64)],
         editing_text: Option<ShapeId>,
-        anim: Option<(&deckcraft_anim::Timeline, f64)>,
+        anim: Option<(&iridium_decks_anim::Timeline, f64)>,
     ) -> Option<(TextureHandle, Region)> {
         let slide = p.slides.get(index)?.clone();
         let master = master_of(p, &slide);
@@ -272,7 +272,7 @@ impl Textures {
         let estimate = match &self.estimate {
             Some((s, m, r)) if Arc::ptr_eq(s, &slide) && same(m, &master) => *r,
             _ => {
-                let r = deckcraft_render::slide_extent(p, index);
+                let r = iridium_decks_render::slide_extent(p, index);
                 self.estimate = Some((slide.clone(), master.clone(), r));
                 r
             }
@@ -283,7 +283,7 @@ impl Textures {
         };
         // The GPU's (or software fallback's) texture limit: a larger canvas texture panics in egui.
         let max_side = max_side(ctx);
-        let want = fit_texture(deckcraft_render::pasteboard_region(size, scale, reach, visible), visible, max_side);
+        let want = fit_texture(iridium_decks_render::pasteboard_region(size, scale, reach, visible), visible, max_side);
         let key = Key {
             slide: Arc::as_ptr(&slide) as usize,
             master: master.as_ref().map(|m| Arc::as_ptr(m) as usize).unwrap_or(0),
@@ -301,7 +301,7 @@ impl Textures {
         let t0 = crate::now_ms();
         let render = |region: Region| {
             let state_of = |id: ShapeId| anim.map(|(tl, time)| crate::preview::shape_state_at(tl, id, time)).unwrap_or_default();
-            let state: Option<&dyn Fn(ShapeId) -> deckcraft_render::ShapeState> = if anim.is_some() { Some(&state_of) } else { None };
+            let state: Option<&dyn Fn(ShapeId) -> iridium_decks_render::ShapeState> = if anim.is_some() { Some(&state_of) } else { None };
             let opts = RenderOpts {
                 scale,
                 edit,
@@ -313,7 +313,7 @@ impl Textures {
                 editing_text,
                 ..Default::default()
             };
-            deckcraft_render::render_slide_drawn(p, index, &opts)
+            iridium_decks_render::render_slide_drawn(p, index, &opts)
         };
         let (mut img, drawn) = render(want);
         self.canvas_renders += 1;
@@ -322,7 +322,7 @@ impl Textures {
         // region it calls for is known (and is next frame's key): render again only if it shows
         // more than this render covered.
         let key =
-            Key { want: fit_texture(deckcraft_render::pasteboard_region(size, scale, estimate.union(drawn), visible), visible, max_side), ..key };
+            Key { want: fit_texture(iridium_decks_render::pasteboard_region(size, scale, estimate.union(drawn), visible), visible, max_side), ..key };
         if !region.contains(&key.want) {
             region = key.want;
             img = render(region).0;
@@ -391,7 +391,7 @@ impl Textures {
         *budget -= 1;
         let (tw, th) = fit_size((width_px, h), max_side(ctx));
         let scale = tw as f64 / p.slide_size.width.max(1.0);
-        let img = deckcraft_render::render_slide(p, index, &RenderOpts { scale, size: Some((tw, th)), threads: 0, ..Default::default() });
+        let img = iridium_decks_render::render_slide(p, index, &RenderOpts { scale, size: Some((tw, th)), threads: 0, ..Default::default() });
         self.thumb_renders += 1;
         let tex = upload_editor(ctx, format!("thumb-{index}"), to_color_image(&img, false));
         // Drop the old entry for this slide address; entries for slides that no longer exist age out.

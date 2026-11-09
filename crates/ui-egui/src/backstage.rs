@@ -181,7 +181,7 @@ pub struct Backstage {
     pub print_layout: &'static str,
     pub print_hidden: bool,
     pub print_frame: bool,
-    /// Notes and handouts: a paper id from [`deckcraft_engine::cmd::file::PAPERS`] and its orientation.
+    /// Notes and handouts: a paper id from [`iridium_decks_engine::cmd::file::PAPERS`] and its orientation.
     pub print_paper: &'static str,
     pub print_landscape: bool,
     pub preview_page: usize,
@@ -273,7 +273,7 @@ fn act(app: &mut SlideApp, nav: Nav, current: Page) -> Option<Page> {
 /// The File tab's own keys: Esc goes back to the presentation; Up and Down walk the side menu
 /// (a page shows as soon as it has the focus, as in PowerPoint); Enter or Space runs the focused
 /// action. True when the key was used.
-pub fn key(app: &mut SlideApp, key: Key, mods: deckcraft_engine::Mods) -> bool {
+pub fn key(app: &mut SlideApp, key: Key, mods: iridium_decks_engine::Mods) -> bool {
     if mods.cmd || mods.alt || mods.shift {
         return false;
     }

@@ -5,8 +5,8 @@
 //! The import reads paragraphs and their `\outlinelevel` (or, failing that, `\li` indent) into
 //! the tab-indented outline [`crate::outline_to_slides`] understands.
 
-use deckcraft_model::Presentation;
-use deckcraft_model::text::{Paragraph, RunKind};
+use iridium_decks_model::Presentation;
+use iridium_decks_model::text::{Paragraph, RunKind};
 
 /// RTF-escape `s` (non-ASCII as `\uN?`, UTF-16, signed as RTF wants).
 fn escape(out: &mut String, s: &str) {
@@ -434,7 +434,7 @@ mod tests {
 
     #[test]
     fn export_reads_back_as_the_same_outline() {
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = iridium_decks_model::defaults::blank_presentation(iridium_decks_model::defaults::WIDE, Default::default(), false);
         let outline = "Plan {Q3}\n\tGrow — fast 😀\n\t\tEurope\\Asia\nCafé résumé\n\tDone\n";
         crate::outline_to_slides(&mut p, outline);
         let rtf = slides_to_rtf(&p);
@@ -446,7 +446,7 @@ mod tests {
     /// A title with two paragraphs: the plain outline keeps both, the RTF export kept only the first.
     #[test]
     fn every_title_paragraph_is_exported() {
-        let mut p = deckcraft_model::defaults::blank_presentation(deckcraft_model::defaults::WIDE, Default::default(), false);
+        let mut p = iridium_decks_model::defaults::blank_presentation(iridium_decks_model::defaults::WIDE, Default::default(), false);
         crate::outline_to_slides(&mut p, "First line\n\tBody\n");
         let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
         let title = slide.shapes.iter_mut().find(|sh| sh.ph_type().is_some_and(|k| k.is_title())).and_then(|sh| sh.text.as_mut()).unwrap();

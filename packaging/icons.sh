@@ -9,7 +9,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DIR="$ROOT/assets/app-icon"
 SVG="$DIR/iridium-decks.svg"
-ID="ph.iridium.decks"
+ID="ph.decks"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
@@ -28,7 +28,7 @@ render() {
 }
 
 render "$SVG" 1024 "$DIR/iridium-decks-1024.png"
-# Runtime window/Dock icon on macOS (embedded by apps/deckcraft); other platforms use hicolor 256.
+# Runtime window/Dock icon on macOS (embedded by apps/iridium-decks); other platforms use hicolor 256.
 render "$MAC" 512 "$DIR/iridium-decks-macos-512.png"
 
 # Linux hicolor theme.

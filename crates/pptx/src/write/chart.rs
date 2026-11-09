@@ -1,8 +1,8 @@
 //! Chart parts: a `c:chartSpace` with cached categories and values.
 //! An unchanged chart also keeps the embedded workbook and the other parts it points at.
 
-use deckcraft_model::chart::{Chart, ChartType, ErrorBars, Series, Trendline, TrendlineType};
-use deckcraft_model::style::Fill;
+use iridium_decks_model::chart::{Chart, ChartType, ErrorBars, Series, Trendline, TrendlineType};
+use iridium_decks_model::style::Fill;
 
 use crate::opc::{NS_A, NS_C, NS_R};
 
@@ -50,7 +50,7 @@ fn simple_fill(w: &mut W, f: &Fill) {
     }
 }
 
-fn sp_pr(w: &mut W, fill: Option<&Fill>, line: Option<&deckcraft_model::Line>) {
+fn sp_pr(w: &mut W, fill: Option<&Fill>, line: Option<&iridium_decks_model::Line>) {
     if fill.is_none() && line.is_none() {
         return;
     }
@@ -70,7 +70,7 @@ fn sp_pr(w: &mut W, fill: Option<&Fill>, line: Option<&deckcraft_model::Line>) {
 
 /// `a:defRPr` carrying the chart's text colour, where PowerPoint keeps it: the paragraph
 /// defaults of a title's rich text and of every `c:txPr`.
-fn def_rpr(w: &mut W, color: Option<&deckcraft_model::ColorRef>) {
+fn def_rpr(w: &mut W, color: Option<&iridium_decks_model::ColorRef>) {
     match color {
         Some(c) => {
             w.open0("a:defRPr");
@@ -98,7 +98,7 @@ fn tx_pr(w: &mut W, c: &Chart) {
     w.close("c:txPr");
 }
 
-fn rich(w: &mut W, text: &str, color: Option<&deckcraft_model::ColorRef>) {
+fn rich(w: &mut W, text: &str, color: Option<&iridium_decks_model::ColorRef>) {
     w.open0("c:tx");
     w.open0("c:rich");
     w.empty0("a:bodyPr");
@@ -1047,9 +1047,9 @@ mod region_map_tests {
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_color::{ColorTransform, Rgba};
-    use deckcraft_model::ColorRef;
-    use deckcraft_model::chart::{Chart, ChartType};
+    use iridium_decks_color::{ColorTransform, Rgba};
+    use iridium_decks_model::ColorRef;
+    use iridium_decks_model::chart::{Chart, ChartType};
 
     /// The chart's text colour is written where PowerPoint keeps it (`c:txPr` on the axes, legend,
     /// data labels and chart, the title's run defaults) and read back as the same colour.
@@ -1060,7 +1060,7 @@ mod tests {
         c.legend = Some("b".into());
         c.data_labels = true;
         c.axis_titles = (Some("Quarter".into()), Some("EUR".into()));
-        let tinted = ColorRef::scheme(deckcraft_model::SchemeSlot::Accent2).with(ColorTransform::LumMod(75000));
+        let tinted = ColorRef::scheme(iridium_decks_model::SchemeSlot::Accent2).with(ColorTransform::LumMod(75000));
         c.text_color = Some(tinted.clone());
         let xml = String::from_utf8(super::chart_xml(&c).0).unwrap();
         // Axes (2), legend, data labels and the chart root; a title keeps it in its rich text.
@@ -1084,7 +1084,7 @@ mod tests {
     fn imported_text_colour_survives_an_edit_and_a_save() {
         let xml = r#"<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><c:chart><c:plotArea><c:barChart><c:barDir val="col"/><c:ser><c:idx val="0"/><c:val><c:numRef><c:numCache><c:ptCount val="1"/><c:pt idx="0"><c:v>1</c:v></c:pt></c:numCache></c:numRef></c:val></c:ser><c:axId val="1"/><c:axId val="2"/></c:barChart><c:catAx><c:axId val="1"/><c:txPr><a:bodyPr/><a:p><a:pPr><a:defRPr><a:solidFill><a:schemeClr val="tx1"><a:lumMod val="65000"/><a:lumOff val="35000"/></a:schemeClr></a:solidFill></a:defRPr></a:pPr></a:p></c:txPr><c:crossAx val="2"/></c:catAx><c:valAx><c:axId val="2"/><c:crossAx val="1"/></c:valAx></c:plotArea></c:chart></c:chartSpace>"#;
         let c = crate::read::chart::read_chart_xml(xml.as_bytes()).unwrap();
-        let grey = ColorRef::scheme(deckcraft_model::SchemeSlot::Tx1).with(ColorTransform::LumMod(65000)).with(ColorTransform::LumOff(35000));
+        let grey = ColorRef::scheme(iridium_decks_model::SchemeSlot::Tx1).with(ColorTransform::LumMod(65000)).with(ColorTransform::LumOff(35000));
         assert_eq!(c.text_color, Some(grey.clone()));
         // Unchanged: the part is written back as read.
         assert!(super::chart_xml(&c).1);

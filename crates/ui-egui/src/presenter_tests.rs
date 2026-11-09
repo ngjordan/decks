@@ -4,7 +4,7 @@
 use serde_json::json;
 
 use crate::{Services, SlideApp};
-use deckcraft_engine::Session;
+use iridium_decks_engine::Session;
 
 #[test]
 fn show_presenter_answers_on_and_window() {

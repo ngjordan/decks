@@ -1,11 +1,11 @@
 /// Temp key holding whether the current viewport is inside an egui UI pass.
 pub(crate) fn ime_in_ui_pass_key(viewport: egui::ViewportId) -> egui::Id {
-    egui::Id::unique(("deckcraft-ime-in-ui-pass", viewport))
+    egui::Id::unique(("iridium-decks-ime-in-ui-pass", viewport))
 }
 
 /// Stable key marking that the IME pass hooks are installed.
 fn ime_pass_hooks_key() -> egui::Id {
-    egui::Id::unique(("deckcraft-ime-pass-hooks", "installed"))
+    egui::Id::unique(("iridium-decks-ime-pass-hooks", "installed"))
 }
 
 /// Install the per-viewport UI-pass mode hooks exactly once for this [`egui::Context`].
@@ -20,7 +20,7 @@ pub fn install_ime_pass_hooks(ctx: &egui::Context) {
         return;
     }
     ctx.on_begin_pass(
-        "deckcraft-ime-ui-pass-begin",
+        "iridium-decks-ime-ui-pass-begin",
         std::sync::Arc::new(|ui: &mut egui::Ui| {
             let ctx = ui.ctx();
             let key = ime_in_ui_pass_key(ctx.viewport_id());
@@ -28,7 +28,7 @@ pub fn install_ime_pass_hooks(ctx: &egui::Context) {
         }),
     );
     ctx.on_end_pass(
-        "deckcraft-ime-ui-pass-end",
+        "iridium-decks-ime-ui-pass-end",
         std::sync::Arc::new(|ui: &mut egui::Ui| {
             let ctx = ui.ctx();
             let key = ime_in_ui_pass_key(ctx.viewport_id());

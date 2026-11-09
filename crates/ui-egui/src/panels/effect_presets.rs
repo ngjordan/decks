@@ -1,8 +1,8 @@
 //! Format Shape ▸ Effects: preset tiles that draw what each Shadow, Glow and Soft Edges preset does
 //! to a small card, so the choice is made by looking rather than by reading names.
 
-use deckcraft_model::style::Effects;
 use egui::{Color32, CornerRadius, Painter, Rect, Role, Sense, Stroke, StrokeKind, Ui, WidgetInfo, pos2, vec2};
+use iridium_decks_model::style::Effects;
 
 use crate::theme::Tokens;
 
@@ -170,8 +170,8 @@ fn paint_soft(p: &Painter, tile: Rect, radius: f64) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_model::style::Shadow;
-    use deckcraft_model::{ColorRef, SchemeSlot};
+    use iridium_decks_model::style::Shadow;
+    use iridium_decks_model::{ColorRef, SchemeSlot};
 
     fn shadow(dist: f64, dir: f64, align: &str, inner: bool) -> Shadow {
         Shadow {

@@ -50,7 +50,7 @@ impl Session {
         });
         self.edit(|doc, sel| {
             let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("tool", "no slide"))?;
-            if let Some(sh) = deckcraft_model::find_shape_mut(list, id) {
+            if let Some(sh) = iridium_decks_model::find_shape_mut(list, id) {
                 sh.xfrm = Some(x);
                 if let ShapeKind::Table(t) = &mut sh.kind {
                     // Tables resize their columns and rows proportionally.
@@ -75,7 +75,7 @@ impl Session {
         self.execute("shape.setBounds", &json!({"id": id, "x": x.x, "y": x.y, "w": x.w, "h": x.h}))?;
         if x.flip_h || x.flip_v {
             self.edit(|doc, sel| {
-                if let Some(sh) = crate::shapes_mut(doc, sel).and_then(|l| deckcraft_model::find_shape_mut(l, id))
+                if let Some(sh) = crate::shapes_mut(doc, sel).and_then(|l| iridium_decks_model::find_shape_mut(l, id))
                     && let Some(xx) = sh.xfrm.as_mut()
                 {
                     xx.flip_h = x.flip_h;
@@ -208,7 +208,7 @@ impl Session {
             } else {
                 r.center().x
             };
-            off.x = deckcraft_geom::snap(at, self.prefs.grid_spacing) - at;
+            off.x = iridium_decks_geom::snap(at, self.prefs.grid_spacing) - at;
         }
         if let Some((d, y, b)) = best_y {
             off.y = d;
@@ -222,7 +222,7 @@ impl Session {
             } else {
                 r.center().y
             };
-            off.y = deckcraft_geom::snap(at, self.prefs.grid_spacing) - at;
+            off.y = iridium_decks_geom::snap(at, self.prefs.grid_spacing) - at;
         }
         (off, guides)
     }
@@ -272,7 +272,7 @@ impl Session {
 
     pub(super) fn add_ink(&mut self, points: Vec<(f64, f64, f32)>) -> Result<Value> {
         let ToolKind::Ink { mode, color, width } = self.tool.kind.clone() else { return Ok(Value::Null) };
-        let stroke = deckcraft_model::InkStroke { points, color, width, highlighter: mode == "highlighter" };
+        let stroke = iridium_decks_model::InkStroke { points, color, width, highlighter: mode == "highlighter" };
         // Strokes join the slide's ink layer (one ink shape per slide).
         let existing = self.doc()?.shapes().iter().rev().find(|s| matches!(s.kind, ShapeKind::Ink { .. })).map(|s| s.id);
         self.edit(|doc, sel| {
@@ -293,7 +293,7 @@ impl Session {
                 }
             };
             let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("ink", "no slide"))?;
-            if let Some(sh) = deckcraft_model::find_shape_mut(list, id)
+            if let Some(sh) = iridium_decks_model::find_shape_mut(list, id)
                 && let ShapeKind::Ink { strokes } = &mut sh.kind
             {
                 strokes.push(stroke);
@@ -309,7 +309,7 @@ impl Session {
         let sel_before = st.selection.clone();
         self.edit(|doc, sel| {
             let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("ink", "no slide"))?;
-            if let Some(sh) = deckcraft_model::find_shape_mut(list, ink)
+            if let Some(sh) = iridium_decks_model::find_shape_mut(list, ink)
                 && let ShapeKind::Ink { strokes } = &mut sh.kind
             {
                 strokes.retain(|s| !s.points.iter().any(|(x, y, _)| (Point::new(*x, *y) - p).hypot() <= tol * 2.0 + s.width));

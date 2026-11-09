@@ -44,7 +44,7 @@ pub(super) fn chart(s: &mut Session, p: &Value) -> Result<Value> {
     if let Some(series) = p.get("series").and_then(Value::as_array) {
         c.series = series
             .iter()
-            .map(|sv| deckcraft_model::chart::Series {
+            .map(|sv| iridium_decks_model::chart::Series {
                 name: sv.get("name").and_then(Value::as_str).unwrap_or("Series").to_string(),
                 values: sv.get("values").and_then(Value::as_array).map(|a| a.iter().map(Value::as_f64).collect()).unwrap_or_default(),
                 ..Default::default()
@@ -92,9 +92,9 @@ pub(super) fn chart_data(s: &mut Session, p: &Value) -> Result<Value> {
         .get("categories")
         .and_then(Value::as_array)
         .map(|a| a.iter().map(|v| v.as_str().map(String::from).unwrap_or_else(|| v.to_string())).collect());
-    let series: Option<Vec<deckcraft_model::chart::Series>> = p.get("series").and_then(Value::as_array).map(|a| {
+    let series: Option<Vec<iridium_decks_model::chart::Series>> = p.get("series").and_then(Value::as_array).map(|a| {
         a.iter()
-            .map(|sv| deckcraft_model::chart::Series {
+            .map(|sv| iridium_decks_model::chart::Series {
                 name: sv.get("name").and_then(Value::as_str).unwrap_or("Series").to_string(),
                 values: sv.get("values").and_then(Value::as_array).map(|v| v.iter().map(Value::as_f64).collect()).unwrap_or_default(),
                 ..Default::default()
@@ -103,7 +103,7 @@ pub(super) fn chart_data(s: &mut Session, p: &Value) -> Result<Value> {
     });
     let levels: Option<Vec<Vec<String>>> = p.get("levels").and_then(Value::as_array).map(|a| {
         a.iter()
-            .take(deckcraft_model::chart::MAX_LEVELS)
+            .take(iridium_decks_model::chart::MAX_LEVELS)
             .map(|l| {
                 l.as_array().map(|v| v.iter().map(|x| x.as_str().map(String::from).unwrap_or_else(|| x.to_string())).collect()).unwrap_or_default()
             })
@@ -135,7 +135,7 @@ pub(super) fn chart_data(s: &mut Session, p: &Value) -> Result<Value> {
     })
 }
 
-fn apply_bin_options(c: &mut deckcraft_model::chart::Chart, bin_count: Option<Option<u32>>, bin_size: Option<Option<f64>>) {
+fn apply_bin_options(c: &mut iridium_decks_model::chart::Chart, bin_count: Option<Option<u32>>, bin_size: Option<Option<f64>>) {
     if let Some(n) = bin_count {
         c.bin_count = n;
         if n.is_some() {
@@ -150,7 +150,7 @@ fn apply_bin_options(c: &mut deckcraft_model::chart::Chart, bin_count: Option<Op
     }
 }
 
-fn apply_subtotals_and_bars(c: &mut deckcraft_model::chart::Chart, p: &Value, subtotals: Option<&[usize]>) {
+fn apply_subtotals_and_bars(c: &mut iridium_decks_model::chart::Chart, p: &Value, subtotals: Option<&[usize]>) {
     if let Some(t) = subtotals {
         let n = c.series.first().map_or(0, |s| s.values.len());
         let mut t: Vec<usize> = t.iter().copied().filter(|i| *i < n).collect();
@@ -170,7 +170,7 @@ fn apply_subtotals_and_bars(c: &mut deckcraft_model::chart::Chart, p: &Value, su
 
 pub(super) fn chart_options(s: &mut Session, p: &Value) -> Result<Value> {
     // Histogram bins: a count or a width (setting one clears the other; null for automatic).
-    let bin_count = p.get("binCount").map(|v| v.as_u64().map(|n| n.clamp(1, deckcraft_model::chart::MAX_BINS as u64) as u32));
+    let bin_count = p.get("binCount").map(|v| v.as_u64().map(|n| n.clamp(1, iridium_decks_model::chart::MAX_BINS as u64) as u32));
     let bin_size = p.get("binSize").map(|v| v.as_f64().filter(|w| w.is_finite() && *w > 0.0));
     if p.get("binSize").is_some_and(|v| !v.is_null()) && bin_size.flatten().is_none() {
         return Err(bad("chart.options", "binSize must be a positive number"));

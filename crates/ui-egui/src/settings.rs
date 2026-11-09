@@ -1,5 +1,5 @@
 //! The desktop app's settings files, `ui.json` ([`UiState`]) and `prefs.json`
-//! ([`deckcraft_engine::Prefs`]), in the per-user settings folder. They are files on disk that a
+//! ([`iridium_decks_engine::Prefs`]), in the per-user settings folder. They are files on disk that a
 //! crash, a full disk or a hand edit can leave damaged, so reading never fails and never trusts
 //! them: an unreadable, oversized or malformed file gives the defaults, and the values of a
 //! well-formed one are brought into range ([`UiState::sanitized`], `Prefs::sanitized`). Writing
@@ -7,7 +7,7 @@
 
 use std::path::Path;
 
-use deckcraft_engine::Prefs;
+use iridium_decks_engine::Prefs;
 
 use crate::UiState;
 
@@ -67,7 +67,7 @@ mod tests {
     use super::*;
 
     fn dir(name: &str) -> std::path::PathBuf {
-        let d = std::env::temp_dir().join(format!("deckcraft-settings-{}-{name}", std::process::id()));
+        let d = std::env::temp_dir().join(format!("iridium-decks-settings-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&d);
         std::fs::create_dir_all(&d).unwrap();
         d
@@ -115,7 +115,7 @@ mod tests {
         assert_eq!(ui.recent.len(), crate::RECENT_MAX);
         assert_eq!(prefs.grid_spacing, Prefs::default().grid_spacing);
         assert_eq!(prefs.duplicate_offset, 1000.0);
-        assert_eq!(prefs.undo_limit, deckcraft_engine::MAX_UNDO_LIMIT);
+        assert_eq!(prefs.undo_limit, iridium_decks_engine::MAX_UNDO_LIMIT);
         assert_eq!(prefs.recovery_minutes, 0.1);
         assert_eq!(prefs.author.chars().count(), 256);
         // A zero or negative zoom means "fit".
@@ -127,12 +127,12 @@ mod tests {
     fn saving_round_trips_and_leaves_no_temporary_file() {
         let d = dir("save");
         let ui = UiState { zoom: Some(1.5), recent: vec!["/a.pptx".into()], ..Default::default() };
-        let prefs = Prefs { author: "Ann".into(), units: deckcraft_geom::Unit::Centimeters, ..Default::default() };
+        let prefs = Prefs { author: "Ann".into(), units: iridium_decks_geom::Unit::Centimeters, ..Default::default() };
         save(&d.join("nested"), &ui, &prefs);
         let (u, p) = load(&d.join("nested"));
         assert_eq!(u.unwrap().zoom, Some(1.5));
         let p = p.unwrap();
-        assert_eq!((p.author.as_str(), p.units), ("Ann", deckcraft_geom::Unit::Centimeters));
+        assert_eq!((p.author.as_str(), p.units), ("Ann", iridium_decks_geom::Unit::Centimeters));
         let names: Vec<String> =
             std::fs::read_dir(d.join("nested")).unwrap().flatten().map(|e| e.file_name().to_string_lossy().to_string()).collect();
         assert!(names.iter().all(|n| !n.ends_with(".tmp")), "{names:?}");
@@ -154,7 +154,7 @@ mod tests {
             ..Default::default()
         };
         for ui in [hostile.clone().sanitized(), UiState { zoom: Some(1.0e4), ..Default::default() }] {
-            let mut app = crate::SlideApp::new(deckcraft_engine::Session::with_new(), crate::Services::default());
+            let mut app = crate::SlideApp::new(iridium_decks_engine::Session::with_new(), crate::Services::default());
             // The second case is not sanitized: the canvas keeps a stray zoom in range itself.
             app.ui = ui;
             let mut h = egui_kittest::Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_ui_state(

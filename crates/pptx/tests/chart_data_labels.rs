@@ -4,9 +4,9 @@
 use std::io::{Cursor, Read, Write};
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::chart::{Chart, ChartType};
-use deckcraft_model::{LayoutType, Presentation, Shape, ShapeId, ShapeKind, defaults};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::chart::{Chart, ChartType};
+use iridium_decks_model::{LayoutType, Presentation, Shape, ShapeId, ShapeKind, defaults};
 
 /// A one-slide deck whose bar chart shows no labels anywhere.
 fn bar_chart_pptx() -> Vec<u8> {
@@ -24,7 +24,7 @@ fn bar_chart_pptx() -> Vec<u8> {
     shape.kind = ShapeKind::Chart(Box::new(chart));
     slide.shapes.push(shape);
     p.slides.push(Arc::new(slide));
-    deckcraft_pptx::export(&p).expect("export")
+    iridium_decks_pptx::export(&p).expect("export")
 }
 
 /// Rewrite the chart part's XML through `f` and re-import the deck.
@@ -45,7 +45,7 @@ fn reimport(bytes: &[u8], f: impl Fn(&str) -> String) -> Presentation {
         out.write_all(&data).expect("write");
     }
     let patched = out.finish().expect("finish").into_inner();
-    deckcraft_pptx::import(&patched).expect("import")
+    iridium_decks_pptx::import(&patched).expect("import")
 }
 
 fn chart_of(p: &Presentation) -> &Chart {
@@ -107,8 +107,8 @@ fn series_label_settings_round_trip() {
     slide.shapes.push(shape);
     p.slides.push(Arc::new(slide));
 
-    let bytes = deckcraft_pptx::export(&p).expect("export");
-    let back = deckcraft_pptx::import(&bytes).expect("import");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
+    let back = iridium_decks_pptx::import(&bytes).expect("import");
     let c = chart_of(&back);
     assert!(c.data_labels);
     assert_eq!(c.series[0].data_labels, Some(false), "the explicit off survives");
@@ -131,7 +131,7 @@ fn combo_chart_pptx() -> Vec<u8> {
     shape.kind = ShapeKind::Chart(Box::new(chart));
     slide.shapes.push(shape);
     p.slides.push(Arc::new(slide));
-    deckcraft_pptx::export(&p).expect("export")
+    iridium_decks_pptx::export(&p).expect("export")
 }
 
 /// A combo chart's groups keep their own label setting: the group that asks for no labels
@@ -157,11 +157,11 @@ fn a_combo_chart_keeps_each_groups_own_label_setting() {
 /// switched off one by one.
 #[test]
 fn chart_options_data_labels_on_overrides_series_off() {
-    use deckcraft_engine::Session;
+    use iridium_decks_engine::Session;
     let p = reimport(&bar_chart_pptx(), |xml| xml.replace("<c:cat>", r#"<c:dLbls><c:showVal val="0"/></c:dLbls><c:cat>"#));
     assert!(chart_of(&p).series.iter().all(|s| !chart_of(&p).series_data_labels(s)), "every series starts quiet");
-    let path = std::env::temp_dir().join("deckcraft_series_labels_off.pptx");
-    std::fs::write(&path, deckcraft_pptx::export(&p).expect("export")).expect("write");
+    let path = std::env::temp_dir().join("iridium_decks_series_labels_off.pptx");
+    std::fs::write(&path, iridium_decks_pptx::export(&p).expect("export")).expect("write");
     let mut s = Session::with_new();
     s.execute("file.open", &serde_json::json!({"path": path.to_string_lossy()})).expect("open");
     let doc = s.doc().unwrap().doc.clone();

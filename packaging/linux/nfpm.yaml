@@ -3,7 +3,7 @@
 # exports VERSION and NFPM_ARCH.
 #
 #   nfpm package -f packaging/linux/nfpm.yaml -p deb -t dist/release/
-name: deckcraft
+name: iridium-decks
 arch: ${NFPM_ARCH}
 platform: linux
 version: ${VERSION}
@@ -12,7 +12,7 @@ version_schema: semver
 release: 1
 section: editors
 priority: optional
-maintainer: ${DECKCRAFT_MAINTAINER}
+maintainer: ${IRIDIUM_DECKS_MAINTAINER}
 vendor: Iridium Technologies, Inc.
 homepage: https://iridium.ph
 license: MIT OR Apache-2.0
@@ -21,7 +21,7 @@ description: |-
   expect. Themes, layouts, shapes, pictures, tables, charts, transitions and
   animations; opens and saves PowerPoint (.pptx) files; full-screen slide show
   with presenter view; GPU rendering (wgpu).
-  Includes deckcraft-cli, a headless renderer and command runner.
+  Includes iridium-decks-cli, a headless renderer and command runner.
 
 # The binaries link only glibc and libgcc_s directly. Windowing (X11/Wayland, xkbcommon) and the
 # GPU (Vulkan, EGL/GL) are loaded at runtime, so they are dependencies/recommendations here
@@ -58,11 +58,11 @@ overrides:
       - xdg-desktop-portal
 
 contents:
-  - src: ${STAGE}/usr/bin/deckcraft
-    dst: /usr/bin/deckcraft
+  - src: ${STAGE}/usr/bin/iridium-decks
+    dst: /usr/bin/iridium-decks
     file_info: { mode: 0755 }
-  - src: ${STAGE}/usr/bin/deckcraft-cli
-    dst: /usr/bin/deckcraft-cli
+  - src: ${STAGE}/usr/bin/iridium-decks-cli
+    dst: /usr/bin/iridium-decks-cli
     file_info: { mode: 0755 }
   - src: ${STAGE}/usr/share/
     dst: /usr/share/

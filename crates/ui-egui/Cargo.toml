@@ -1,23 +1,23 @@
 [package]
-name = "deckcraft-ui-egui"
+name = "iridium-decks-ui-egui"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Iridium Decks egui frontend (PowerPoint-style UI); swappable — nothing below depends on it"
+description = "Decks egui frontend (PowerPoint-style UI); swappable — nothing below depends on it"
 
 [lints]
 workspace = true
 
 [dependencies]
-deckcraft-geom = { workspace = true }
-deckcraft-color = { workspace = true }
-deckcraft-model = { workspace = true }
-deckcraft-fonts = { workspace = true }
-deckcraft-text = { workspace = true }
-deckcraft-render = { workspace = true }
-deckcraft-anim = { workspace = true }
-deckcraft-engine = { workspace = true }
-deckcraft-media = { workspace = true }
+iridium-decks-geom = { workspace = true }
+iridium-decks-color = { workspace = true }
+iridium-decks-model = { workspace = true }
+iridium-decks-fonts = { workspace = true }
+iridium-decks-text = { workspace = true }
+iridium-decks-render = { workspace = true }
+iridium-decks-anim = { workspace = true }
+iridium-decks-engine = { workspace = true }
+iridium-decks-media = { workspace = true }
 egui = { workspace = true, features = ["default_fonts", "monochrome_emoji_fonts"] }
 craft-ui = { workspace = true }
 serde = { workspace = true }

@@ -89,7 +89,7 @@ fn dlg_table(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
 }
 
 fn dlg_slide_size(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
-    let cur = app.session.active().map(|s| s.doc.slide_size).unwrap_or(deckcraft_model::defaults::WIDE);
+    let cur = app.session.active().map(|s| s.doc.slide_size).unwrap_or(iridium_decks_model::defaults::WIDE);
     let len = app.session.prefs.units;
     let ppu = len.points_per_unit();
     // Each field keeps its exact size in points (`wPt`) beside the two decimals shown, so
@@ -102,7 +102,7 @@ fn dlg_slide_size(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
     let label = ui.label("Slides sized for:");
     let preset = d.get("preset", "");
     let combo = craft_ui::ComboBox::from_id_salt("sizes").selected_text(if preset.is_empty() { "Custom" } else { &preset }).show_ui(ui, |ui| {
-        for (label, w, h) in deckcraft_model::defaults::SLIDE_SIZES {
+        for (label, w, h) in iridium_decks_model::defaults::SLIDE_SIZES {
             if ui.selectable_label(preset == *label, *label).clicked() {
                 d.fields.insert("preset".into(), label.to_string());
                 put_slide_dim(d, "w", *w, ppu);
@@ -470,7 +470,7 @@ fn dlg_bullets(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
 }
 
 fn dlg_action(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
-    use deckcraft_model::text::Action;
+    use iridium_decks_model::text::Action;
     let tab = d.get("tab", "click");
     // Start from the selected shape's current setting for this tab.
     let (cur, slides, shows) = app
@@ -478,7 +478,7 @@ fn dlg_action(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         .active()
         .map(|st| {
             let sh = st.selected_shapes().first().map(|x| if tab == "hover" { x.hover.clone() } else { x.click.clone() }).unwrap_or(None);
-            let slides: Vec<(deckcraft_model::SlideId, String)> =
+            let slides: Vec<(iridium_decks_model::SlideId, String)> =
                 st.doc.slides.iter().enumerate().map(|(i, sl)| (sl.id, format!("{}. {}", i + 1, sl.title()))).collect();
             let shows: Vec<String> = st.doc.custom_shows.iter().map(|c| c.name.clone()).collect();
             (sh, slides, shows)
@@ -886,7 +886,7 @@ fn dlg_equation(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
     let (ok, cancel) = buttons(ui, "Insert");
     if ok && !v.is_empty() {
         let pretty = pretty_equation(&v);
-        let size = app.session.active().map(|s| s.doc.slide_size).unwrap_or(deckcraft_model::defaults::WIDE);
+        let size = app.session.active().map(|s| s.doc.slide_size).unwrap_or(iridium_decks_model::defaults::WIDE);
         run(app, "insert.textBox", json!({"rect": [size.width / 2.0 - 150.0, size.height / 2.0 - 25.0, 300, 50], "text": pretty}));
         run(app, "text.exit", json!({}));
         run(app, "format.font", json!({"family": "Liberation Serif"}));
@@ -983,9 +983,9 @@ fn dlg_spelling(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
                         let end = item.get("end").and_then(Value::as_u64).unwrap_or(0) as usize;
                         let para = item.get("para").and_then(Value::as_u64).unwrap_or(0) as usize;
                         let text = app.session.active().and_then(|st| {
-                            let sh = st.shape(deckcraft_model::ShapeId(shape.as_u64()? as u32))?;
+                            let sh = st.shape(iridium_decks_model::ShapeId(shape.as_u64()? as u32))?;
                             let pp = match (item.get("row").and_then(Value::as_u64), item.get("col").and_then(Value::as_u64), &sh.kind) {
-                                (Some(r), Some(c), deckcraft_model::ShapeKind::Table(tb)) => {
+                                (Some(r), Some(c), iridium_decks_model::ShapeKind::Table(tb)) => {
                                     tb.cell(r as usize, c as usize)?.text.paragraphs.get(para)?.text()
                                 }
                                 _ => sh.text.as_ref()?.paragraphs.get(para)?.text(),
@@ -1095,7 +1095,7 @@ fn dlg_language(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
     let lang = d.get("lang", &cur);
     let mut no_proof = d.get("noProof", if np { "1" } else { "" }) == "1";
     // The selected text, or every text in the presentation (all there is with nothing selected).
-    let has_sel = deckcraft_engine::cmd::has_text_or_shapes(&app.session).is_ok();
+    let has_sel = iridium_decks_engine::cmd::has_text_or_shapes(&app.session).is_ok();
     let mut all = !has_sel || d.get("scope", "") == "all";
     ui.horizontal(|ui| {
         ui.label("Apply to:");
@@ -1117,7 +1117,7 @@ fn dlg_language(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
             // Native names are shown when the interface fonts can draw them; otherwise
             // the tag is the explicit fallback (egui 0.37 aborts on a missing glyph).
             let name = crate::squiggles::display_lang_name(ui.ctx(), &tag);
-            let installed = deckcraft_engine::spell::dictionary(&tag).is_some();
+            let installed = iridium_decks_engine::spell::dictionary(&tag).is_some();
             let label = if installed { format!("{name}  (dictionary)") } else { name };
             if ui.selectable_label(lang.eq_ignore_ascii_case(&tag), label).clicked() {
                 d.fields.insert("lang".into(), tag);
@@ -1170,7 +1170,7 @@ fn dlg_chart_data(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
     let ch = app.session.active().and_then(|s| {
         s.selected_shapes()
             .into_iter()
-            .find_map(|x| if let deckcraft_model::ShapeKind::Chart(c) = &x.kind { Some(((**c).clone(), x.id)) } else { None })
+            .find_map(|x| if let iridium_decks_model::ShapeKind::Chart(c) = &x.kind { Some(((**c).clone(), x.id)) } else { None })
     });
     let Some((c, id)) = ch else {
         ui.label("Select a chart first.");
@@ -1364,12 +1364,12 @@ fn dlg_preferences(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bool {
         }
         d.fields.remove("uiScale");
     }
-    // PowerPoint takes the unit from the system's measurement setting; Iridium Decks asks here.
+    // PowerPoint takes the unit from the system's measurement setting; Decks asks here.
     ui.horizontal(|ui| {
         ui.label("Measurement units:");
         let units = &mut app.session.prefs.units;
-        ui.radio_value(units, deckcraft_geom::Unit::Inches, "Inches");
-        ui.radio_value(units, deckcraft_geom::Unit::Centimeters, "Centimeters");
+        ui.radio_value(units, iridium_decks_geom::Unit::Inches, "Inches");
+        ui.radio_value(units, iridium_decks_geom::Unit::Centimeters, "Centimeters");
     });
     ui.label(egui::RichText::new("Editing").font(theme::bold(13.0)));
     ui.checkbox(&mut app.session.prefs.smart_guides, "Show smart guides");

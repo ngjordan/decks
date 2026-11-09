@@ -1,8 +1,8 @@
 //! Dialogs (Insert Table, Slide Size, Font, Paragraph, Tabs, Header & Footer, Hyperlink, Set Up Show, Zoom, …) and the
 //! About window. The start screen is File › Home (`backstage.rs`).
 
-use deckcraft_color::SchemeSlot;
 use egui::{Align2, Color32, CornerRadius, Rect, Sense, Stroke, Ui, pos2, vec2};
+use iridium_decks_color::SchemeSlot;
 use serde_json::{Value, json};
 
 use crate::SlideApp;
@@ -48,7 +48,7 @@ fn title(id: &str) -> &'static str {
         "paragraph" => "Paragraph",
         "tabs" => "Tabs",
         "font" => "Font",
-        "about" => "About Iridium Decks",
+        "about" => "About Decks",
         "preferences" => "Preferences",
         "autocorrect" => "AutoCorrect",
         "gridOptions" => "Grid Options",
@@ -70,10 +70,10 @@ fn title(id: &str) -> &'static str {
         "smartart" => "Choose a SmartArt Graphic",
         "bullets" => "Bullets and Numbering",
         "action" => "Action Settings",
-        "quit" => "Iridium Decks",
+        "quit" => "Decks",
         "themeColors" => "Create New Theme Colors",
         "themeFonts" => "Create New Theme Fonts",
-        _ => "Iridium Decks",
+        _ => "Decks",
     }
 }
 
@@ -200,7 +200,7 @@ fn text_row(ui: &mut Ui, d: &mut Dialog, label: &str, key: &str) {
     d.fields.insert(key.into(), v);
 }
 
-use deckcraft_text::datetime::DATE_KINDS;
+use iridium_decks_text::datetime::DATE_KINDS;
 
 mod about;
 mod alt_text;

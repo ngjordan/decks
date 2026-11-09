@@ -1,22 +1,22 @@
 [package]
-name = "deckcraft-media"
+name = "iridium-decks-media"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Iridium Decks media: probing, audio decoding (MP3, AAC/M4A, WAV, AIFF, FLAC, ALAC, Vorbis, Opus) to f32 PCM, H.264/HEVC/VP9/AV1 video decoding, poster frames, trim/fade/volume and the playback mixer and clock"
+description = "Decks media: probing, audio decoding (MP3, AAC/M4A, WAV, AIFF, FLAC, ALAC, Vorbis, Opus) to f32 PCM, H.264/HEVC/VP9/AV1 video decoding, poster frames, trim/fade/volume and the playback mixer and clock"
 
 [lints]
 workspace = true
 
 [dependencies]
-deckcraft-isobmff = { workspace = true }
-deckcraft-matroska = { workspace = true }
-deckcraft-ogg = { workspace = true }
-deckcraft-opus = { workspace = true }
-deckcraft-h264 = { workspace = true }
-deckcraft-hevc = { workspace = true }
-deckcraft-vp9 = { workspace = true }
-deckcraft-av1 = { workspace = true }
+iridium-decks-isobmff = { workspace = true }
+iridium-decks-matroska = { workspace = true }
+iridium-decks-ogg = { workspace = true }
+iridium-decks-opus = { workspace = true }
+iridium-decks-h264 = { workspace = true }
+iridium-decks-hevc = { workspace = true }
+iridium-decks-vp9 = { workspace = true }
+iridium-decks-av1 = { workspace = true }
 thiserror = { workspace = true }
 log = { workspace = true }
 image = { workspace = true }

@@ -1,9 +1,9 @@
 use super::{Align2, Color32, CornerRadius, Rect, Sense, SlideApp, Stroke, Tokens, Ui, Value, json, pos2, run, scheme, theme, vec2, widgets};
 
 /// A ColorRef as a command colour parameter.
-pub fn cref_param(c: &deckcraft_model::ColorRef) -> Value {
+pub fn cref_param(c: &iridium_decks_model::ColorRef) -> Value {
     match &c.base {
-        deckcraft_model::ColorBase::Scheme { slot } => {
+        iridium_decks_model::ColorBase::Scheme { slot } => {
             let mut o = serde_json::Map::new();
             o.insert("scheme".into(), json!(slot.xml_name()));
             for m in &c.mods {
@@ -13,8 +13,8 @@ pub fn cref_param(c: &deckcraft_model::ColorRef) -> Value {
             }
             Value::Object(o)
         }
-        deckcraft_model::ColorBase::Rgb { rgb } if c.mods.is_empty() => json!(format!("#{}", rgb.hex())),
-        deckcraft_model::ColorBase::Rgb { rgb } => {
+        iridium_decks_model::ColorBase::Rgb { rgb } if c.mods.is_empty() => json!(format!("#{}", rgb.hex())),
+        iridium_decks_model::ColorBase::Rgb { rgb } => {
             let mut o = serde_json::Map::new();
             o.insert("rgb".into(), json!(format!("#{}", rgb.hex())));
             for m in &c.mods {
@@ -24,7 +24,7 @@ pub fn cref_param(c: &deckcraft_model::ColorRef) -> Value {
             }
             Value::Object(o)
         }
-        deckcraft_model::ColorBase::Preset { name } => {
+        iridium_decks_model::ColorBase::Preset { name } => {
             let mut o = serde_json::Map::new();
             o.insert("preset".into(), json!(name));
             for m in &c.mods {
@@ -34,7 +34,7 @@ pub fn cref_param(c: &deckcraft_model::ColorRef) -> Value {
             }
             Value::Object(o)
         }
-        deckcraft_model::ColorBase::System { name, last } => {
+        iridium_decks_model::ColorBase::System { name, last } => {
             let mut o = serde_json::Map::new();
             o.insert("system".into(), json!(name));
             o.insert("last".into(), json!(format!("#{}", last.hex())));
@@ -61,9 +61,9 @@ pub(super) fn smartart_gallery(
     extra: Value,
     current: &str,
     (style, colors): (&str, &str),
-    nodes: Option<&[deckcraft_model::DiagramNode]>,
+    nodes: Option<&[iridium_decks_model::DiagramNode]>,
 ) {
-    use deckcraft_engine::cmd::smartart::{LAYOUTS, category};
+    use iridium_decks_engine::cmd::smartart::{LAYOUTS, category};
     ui.set_min_width(440.0);
     let slide = app.session.active().map(|d| d.selection.slide).unwrap_or(0);
     egui::ScrollArea::vertical().max_height(520.0).show(ui, |ui| {
@@ -130,11 +130,11 @@ pub fn shapes_gallery(ui: &mut Ui) -> Option<&'static str> {
     let mut out = None;
     ui.set_max_width(330.0);
     egui::ScrollArea::vertical().max_height(420.0).show(ui, |ui| {
-        for cat in deckcraft_geom::preset::Category::ALL {
+        for cat in iridium_decks_geom::preset::Category::ALL {
             ui.label(egui::RichText::new(cat.label()).font(theme::bold(12.0)));
             ui.horizontal_wrapped(|ui| {
                 ui.spacing_mut().item_spacing = vec2(1.0, 1.0);
-                for p in deckcraft_geom::preset::CATALOG.iter().filter(|p| p.category == cat) {
+                for p in iridium_decks_geom::preset::CATALOG.iter().filter(|p| p.category == cat) {
                     let (r, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
                     if resp.hovered() {
                         ui.painter().rect_filled(r, CornerRadius::same(3), t.hover);
@@ -144,8 +144,8 @@ pub fn shapes_gallery(ui: &mut Ui) -> Option<&'static str> {
                         out = Some(p.name);
                     }
                 }
-                if cat == deckcraft_geom::preset::Category::Lines {
-                    for (name, label) in deckcraft_engine::tools::FREEFORM_TOOLS {
+                if cat == iridium_decks_geom::preset::Category::Lines {
+                    for (name, label) in iridium_decks_engine::tools::FREEFORM_TOOLS {
                         let (r, resp) = ui.allocate_exact_size(vec2(26.0, 26.0), Sense::click());
                         if resp.hovered() {
                             ui.painter().rect_filled(r, CornerRadius::same(3), t.hover);
@@ -169,7 +169,7 @@ pub fn shapes_gallery(ui: &mut Ui) -> Option<&'static str> {
 /// Draw a preset's outline (gallery icons).
 pub fn paint_preset(p: &egui::Painter, r: Rect, name: &str, fill: Color32, stroke: Color32) {
     let (w, h) = (r.width() as f64, r.height() as f64);
-    let Some(g) = deckcraft_geom::preset::build(name, w, h, &[]) else { return };
+    let Some(g) = iridium_decks_geom::preset::build(name, w, h, &[]) else { return };
     for sp in &g.paths {
         let mut pts: Vec<egui::Pos2> = vec![];
         let mut polys: Vec<(Vec<egui::Pos2>, bool)> = vec![];
@@ -192,7 +192,7 @@ pub fn paint_preset(p: &egui::Painter, r: Rect, name: &str, fill: Color32, strok
             polys.push((pts, false));
         }
         for (poly, closed) in polys {
-            if closed && fill != Color32::TRANSPARENT && sp.fill != deckcraft_geom::preset::FillMode::None {
+            if closed && fill != Color32::TRANSPARENT && sp.fill != iridium_decks_geom::preset::FillMode::None {
                 p.add(egui::Shape::Path(egui::epaint::PathShape { points: poly.clone(), closed: true, fill, stroke: Stroke::NONE.into() }));
             }
             if sp.stroke {
@@ -213,16 +213,16 @@ pub(super) enum Fl {
     Close,
 }
 
-pub(super) fn kurbo_flatten(path: &deckcraft_geom::BezPath, mut f: impl FnMut(Fl)) {
-    deckcraft_geom::preset_flatten(path, &mut |el| match el {
-        deckcraft_geom::PathEl::MoveTo(p) => f(Fl::Move(p.x, p.y)),
-        deckcraft_geom::PathEl::LineTo(p) => f(Fl::Line(p.x, p.y)),
-        deckcraft_geom::PathEl::ClosePath => f(Fl::Close),
+pub(super) fn kurbo_flatten(path: &iridium_decks_geom::BezPath, mut f: impl FnMut(Fl)) {
+    iridium_decks_geom::preset_flatten(path, &mut |el| match el {
+        iridium_decks_geom::PathEl::MoveTo(p) => f(Fl::Move(p.x, p.y)),
+        iridium_decks_geom::PathEl::LineTo(p) => f(Fl::Line(p.x, p.y)),
+        iridium_decks_geom::PathEl::ClosePath => f(Fl::Close),
         _ => {}
     });
 }
 
-pub fn outline_menu(app: &mut SlideApp, ui: &mut Ui, sc: &deckcraft_color::ColorScheme) {
+pub fn outline_menu(app: &mut SlideApp, ui: &mut Ui, sc: &iridium_decks_color::ColorScheme) {
     if let Some(c) = widgets::color_grid(ui, sc, Some("No Outline")) {
         match c {
             Some(c) => {
@@ -341,13 +341,13 @@ pub fn effects_menu(app: &mut SlideApp, ui: &mut Ui) {
 pub(super) fn quick_styles(app: &mut SlideApp, ui: &mut Ui) {
     let sc = scheme(app);
     let slots = [
-        deckcraft_color::SchemeSlot::Dk1,
-        deckcraft_color::SchemeSlot::Accent1,
-        deckcraft_color::SchemeSlot::Accent2,
-        deckcraft_color::SchemeSlot::Accent3,
-        deckcraft_color::SchemeSlot::Accent4,
-        deckcraft_color::SchemeSlot::Accent5,
-        deckcraft_color::SchemeSlot::Accent6,
+        iridium_decks_color::SchemeSlot::Dk1,
+        iridium_decks_color::SchemeSlot::Accent1,
+        iridium_decks_color::SchemeSlot::Accent2,
+        iridium_decks_color::SchemeSlot::Accent3,
+        iridium_decks_color::SchemeSlot::Accent4,
+        iridium_decks_color::SchemeSlot::Accent5,
+        iridium_decks_color::SchemeSlot::Accent6,
     ];
     egui::Grid::new("quickstyles").spacing(vec2(4.0, 4.0)).show(ui, |ui| {
         for row in 0..6 {

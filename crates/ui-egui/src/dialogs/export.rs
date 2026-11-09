@@ -3,7 +3,7 @@ use super::{Dialog, SlideApp, Ui, Value, check, field, json, num, vec2};
 /// The export dialog's Animated GIF options (size, seconds per slide, loop, slide range, hidden
 /// slides) as `file.export` params; a slide range that doesn't fit the deck is an error message.
 pub(super) fn gif_options(app: &SlideApp, ui: &mut Ui, d: &mut Dialog) -> Result<Value, String> {
-    use deckcraft_engine::gif_export::{MAX_SECONDS, MAX_WIDTH, MIN_SECONDS, MIN_WIDTH, SIZE_PRESETS};
+    use iridium_decks_engine::gif_export::{MAX_SECONDS, MAX_WIDTH, MIN_SECONDS, MIN_WIDTH, SIZE_PRESETS};
     let n = app.session.active().map_or(0, |s| s.doc.slides.len());
     let size = d.get("gifSize", "medium");
     let size_label = |k: &str| match k {
@@ -45,7 +45,7 @@ pub(super) fn gif_options(app: &SlideApp, ui: &mut Ui, d: &mut Dialog) -> Result
         json!(size)
     };
     let seconds = num(d, "gifSeconds", f64::NAN);
-    if deckcraft_engine::gif_export::check_seconds(seconds).is_err() {
+    if iridium_decks_engine::gif_export::check_seconds(seconds).is_err() {
         return Err(format!("Seconds per slide: enter {MIN_SECONDS} to {MAX_SECONDS}"));
     }
     let mut p = json!({"width": width, "secondsPerSlide": seconds, "loop": forever, "includeHidden": hidden});

@@ -17,7 +17,7 @@ pub(super) fn connect(s: &mut Session, p: &Value) -> Result<Value> {
     if a.is_empty() || b.is_empty() {
         return Err(bad("shape.connect", "both shapes need connection sites (lines and groups have none)"));
     }
-    let pick = |v: &[deckcraft_geom::Point], key: &str| usize_param(p, key).filter(|i| *i < v.len());
+    let pick = |v: &[iridium_decks_geom::Point], key: &str| usize_param(p, key).filter(|i| *i < v.len());
     let (ia, ib) = match (pick(&a, "fromSite"), pick(&b, "toSite")) {
         (Some(i), Some(j)) => (i, j),
         (fi, fj) => {
@@ -39,24 +39,24 @@ pub(super) fn connect(s: &mut Session, p: &Value) -> Result<Value> {
         None => {
             let preset = str_param(p, "preset").unwrap_or("straightConnector1");
             let r = s.execute("shape.insert", &json!({"preset": preset, "rect": [p0.x, p0.y, 1.0, 1.0]}))?;
-            deckcraft_model::ShapeId(r.get("id").and_then(Value::as_u64).ok_or_else(|| bad("shape.connect", "insert failed"))? as u32)
+            iridium_decks_model::ShapeId(r.get("id").and_then(Value::as_u64).ok_or_else(|| bad("shape.connect", "insert failed"))? as u32)
         }
     };
     s.edit(|doc, sel| {
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad("shape.connect", "no slide"))?;
-        let sh = deckcraft_model::find_shape_mut(list, id).ok_or_else(|| bad("shape.connect", "no such line"))?;
+        let sh = iridium_decks_model::find_shape_mut(list, id).ok_or_else(|| bad("shape.connect", "no such line"))?;
         if !sh.is_line() {
             return Err(bad("shape.connect", "`id` is not a line or connector"));
         }
         sh.xfrm = Some(crate::tools::line_xfrm(p0, p1, 0.0));
-        sh.kind = deckcraft_model::ShapeKind::Connector { start: Some((from, ia as u32)), end: Some((to, ib as u32)) };
+        sh.kind = iridium_decks_model::ShapeKind::Connector { start: Some((from, ia as u32)), end: Some((to, ib as u32)) };
         Ok(())
     })?;
     Ok(json!({"id": id.0, "fromSite": ia, "toSite": ib}))
 }
 
 /// Path data through `pts` (shape-local): straight segments, or a Catmull-Rom curve as cubics.
-pub fn freeform_path(pts: &[deckcraft_geom::Point], closed: bool, smooth: bool) -> String {
+pub fn freeform_path(pts: &[iridium_decks_geom::Point], closed: bool, smooth: bool) -> String {
     let f = |v: f64| {
         let s = format!("{:.2}", v);
         s.trim_end_matches('0').trim_end_matches('.').to_string()
@@ -64,7 +64,7 @@ pub fn freeform_path(pts: &[deckcraft_geom::Point], closed: bool, smooth: bool) 
     let mut d = format!("M {} {}", f(pts[0].x), f(pts[0].y));
     let n = pts.len();
     if smooth && n > 2 {
-        let at = |i: isize| -> deckcraft_geom::Point {
+        let at = |i: isize| -> iridium_decks_geom::Point {
             if closed { pts[i.rem_euclid(n as isize) as usize] } else { pts[i.clamp(0, n as isize - 1) as usize] }
         };
         let segs = if closed { n } else { n - 1 };
@@ -86,12 +86,12 @@ pub fn freeform_path(pts: &[deckcraft_geom::Point], closed: bool, smooth: bool) 
 }
 
 pub(super) fn freeform(s: &mut Session, p: &Value) -> Result<Value> {
-    let pts: Vec<deckcraft_geom::Point> = p
+    let pts: Vec<iridium_decks_geom::Point> = p
         .get("points")
         .and_then(Value::as_array)
         .map(|a| {
             a.iter()
-                .filter_map(|v| Some(deckcraft_geom::Point::new(v.get(0)?.as_f64()?, v.get(1)?.as_f64()?)))
+                .filter_map(|v| Some(iridium_decks_geom::Point::new(v.get(0)?.as_f64()?, v.get(1)?.as_f64()?)))
                 .filter(|q| q.x.is_finite() && q.y.is_finite())
                 .take(20_000)
                 .collect()
@@ -102,30 +102,30 @@ pub(super) fn freeform(s: &mut Session, p: &Value) -> Result<Value> {
     }
     let closed = bool_or(p, "closed", false) && pts.len() > 2;
     let smooth = bool_or(p, "smooth", false);
-    let mut bb = deckcraft_geom::Rect::from_points(pts[0], pts[0]);
+    let mut bb = iridium_decks_geom::Rect::from_points(pts[0], pts[0]);
     for q in &pts {
         bb = bb.union_pt(*q);
     }
     let (w, h) = (bb.width().max(1.0), bb.height().max(1.0));
-    let local: Vec<deckcraft_geom::Point> = pts.iter().map(|q| deckcraft_geom::Point::new(q.x - bb.x0, q.y - bb.y0)).collect();
+    let local: Vec<iridium_decks_geom::Point> = pts.iter().map(|q| iridium_decks_geom::Point::new(q.x - bb.x0, q.y - bb.y0)).collect();
     let d = freeform_path(&local, closed, smooth);
     // Closed shapes take the default shape style, open paths the line style.
     let r = s.execute("shape.insert", &json!({"preset": if closed { "rect" } else { "line" }, "rect": [bb.x0, bb.y0, w, h]}))?;
-    let id = deckcraft_model::ShapeId(r.get("id").and_then(Value::as_u64).ok_or_else(|| bad("shape.freeform", "insert failed"))? as u32);
+    let id = iridium_decks_model::ShapeId(r.get("id").and_then(Value::as_u64).ok_or_else(|| bad("shape.freeform", "insert failed"))? as u32);
     s.edit(|doc, sel| {
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad("shape.freeform", "no slide"))?;
-        let sh = deckcraft_model::find_shape_mut(list, id).ok_or_else(|| bad("shape.freeform", "insert failed"))?;
+        let sh = iridium_decks_model::find_shape_mut(list, id).ok_or_else(|| bad("shape.freeform", "insert failed"))?;
         sh.geom = Geom::Custom {
-            paths: vec![deckcraft_model::CustomPath {
+            paths: vec![iridium_decks_model::CustomPath {
                 w,
                 h,
                 d: d.clone(),
-                fill: if closed { deckcraft_geom::preset::FillMode::Norm } else { deckcraft_geom::preset::FillMode::None },
+                fill: if closed { iridium_decks_geom::preset::FillMode::Norm } else { iridium_decks_geom::preset::FillMode::None },
                 stroke: true,
             }],
         };
-        sh.xfrm = Some(deckcraft_geom::Xfrm::new(bb.x0, bb.y0, w, h));
-        sh.kind = deckcraft_model::ShapeKind::Shape;
+        sh.xfrm = Some(iridium_decks_geom::Xfrm::new(bb.x0, bb.y0, w, h));
+        sh.kind = iridium_decks_model::ShapeKind::Shape;
         sh.name = format!("Freeform {}", id.0);
         Ok(())
     })?;
@@ -136,7 +136,7 @@ pub(super) fn freeform(s: &mut Session, p: &Value) -> Result<Value> {
 /// outlined in the stroke's colour and width; the rest stays ink. One undo step.
 pub(super) fn ink_to_shape(s: &mut Session, _p: &Value) -> Result<Value> {
     use crate::inkshape::{Recognized, recognize};
-    use deckcraft_model::{Shape, ShapeId, ShapeKind};
+    use iridium_decks_model::{Shape, ShapeId, ShapeKind};
     let shapes = s.doc()?.shapes();
     let Some(ink) = shapes.iter().find(|sh| matches!(sh.kind, ShapeKind::Ink { .. })) else {
         return Ok(json!({"shapes": [], "kept": 0}));
@@ -165,11 +165,13 @@ pub(super) fn ink_to_shape(s: &mut Session, _p: &Value) -> Result<Value> {
             };
             let (preset, xfrm) = match *r {
                 Recognized::Line { x0, y0, x1, y1 } => {
-                    ("line", crate::tools::line_xfrm(deckcraft_geom::Point::new(x0, y0), deckcraft_geom::Point::new(x1, y1), 0.0))
+                    ("line", crate::tools::line_xfrm(iridium_decks_geom::Point::new(x0, y0), iridium_decks_geom::Point::new(x1, y1), 0.0))
                 }
-                Recognized::Rect { x, y, w, h } => ("rect", deckcraft_geom::Xfrm::new(x, y, w, h)),
-                Recognized::Ellipse { x, y, w, h } => ("ellipse", deckcraft_geom::Xfrm::new(x, y, w, h)),
-                Recognized::Triangle { x, y, w, h, flip_v } => ("triangle", deckcraft_geom::Xfrm { flip_v, ..deckcraft_geom::Xfrm::new(x, y, w, h) }),
+                Recognized::Rect { x, y, w, h } => ("rect", iridium_decks_geom::Xfrm::new(x, y, w, h)),
+                Recognized::Ellipse { x, y, w, h } => ("ellipse", iridium_decks_geom::Xfrm::new(x, y, w, h)),
+                Recognized::Triangle { x, y, w, h, flip_v } => {
+                    ("triangle", iridium_decks_geom::Xfrm { flip_v, ..iridium_decks_geom::Xfrm::new(x, y, w, h) })
+                }
             };
             made.push((preset, xfrm, st.color, st.width));
         }

@@ -37,9 +37,9 @@ pub(super) fn context_menu(app: &mut SlideApp, resp: &egui::Response) {
     });
 }
 
-fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &deckcraft_model::Shape) {
+fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &iridium_decks_model::Shape) {
     if let Some((path, index)) = app.session.tool.edit_segment {
-        let cur = deckcraft_engine::cmd::points::segment_kind_of(sh, path, index);
+        let cur = iridium_decks_engine::cmd::points::segment_kind_of(sh, path, index);
         for (l, k) in [("Straight Segment", "straight"), ("Curved Segment", "curved")] {
             if ui.radio(cur == Some(k), l).clicked() {
                 let _ = app.run("shape.segmentType", json!({"path": path, "segment": index, "type": k}));
@@ -53,7 +53,7 @@ fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &deckcraft_model:
             app.session.tool.edit_segment = None;
             ui.close();
         }
-        let closed = deckcraft_engine::cmd::points::closed_at(sh, path, index);
+        let closed = iridium_decks_engine::cmd::points::closed_at(sh, path, index);
         if ui.add_enabled(closed == Some(true), egui::Button::new("Delete Segment")).clicked() {
             let _ = app.run("shape.deleteSegment", json!({"path": path, "segment": index}));
             app.session.tool.edit_segment = None;
@@ -62,7 +62,7 @@ fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &deckcraft_model:
         // Open Path opens the outline at the segment's start point.
         let (label, id, at) = match closed {
             Some(false) => ("Close Path", "shape.closePath", index),
-            _ => ("Open Path", "shape.openPath", deckcraft_engine::cmd::points::segment_start_of(sh, path, index).unwrap_or(index)),
+            _ => ("Open Path", "shape.openPath", iridium_decks_engine::cmd::points::segment_start_of(sh, path, index).unwrap_or(index)),
         };
         if ui.button(label).clicked() {
             let _ = app.run(id, json!({"path": path, "index": at}));
@@ -71,7 +71,7 @@ fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &deckcraft_model:
         }
         ui.separator();
     } else if let Some((path, index)) = app.session.tool.edit_vertex {
-        let cur = deckcraft_engine::cmd::points::kind_of(sh, path, index);
+        let cur = iridium_decks_engine::cmd::points::kind_of(sh, path, index);
         for (l, k) in [("Smooth Point", "smooth"), ("Straight Point", "straight"), ("Corner Point", "corner")] {
             if ui.radio(cur == Some(k), l).clicked() {
                 let _ = app.run("shape.pointType", json!({"path": path, "index": index, "type": k}));
@@ -83,7 +83,7 @@ fn edit_points_menu(app: &mut SlideApp, ui: &mut egui::Ui, sh: &deckcraft_model:
             app.session.tool.edit_vertex = None;
             ui.close();
         }
-        let (label, id) = match deckcraft_engine::cmd::points::closed_at(sh, path, index) {
+        let (label, id) = match iridium_decks_engine::cmd::points::closed_at(sh, path, index) {
             Some(false) => ("Close Path", "shape.closePath"),
             _ => ("Open Path", "shape.openPath"),
         };
@@ -112,7 +112,7 @@ fn spelling_menu(app: &mut SlideApp, ui: &mut egui::Ui, w: &crate::squiggles::Me
                 .and_then(|st| match w.tag {
                     crate::squiggles::Tag::Shape { id, para } => st.shape(id)?.text.as_ref()?.paragraphs.get(para).map(|p| p.text()),
                     crate::squiggles::Tag::Cell { id, row, col, para } => match &st.shape(id)?.kind {
-                        deckcraft_model::ShapeKind::Table(tb) => tb.cell(row, col)?.text.paragraphs.get(para).map(|p| p.text()),
+                        iridium_decks_model::ShapeKind::Table(tb) => tb.cell(row, col)?.text.paragraphs.get(para).map(|p| p.text()),
                         _ => None,
                     },
                     crate::squiggles::Tag::Notes { .. } => None,
@@ -231,7 +231,7 @@ fn shape_items(app: &mut SlideApp, ui: &mut egui::Ui) {
         ui.close();
     }
     let picture =
-        app.session.active().is_some_and(|d| d.selected_shapes().iter().any(|s| matches!(s.kind, deckcraft_model::ShapeKind::Picture { .. })));
+        app.session.active().is_some_and(|d| d.selected_shapes().iter().any(|s| matches!(s.kind, iridium_decks_model::ShapeKind::Picture { .. })));
     if picture && ui.button("Change Picture…").clicked() {
         let _ = app.run("app.changePictureDialog", json!({}));
         ui.close();

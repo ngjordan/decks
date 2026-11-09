@@ -493,7 +493,7 @@ mod tests {
 mod speed {
     use super::*;
 
-    /// Rough timing of the edge filters (`cargo test --release -p deckcraft-h264 --lib edge_filter_speed -- --ignored --nocapture`).
+    /// Rough timing of the edge filters (`cargo test --release -p iridium-decks-h264 --lib edge_filter_speed -- --ignored --nocapture`).
     #[test]
     #[ignore]
     fn edge_filter_speed() {

@@ -6,7 +6,7 @@ pub(super) enum CurrentLink {
     /// Nothing is linked. OK sets a new link (a caret at a word boundary inserts text).
     None,
     /// One link covers the text span or every selected shape.
-    One(deckcraft_model::text::Hyperlink),
+    One(iridium_decks_model::text::Hyperlink),
     /// The selection mixes different links. OK must not replace them until a new target is chosen.
     Mixed,
 }
@@ -35,8 +35,8 @@ impl HyperlinkSeed {
 
 /// Turn one hyperlink into dialog fields. A slide that is no longer in the deck, and actions this
 /// dialog does not edit (next slide, a program, …), are preserved so OK does not retarget them.
-pub(super) fn seed_of_link(link: &deckcraft_model::text::Hyperlink, slide_ids: &[deckcraft_model::SlideId]) -> HyperlinkSeed {
-    use deckcraft_model::text::Action;
+pub(super) fn seed_of_link(link: &iridium_decks_model::text::Hyperlink, slide_ids: &[iridium_decks_model::SlideId]) -> HyperlinkSeed {
+    use iridium_decks_model::text::Action;
     let mut seed = HyperlinkSeed {
         mode: "url",
         url: String::new(),
@@ -70,7 +70,7 @@ pub(super) fn seed_of_link(link: &deckcraft_model::text::Hyperlink, slide_ids: &
     seed
 }
 
-pub(super) fn seed_from(current: CurrentLink, slide_ids: &[deckcraft_model::SlideId]) -> HyperlinkSeed {
+pub(super) fn seed_from(current: CurrentLink, slide_ids: &[iridium_decks_model::SlideId]) -> HyperlinkSeed {
     match current {
         CurrentLink::None => HyperlinkSeed::blank(),
         CurrentLink::Mixed => HyperlinkSeed { preserve: true, url: String::new(), ..HyperlinkSeed::blank() },
@@ -80,11 +80,11 @@ pub(super) fn seed_from(current: CurrentLink, slide_ids: &[deckcraft_model::Slid
 
 /// Links on the half-open span `[a, b)`. A point span is a new link: Insert Hyperlink inserts
 /// there instead of editing a neighbouring run.
-pub(super) fn link_covering(body: &deckcraft_model::text::TextBody, a: (usize, usize), b: (usize, usize)) -> CurrentLink {
+pub(super) fn link_covering(body: &iridium_decks_model::text::TextBody, a: (usize, usize), b: (usize, usize)) -> CurrentLink {
     if a == b {
         return CurrentLink::None;
     }
-    let mut seen: Option<Option<deckcraft_model::text::Hyperlink>> = None;
+    let mut seen: Option<Option<iridium_decks_model::text::Hyperlink>> = None;
     for (pi, para) in body.paragraphs.iter().enumerate() {
         if pi < a.0 || pi > b.0 {
             continue;
@@ -123,7 +123,7 @@ pub(super) fn link_covering(body: &deckcraft_model::text::TextBody, a: (usize, u
     }
 }
 
-pub(super) fn common_click(clicks: impl IntoIterator<Item = Option<deckcraft_model::text::Hyperlink>>) -> CurrentLink {
+pub(super) fn common_click(clicks: impl IntoIterator<Item = Option<iridium_decks_model::text::Hyperlink>>) -> CurrentLink {
     let mut clicks = clicks.into_iter();
     let Some(first) = clicks.next() else { return CurrentLink::None };
     for next in clicks {
@@ -139,13 +139,13 @@ pub(super) fn common_click(clicks: impl IntoIterator<Item = Option<deckcraft_mod
 
 /// The link Insert Hyperlink would edit: text when a caret or selection is active, otherwise the
 /// click action shared by the selected shapes.
-pub(super) fn hyperlink_seed_of(st: Option<&deckcraft_engine::DocState>) -> HyperlinkSeed {
+pub(super) fn hyperlink_seed_of(st: Option<&iridium_decks_engine::DocState>) -> HyperlinkSeed {
     let Some(st) = st else { return HyperlinkSeed::blank() };
-    let ids: Vec<deckcraft_model::SlideId> = st.doc.slides.iter().map(|s| s.id).collect();
+    let ids: Vec<iridium_decks_model::SlideId> = st.doc.slides.iter().map(|s| s.id).collect();
     let current = if let Some(t) = &st.selection.text {
-        match deckcraft_engine::cmd::text::body_of(st, t) {
+        match iridium_decks_engine::cmd::text::body_of(st, t) {
             Some(body) => {
-                let (a, b) = deckcraft_engine::cmd::text::format_range(st, t);
+                let (a, b) = iridium_decks_engine::cmd::text::format_range(st, t);
                 link_covering(body, a, b)
             }
             None => CurrentLink::None,

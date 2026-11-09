@@ -1,10 +1,10 @@
 //! Home ▸ Font and Paragraph, Format menu: character, paragraph and text box formatting, and
 //! the Format Painter.
 
-use deckcraft_model::edit as ed;
-use deckcraft_model::resolve;
-use deckcraft_model::text::{Align, Anchor, AutoFit, Bullet, Caps, ParaProps, RunProps, Spacing, Strike, TabStop, TextDir};
-use deckcraft_model::{ColorRef, ColorTransform, Effects, Fill, Line, SchemeSlot, Shape, ShapeKind};
+use iridium_decks_model::edit as ed;
+use iridium_decks_model::resolve;
+use iridium_decks_model::text::{Align, Anchor, AutoFit, Bullet, Caps, ParaProps, RunProps, Spacing, Strike, TabStop, TextDir};
+use iridium_decks_model::{ColorRef, ColorTransform, Effects, Fill, Line, SchemeSlot, Shape, ShapeKind};
 use serde_json::{Value, json};
 use std::sync::Arc;
 
@@ -14,7 +14,7 @@ use super::{
     has_text_or_shapes, ids_param, ok, str_param,
 };
 use crate::{Result, Session};
-use deckcraft_model::ShapeId;
+use iridium_decks_model::ShapeId;
 
 mod font;
 mod painter;
@@ -313,8 +313,8 @@ mod ruler_tests;
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_model::text::{Align, Caps, ParaProps, Spacing, Strike};
-    use deckcraft_model::{ColorBase, Fill, SchemeSlot};
+    use iridium_decks_model::text::{Align, Caps, ParaProps, Spacing, Strike};
+    use iridium_decks_model::{ColorBase, Fill, SchemeSlot};
     use serde_json::json;
 
     use super::*;
@@ -515,7 +515,7 @@ mod tests {
         assert!(para(&s).indent.is_none());
     }
 
-    fn body(s: &Session) -> deckcraft_model::text::BodyProps {
+    fn body(s: &Session) -> iridium_decks_model::text::BodyProps {
         s.doc().unwrap().selected_shapes().first().and_then(|sh| sh.text.as_ref()).map(|t| t.body.clone()).unwrap_or_default()
     }
 

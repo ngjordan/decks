@@ -7,21 +7,21 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
-use deckcraft_geom::Xfrm;
-use deckcraft_model::chart::{Chart, ChartType, Series, Trendline, TrendlineType};
-use deckcraft_model::style::{ColorRef, Line};
-use deckcraft_model::table::Table;
-use deckcraft_model::text::{AutoFit, TextBody, TextDir};
-use deckcraft_model::{Presentation, Shape, ShapeId, ShapeKind, Slide, defaults};
+use iridium_decks_color::Rgba;
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::chart::{Chart, ChartType, Series, Trendline, TrendlineType};
+use iridium_decks_model::style::{ColorRef, Line};
+use iridium_decks_model::table::Table;
+use iridium_decks_model::text::{AutoFit, TextBody, TextDir};
+use iridium_decks_model::{Presentation, Shape, ShapeId, ShapeKind, Slide, defaults};
 
 fn shape(p: &mut Presentation, name: &str, x: f64, y: f64, w: f64, h: f64) -> Shape {
     Shape { id: ShapeId(p.alloc_id().expect("id")), name: name.into(), xfrm: Some(Xfrm::new(x, y, w, h)), ..Default::default() }
 }
 
 fn round(p: &Presentation) -> Presentation {
-    let bytes = deckcraft_pptx::export(p).expect("export");
-    deckcraft_pptx::import(&bytes).expect("import")
+    let bytes = iridium_decks_pptx::export(p).expect("export");
+    iridium_decks_pptx::import(&bytes).expect("import")
 }
 
 fn by_name<'a>(s: &'a Slide, name: &str) -> &'a Shape {
@@ -40,7 +40,7 @@ fn corpus() -> Presentation {
     let mut p = defaults::new_presentation(None);
     p.props.title = "Chart and table corpus".into();
     let mut s = {
-        let layout = defaults::layout_of_kind(&p, deckcraft_model::LayoutType::Blank).unwrap_or_default();
+        let layout = defaults::layout_of_kind(&p, iridium_decks_model::LayoutType::Blank).unwrap_or_default();
         defaults::new_slide(&mut p, layout).expect("slide")
     };
 

@@ -32,7 +32,7 @@ pub(super) fn edit(s: &mut Session, p: &Value) -> Result<Value> {
     if sh.text.is_none() && cell.is_none() {
         s.edit(|doc, sel| {
             if let Some(list) = crate::shapes_mut(doc, sel)
-                && let Some(x) = deckcraft_model::find_shape_mut(list, id)
+                && let Some(x) = iridium_decks_model::find_shape_mut(list, id)
             {
                 x.text = Some(TextBody::default());
             }
@@ -114,7 +114,7 @@ pub(super) fn inherited_aligns(s: &Session, id: ShapeId) -> [bool; 9] {
     let Some(sh) = st.shape(id) else { return out };
     let Some(ctx) = ctx_for(&st.doc, &st.selection) else { return out };
     for (lvl, set) in out.iter_mut().enumerate() {
-        let para = deckcraft_model::text::Paragraph { level: lvl as u8, ..Default::default() };
+        let para = iridium_decks_model::text::Paragraph { level: lvl as u8, ..Default::default() };
         *set = resolve::para(&ctx, sh, &para).align.is_some();
     }
     out
@@ -131,8 +131,8 @@ fn inherited_aligns_for_edit(s: &Session) -> [bool; 9] {
 /// A paragraph with no direction of its own whose first strong character is right-to-left
 /// (Arabic, Hebrew, Kurdish…) becomes right-to-left, and right-aligned when nothing (the
 /// paragraph or what it inherits, `inherited`) sets its alignment.
-pub(super) fn promote_rtl_if_needed(para: &mut deckcraft_model::text::Paragraph, inherited: &[bool; 9]) {
-    if para.props.rtl.is_none() && deckcraft_model::bidi::first_strong_is_rtl(&para.text()) {
+pub(super) fn promote_rtl_if_needed(para: &mut iridium_decks_model::text::Paragraph, inherited: &[bool; 9]) {
+    if para.props.rtl.is_none() && iridium_decks_model::bidi::first_strong_is_rtl(&para.text()) {
         para.props.rtl = Some(true);
         let inherits_align = inherited.get(usize::from(para.level)).copied().unwrap_or(false);
         if para.props.align.is_none() && !inherits_align {
@@ -182,7 +182,7 @@ pub(crate) fn insert_field(s: &mut Session, field: &str, text: &str) -> Result<V
         let at = ed::delete(body, a, b);
         let props = ed::props_at(body, at);
         let src = TextBody {
-            paragraphs: vec![deckcraft_model::text::Paragraph {
+            paragraphs: vec![iridium_decks_model::text::Paragraph {
                 runs: vec![Run { text: text.clone(), props, kind: RunKind::Field { field: field.clone() } }],
                 ..Default::default()
             }],
@@ -197,7 +197,7 @@ pub(crate) fn insert_field(s: &mut Session, field: &str, text: &str) -> Result<V
 
 #[cfg(test)]
 mod rtl_promote_tests {
-    use deckcraft_model::text::{Align, Paragraph, Run};
+    use iridium_decks_model::text::{Align, Paragraph, Run};
 
     use super::promote_rtl_if_needed;
 

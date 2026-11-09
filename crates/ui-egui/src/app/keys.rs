@@ -111,7 +111,7 @@ impl SlideApp {
         }
         let img = if image_paste { self.services.clipboard_image.as_mut().and_then(|f| f()) } else { None };
         if let Some(png) = img {
-            let data = deckcraft_engine::cmd::base64_encode(&png);
+            let data = iridium_decks_engine::cmd::base64_encode(&png);
             if let Err(e) = self.session.execute("insert.picture", &json!({"name": "Pasted image.png", "data": data})) {
                 self.set_status(e.to_string());
             }
@@ -124,7 +124,7 @@ impl SlideApp {
                 egui::Event::ImeResetCompleted { request_id } => self.ime_reset_completed(request_id, ctx),
                 egui::Event::PasteImage(image) => match color_image_png(&image) {
                     Ok(png) => {
-                        let params = json!({"name": "Pasted image.png", "data": deckcraft_engine::cmd::base64_encode(&png)});
+                        let params = json!({"name": "Pasted image.png", "data": iridium_decks_engine::cmd::base64_encode(&png)});
                         if let Err(e) = self.session.execute("insert.picture", &params) {
                             self.set_status(e.to_string());
                         }
@@ -158,7 +158,7 @@ impl SlideApp {
                     let r = match img {
                         Some(png) => self
                             .session
-                            .execute("insert.picture", &json!({"name": "Pasted image.png", "data": deckcraft_engine::cmd::base64_encode(&png)})),
+                            .execute("insert.picture", &json!({"name": "Pasted image.png", "data": iridium_decks_engine::cmd::base64_encode(&png)})),
                         None => {
                             let mut params = json!({"text": text});
                             if let Some(h) = html {
@@ -247,5 +247,5 @@ fn color_image_png(image: &egui::ColorImage) -> Result<Vec<u8>, String> {
         return Err(format!("the pasted image is {w}×{h} pixels; the limit is 16 megapixels"));
     }
     let rgba: Vec<u8> = image.pixels.iter().flat_map(|c| c.to_array()).collect();
-    Ok(deckcraft_render::Image { width: w as u32, height: h as u32, pixels: rgba }.to_png())
+    Ok(iridium_decks_render::Image { width: w as u32, height: h as u32, pixels: rgba }.to_png())
 }

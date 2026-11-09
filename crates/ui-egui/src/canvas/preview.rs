@@ -1,10 +1,10 @@
 //! In-canvas animation preview: the current slide's effects played on the editor canvas
 //! (Animations ▸ Preview, Animation Pane ▸ Play All). The slide show uses the same mapping.
 
-use deckcraft_anim::Timeline;
-use deckcraft_geom::Vec2;
-use deckcraft_model::ShapeId;
-use deckcraft_render::{ParaState, ShapeState};
+use iridium_decks_anim::Timeline;
+use iridium_decks_geom::Vec2;
+use iridium_decks_model::ShapeId;
+use iridium_decks_render::{ParaState, ShapeState};
 
 /// How long the finished sequence stays on the canvas before the editor draws the slide at rest.
 pub const HOLD_SECS: f64 = 0.45;

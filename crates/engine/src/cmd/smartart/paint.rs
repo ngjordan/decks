@@ -121,7 +121,7 @@ pub(super) fn paint(d: &Diagram, sh: &mut Shape, i: usize, light: bool) {
 
 fn shadow(blur: f64, dist: f64) -> Shadow {
     Shadow {
-        color: ColorRef::rgb(deckcraft_model::Rgba { r: 0, g: 0, b: 0, a: 255 }).with(ColorTransform::Alpha(40_000)),
+        color: ColorRef::rgb(iridium_decks_model::Rgba { r: 0, g: 0, b: 0, a: 255 }).with(ColorTransform::Alpha(40_000)),
         blur,
         dist,
         dir: 90.0,
@@ -149,7 +149,7 @@ pub(super) fn text_shape(preset: &str, x: Xfrm, lines: &[&DiagramNode], title: b
         } else {
             para.level = n.level.saturating_sub(top).saturating_sub(1).min(MAX_LEVEL);
             para.props.align = Some(Align::Left);
-            para.props.bullet = Some(deckcraft_model::text::Bullet::Char { char: "•".into() });
+            para.props.bullet = Some(iridium_decks_model::text::Bullet::Char { char: "•".into() });
             para.props.margin_left = Some(12.0 * (para.level as f64 + 1.0));
             para.props.indent = Some(-10.0);
         }
@@ -164,7 +164,7 @@ pub(super) fn text_shape(preset: &str, x: Xfrm, lines: &[&DiagramNode], title: b
         body.paragraphs.push(Paragraph::new(""));
     }
     if !title {
-        body.body.anchor = Some(deckcraft_model::text::Anchor::Top);
+        body.body.anchor = Some(iridium_decks_model::text::Anchor::Top);
     }
     Shape { name: "SmartArt shape".into(), xfrm: Some(x), geom: Geom::preset(preset), text: Some(body), ..Default::default() }
 }
@@ -260,7 +260,7 @@ pub(super) fn picture_shape(d: &Diagram, preset: &str, x: Xfrm, i: usize, node: 
     let mut sh = Shape { name: "SmartArt picture".into(), xfrm: Some(x), geom: Geom::preset(preset), ..Default::default() };
     paint(d, &mut sh, i, true);
     if let Some(m) = d.nodes.get(node).and_then(|n| n.picture) {
-        sh.fill = Some(Fill::Picture(deckcraft_model::style::PictureFill { media: m, ..Default::default() }));
+        sh.fill = Some(Fill::Picture(iridium_decks_model::style::PictureFill { media: m, ..Default::default() }));
         sh.line = Some(Line::solid(ColorRef::scheme(SchemeSlot::Lt1), 1.5));
     }
     sh

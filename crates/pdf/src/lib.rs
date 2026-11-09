@@ -1,6 +1,6 @@
 //! PDF export.
 //!
-//! Each slide is drawn by the Iridium Decks renderer at print resolution (so the PDF looks exactly like
+//! Each slide is drawn by the Decks renderer at print resolution (so the PDF looks exactly like
 //! the slide, effects included) and overlaid with an invisible layer of real text from the text
 //! layout engine with embedded font subsets, so the text can be searched, selected and copied.
 //! Hyperlinks and shape actions become link annotations, slide titles become bookmarks.
@@ -15,10 +15,10 @@ use std::collections::HashMap;
 
 use craft_pdf::write::{self, Metadata, Writer, backend as krilla};
 
-use deckcraft_fonts::FontDb;
-use deckcraft_model::Presentation;
-use deckcraft_model::text::{Action as ClickAction, safe_url};
-use deckcraft_render::{PlacedText, RenderOpts};
+use iridium_decks_fonts::FontDb;
+use iridium_decks_model::Presentation;
+use iridium_decks_model::text::{Action as ClickAction, safe_url};
+use iridium_decks_render::{PlacedText, RenderOpts};
 use krilla::action::{Action, LinkAction};
 use krilla::annotation::{Annotation, LinkAnnotation, Target};
 use krilla::destination::XyzDestination;
@@ -168,8 +168,8 @@ fn export_inner(pres: &Presentation, opts: &PdfOptions) -> Result<Vec<u8>> {
     }
     let title = opts.title.clone().unwrap_or_else(|| pres.props.title.clone());
     let metadata = Metadata {
-        creator: "Iridium Decks".into(),
-        producer: "Iridium Decks".into(),
+        creator: "Decks".into(),
+        producer: "Decks".into(),
         title: (!title.trim().is_empty()).then_some(title),
         authors: if pres.props.author.trim().is_empty() { Vec::new() } else { vec![pres.props.author.clone()] },
         ..Default::default()
@@ -228,7 +228,7 @@ fn export_inner(pres: &Presentation, opts: &PdfOptions) -> Result<Vec<u8>> {
 }
 
 /// A notes-size master's rect of placeholder `kind`, scaled to a page of `paper` points.
-fn master_rect(pres: &Presentation, m: &deckcraft_model::Master, kind: deckcraft_model::PhType, paper: (f64, f64)) -> Option<Rect> {
+fn master_rect(pres: &Presentation, m: &iridium_decks_model::Master, kind: iridium_decks_model::PhType, paper: (f64, f64)) -> Option<Rect> {
     let x = m.shapes.iter().find(|s| s.ph_type() == Some(kind))?.xfrm?;
     let (kx, ky) = (paper.0 / pres.notes_size.width.max(1.0), paper.1 / pres.notes_size.height.max(1.0));
     let r = Rect::new(x.x * kx, x.y * ky, (x.x + x.w) * kx, (x.y + x.h) * ky);
@@ -241,7 +241,7 @@ pub fn notes_frames(pres: &Presentation, paper: (f64, f64)) -> (Rect, Rect) {
     let (pw, ph) = paper;
     let aspect = pres.slide_size.width.max(1.0) / pres.slide_size.height.max(1.0);
     let nm = pres.notes_master.as_deref();
-    let slide = match nm.and_then(|m| master_rect(pres, m, deckcraft_model::PhType::SlideImage, paper)) {
+    let slide = match nm.and_then(|m| master_rect(pres, m, iridium_decks_model::PhType::SlideImage, paper)) {
         // The slide keeps its own shape, centred in the frame.
         Some(f) => {
             let (w, h) = if f.width() / f.height() > aspect { (f.height() * aspect, f.height()) } else { (f.width(), f.width() / aspect) };
@@ -250,7 +250,7 @@ pub fn notes_frames(pres: &Presentation, paper: (f64, f64)) -> (Rect, Rect) {
         None => notes_slide_box(paper, aspect),
     };
     let notes = nm
-        .and_then(|m| master_rect(pres, m, deckcraft_model::PhType::Body, paper))
+        .and_then(|m| master_rect(pres, m, iridium_decks_model::PhType::Body, paper))
         .unwrap_or_else(|| Rect::new(72.0, slide.y1 + 36.0, pw - 72.0, ph - 54.0));
     (slide, notes)
 }
@@ -263,21 +263,21 @@ pub struct TextStyle {
     pub size: f64,
     pub bold: bool,
     pub italic: bool,
-    pub color: deckcraft_model::Rgba,
+    pub color: iridium_decks_model::Rgba,
 }
 
 /// The resolved style of placeholder `sh`'s first run (or its paragraph's end properties) on
 /// master `m`: run, list style, master text styles, theme fonts and colours.
-pub fn master_text_style(pres: &Presentation, m: &deckcraft_model::Master, sh: &deckcraft_model::Shape) -> TextStyle {
-    use deckcraft_model::resolve::{self, Ctx};
+pub fn master_text_style(pres: &Presentation, m: &iridium_decks_model::Master, sh: &iridium_decks_model::Shape) -> TextStyle {
+    use iridium_decks_model::resolve::{self, Ctx};
     let ctx = Ctx::for_master(pres, m);
     let para = sh.text.as_ref().and_then(|t| t.paragraphs.first()).cloned().unwrap_or_default();
     let own = para.runs.first().map(|r| r.props.clone()).unwrap_or_else(|| para.end_props.clone());
     let r = resolve::run(&ctx, sh, &para, &own);
     let family = r.font.as_deref().map(|f| if f.starts_with('+') { m.theme.font(f) } else { f.to_string() }).unwrap_or_default();
     let color = match &r.fill {
-        Some(deckcraft_model::Fill::Solid { color }) => ctx.color(color, None),
-        _ => deckcraft_model::Rgba::rgb(0x60, 0x60, 0x60),
+        Some(iridium_decks_model::Fill::Solid { color }) => ctx.color(color, None),
+        _ => iridium_decks_model::Rgba::rgb(0x60, 0x60, 0x60),
     };
     TextStyle { family, size: r.size.unwrap_or(12.0).clamp(1.0, 400.0), bold: r.bold == Some(true), italic: r.italic == Some(true), color }
 }
@@ -289,7 +289,7 @@ pub struct TextPiece {
     pub at: (f64, f64),
     pub text: String,
     pub size: f64,
-    pub color: deckcraft_model::Rgba,
+    pub color: iridium_decks_model::Rgba,
     pub bold: bool,
     pub italic: bool,
 }
@@ -297,10 +297,10 @@ pub struct TextPiece {
 /// The header, date, footer and page number of `m` for page `n`, laid out by the text engine
 /// (wrapped, mixed formatting) and scaled to `paper`, for drawing without glyph access (the
 /// Notes Page view).
-pub fn master_text_pieces(pres: &Presentation, m: &deckcraft_model::Master, paper: (f64, f64), n: usize) -> Vec<TextPiece> {
+pub fn master_text_pieces(pres: &Presentation, m: &iridium_decks_model::Master, paper: (f64, f64), n: usize) -> Vec<TextPiece> {
     let (kx, ky) = (paper.0 / pres.notes_size.width.max(1.0), paper.1 / pres.notes_size.height.max(1.0));
     let mut out = vec![];
-    for pt in deckcraft_render::place_master_texts(pres, m, n) {
+    for pt in iridium_decks_render::place_master_texts(pres, m, n) {
         for run in &pt.layout.runs {
             let Some(g) = run.glyphs.first() else { continue };
             let text: String = pt
@@ -333,8 +333,8 @@ pub fn master_text_pieces(pres: &Presentation, m: &deckcraft_model::Master, pape
 /// The header, date, footer and page-number text a master puts on page `n`, with where it goes,
 /// whether it's right-aligned and its style. Placeholders with no text are left out; the page
 /// number is always `n`.
-pub fn master_texts(pres: &Presentation, m: &deckcraft_model::Master, paper: (f64, f64), n: usize) -> Vec<(Rect, String, bool, TextStyle)> {
-    use deckcraft_model::PhType;
+pub fn master_texts(pres: &Presentation, m: &iridium_decks_model::Master, paper: (f64, f64), n: usize) -> Vec<(Rect, String, bool, TextStyle)> {
+    use iridium_decks_model::PhType;
     let mut out = vec![];
     for kind in [PhType::Header, PhType::Date, PhType::Footer, PhType::SlideNum] {
         let Some(r) = master_rect(pres, m, kind, paper) else { continue };
@@ -348,7 +348,7 @@ pub fn master_texts(pres: &Presentation, m: &deckcraft_model::Master, paper: (f6
             .as_ref()
             .and_then(|t| t.paragraphs.first())
             .and_then(|p| p.props.align)
-            .map_or(matches!(kind, PhType::Date | PhType::SlideNum), |a| a == deckcraft_model::text::Align::Right);
+            .map_or(matches!(kind, PhType::Date | PhType::SlideNum), |a| a == iridium_decks_model::text::Align::Right);
         let mut style = master_text_style(pres, m, sh);
         // Sizes scale with the page, as the placeholders do.
         style.size *= paper.1 / pres.notes_size.height.max(1.0);
@@ -472,7 +472,7 @@ const BACKDROP_CACHE_BYTES: usize = 32 << 20;
 struct Backdrops(Vec<(Vec<u8>, u32, u32, Image)>);
 
 impl Backdrops {
-    fn image(&mut self, mut img: deckcraft_render::Image) -> Image {
+    fn image(&mut self, mut img: iridium_decks_render::Image) -> Image {
         opaque(&mut img.pixels);
         let (w, h) = (img.width, img.height);
         if let Some(i) = self.0.iter().position(|(px, pw, ph, _)| (*pw, *ph) == (w, h) && *px == img.pixels) {
@@ -506,7 +506,7 @@ fn raster_scale(box_width: f64, slide: (f64, f64), dpi: f64) -> f64 {
 }
 
 impl Exporter<'_> {
-    fn font(&mut self, face: &deckcraft_fonts::FontFace) -> Result<Font> {
+    fn font(&mut self, face: &iridium_decks_fonts::FontFace) -> Result<Font> {
         if let Some(font) = self.fonts.get(&face.id()) {
             return Ok(font.clone());
         }
@@ -526,9 +526,9 @@ impl Exporter<'_> {
         // Two rasters per slide: the backdrop (background, master and layout graphics) is the same
         // on every slide that shares its layout, so the writer stores it once, and the slide's own
         // shapes draw over it (#845).
-        let mut back = deckcraft_render::render_slide_part(pres, i, deckcraft_render::SlidePart::Backdrop, &ropts);
+        let mut back = iridium_decks_render::render_slide_part(pres, i, iridium_decks_render::SlidePart::Backdrop, &ropts);
         opaque(&mut back.pixels);
-        let front = deckcraft_render::render_slide_part(pres, i, deckcraft_render::SlidePart::Content, &ropts);
+        let front = iridium_decks_render::render_slide_part(pres, i, iridium_decks_render::SlidePart::Content, &ropts);
         let (w, h) = (back.width, back.height);
         if w > 0
             && h > 0
@@ -563,7 +563,7 @@ impl Exporter<'_> {
         }
         if self.opts.text_layer {
             let view = Affine::translate((b.x0, b.y0)) * Affine::scale(k);
-            for pt in deckcraft_render::place_slide(pres, i).texts {
+            for pt in iridium_decks_render::place_slide(pres, i).texts {
                 self.text_layer(s, &pt, view, false)?;
             }
             let _ = sh;
@@ -627,7 +627,7 @@ impl Exporter<'_> {
         let k = b.width() / pres.slide_size.width.max(1.0);
         let view = Affine::translate((b.x0, b.y0)) * Affine::scale(k);
         let mut out = Vec::new();
-        for l in deckcraft_render::place_slide(pres, i).links {
+        for l in iridium_decks_render::place_slide(pres, i).links {
             let r = view.transform_rect_bbox(l.rect).intersect(b);
             let Some(rect) = krilla::geom::Rect::from_ltrb(r.x0 as f32, r.y0 as f32, r.x1 as f32, r.y1 as f32) else { continue };
             let goto = |slide: Option<usize>| {
@@ -652,8 +652,8 @@ impl Exporter<'_> {
         out
     }
 
-    fn ui_font(&mut self) -> Result<(Font, std::sync::Arc<deckcraft_fonts::FontFace>)> {
-        let face = FontDb::global().face(deckcraft_fonts::DEFAULT_FAMILY, "Regular");
+    fn ui_font(&mut self) -> Result<(Font, std::sync::Arc<iridium_decks_fonts::FontFace>)> {
+        let face = FontDb::global().face(iridium_decks_fonts::DEFAULT_FAMILY, "Regular");
         let f = self.font(&face)?;
         Ok((f, face))
     }
@@ -715,13 +715,13 @@ impl Exporter<'_> {
 
     /// A notes or handout page's header, date, footer and page number from its master; just the
     /// page number when the deck has no such master.
-    fn page_texts(&mut self, s: &mut Surface, master: Option<&deckcraft_model::Master>, pw: f64, ph: f64, n: usize) -> Result<()> {
+    fn page_texts(&mut self, s: &mut Surface, master: Option<&iridium_decks_model::Master>, pw: f64, ph: f64, n: usize) -> Result<()> {
         let Some(m) = master else { return self.footer(s, pw, ph, n) };
         // Laid out by the text engine in the placeholders, scaled from the notes size to the page:
         // wrapping, alignment and mixed formatting as the master has them.
         let pres = self.pres;
         let view = Affine::scale_non_uniform(pw / pres.notes_size.width.max(1.0), ph / pres.notes_size.height.max(1.0));
-        for pt in deckcraft_render::place_master_texts(pres, m, n) {
+        for pt in iridium_decks_render::place_master_texts(pres, m, n) {
             self.text_layer(s, &pt, view, true)?;
         }
         Ok(())

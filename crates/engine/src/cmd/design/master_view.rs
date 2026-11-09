@@ -43,13 +43,13 @@ pub fn handout_placeholder(kind: PhType, size: Size, id: ShapeId) -> Shape {
     if let Some(p) = text.paragraphs.first_mut()
         && matches!(kind, PhType::Date | PhType::SlideNum)
     {
-        p.props.align = Some(deckcraft_model::text::Align::Right);
+        p.props.align = Some(iridium_decks_model::text::Align::Right);
     }
     Shape {
         id,
         name: format!("{name} {}", idx + 1),
-        xfrm: Some(deckcraft_geom::Xfrm::new(x, y, w * 0.43, h * 0.05)),
-        ph: Some(deckcraft_model::Placeholder { kind, idx, size: Some("quarter".into()), ..Default::default() }),
+        xfrm: Some(iridium_decks_geom::Xfrm::new(x, y, w * 0.43, h * 0.05)),
+        ph: Some(iridium_decks_model::Placeholder { kind, idx, size: Some("quarter".into()), ..Default::default() }),
         text: Some(text),
         ..Default::default()
     }
@@ -62,7 +62,7 @@ pub(super) fn handout_view(s: &mut Session, _p: &Value) -> Result<Value> {
     let created = s.doc()?.doc.handout_master.is_none();
     if created {
         s.edit(|doc, _| {
-            let mut m = deckcraft_model::Master {
+            let mut m = iridium_decks_model::Master {
                 name: "Handout Master".into(),
                 theme: doc.masters.first().map(|m| m.theme.clone()).unwrap_or_default(),
                 color_map: doc.masters.first().map(|m| m.color_map.clone()).unwrap_or_default(),
@@ -133,20 +133,20 @@ pub fn notes_placeholder(kind: PhType, size: Size, id: ShapeId) -> Shape {
         PhType::SlideImage => Shape {
             id,
             name: "Slide Image Placeholder 3".into(),
-            xfrm: Some(deckcraft_geom::Xfrm::new(w * 0.125, h * 0.125, w * 0.75, h * 0.375)),
-            ph: Some(deckcraft_model::Placeholder { kind, idx: 2, ..Default::default() }),
+            xfrm: Some(iridium_decks_geom::Xfrm::new(w * 0.125, h * 0.125, w * 0.75, h * 0.375)),
+            ph: Some(iridium_decks_model::Placeholder { kind, idx: 2, ..Default::default() }),
             fill: Some(Fill::None),
-            line: Some(deckcraft_model::Line::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::BLACK), 1.0)),
+            line: Some(iridium_decks_model::Line::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::BLACK), 1.0)),
             ..Default::default()
         },
         PhType::Body => {
             let mut text = TextBody::default();
-            text.paragraphs = vec![deckcraft_model::text::Paragraph::new("Click to edit Master text styles")];
+            text.paragraphs = vec![iridium_decks_model::text::Paragraph::new("Click to edit Master text styles")];
             Shape {
                 id,
                 name: "Notes Placeholder 4".into(),
-                xfrm: Some(deckcraft_geom::Xfrm::new(w * 0.1, h * 0.53, w * 0.8, h * 0.36)),
-                ph: Some(deckcraft_model::Placeholder { kind, idx: 3, size: Some("quarter".into()), ..Default::default() }),
+                xfrm: Some(iridium_decks_geom::Xfrm::new(w * 0.1, h * 0.53, w * 0.8, h * 0.36)),
+                ph: Some(iridium_decks_model::Placeholder { kind, idx: 3, size: Some("quarter".into()), ..Default::default() }),
                 text: Some(text),
                 ..Default::default()
             }
@@ -170,7 +170,7 @@ pub(super) fn notes_view(s: &mut Session, _p: &Value) -> Result<Value> {
     let created = s.doc()?.doc.notes_master.as_ref().is_none_or(|m| m.shapes.is_empty());
     if created {
         s.edit(|doc, _| {
-            let mut m = doc.notes_master.as_deref().cloned().unwrap_or_else(|| deckcraft_model::Master {
+            let mut m = doc.notes_master.as_deref().cloned().unwrap_or_else(|| iridium_decks_model::Master {
                 name: "Notes Master".into(),
                 theme: doc.masters.first().map(|m| m.theme.clone()).unwrap_or_default(),
                 color_map: doc.masters.first().map(|m| m.color_map.clone()).unwrap_or_default(),
@@ -231,7 +231,7 @@ pub(super) fn insert_layout(s: &mut Session, p: &Value) -> Result<Value> {
     let name = str_param(p, "name").unwrap_or("Custom Layout").to_string();
     s.edit(|doc, sel| {
         let mi = master_index(doc, sel);
-        let id = deckcraft_model::LayoutId(doc.alloc_id().ok_or_else(|| bad("master.insertLayout", NO_ID_SPACE))?);
+        let id = iridium_decks_model::LayoutId(doc.alloc_id().ok_or_else(|| bad("master.insertLayout", NO_ID_SPACE))?);
         let tid = ShapeId(doc.alloc_id().ok_or_else(|| bad("master.insertLayout", NO_ID_SPACE))?);
         let size = doc.slide_size;
         let m = Arc::make_mut(doc.masters.get_mut(mi).ok_or_else(|| bad("master.insertLayout", "no master"))?);
@@ -247,10 +247,10 @@ pub(super) fn insert_layout(s: &mut Session, p: &Value) -> Result<Value> {
         };
         m.layouts.insert(
             at.min(m.layouts.len()),
-            deckcraft_model::Layout {
+            iridium_decks_model::Layout {
                 id,
                 name,
-                kind: deckcraft_model::LayoutType::Custom,
+                kind: iridium_decks_model::LayoutType::Custom,
                 shapes: title.into_iter().collect(),
                 background: None,
                 show_master_shapes: true,
@@ -316,11 +316,12 @@ pub(super) fn insert_placeholder(s: &mut Session, p: &Value) -> Result<Value> {
         return Err(bad("master.insertPlaceholder", "select a layout in Slide Master view"));
     }
     let size = s.doc()?.doc.slide_size;
-    let rect = rect_param(p, "rect").unwrap_or(deckcraft_geom::Xfrm::new(size.width * 0.25, size.height * 0.3, size.width * 0.5, size.height * 0.4));
+    let rect =
+        rect_param(p, "rect").unwrap_or(iridium_decks_geom::Xfrm::new(size.width * 0.25, size.height * 0.3, size.width * 0.5, size.height * 0.4));
     let idx = s.doc()?.shapes().iter().filter_map(|x| x.ph.as_ref().map(|p| p.idx)).max().unwrap_or(0) + 1;
     let shape = Shape {
         xfrm: Some(rect),
-        ph: Some(deckcraft_model::Placeholder { kind, idx, ..Default::default() }),
+        ph: Some(iridium_decks_model::Placeholder { kind, idx, ..Default::default() }),
         text: Some(TextBody::default()),
         ..Default::default()
     };
@@ -474,14 +475,14 @@ fn synthesized_placeholder(kind: PhType, id: ShapeId, idx: u32, size: Size) -> S
         id,
         name: name.into(),
         xfrm: Some(placeholder_rect(kind, size)),
-        ph: Some(deckcraft_model::Placeholder { kind, idx, ..Default::default() }),
+        ph: Some(iridium_decks_model::Placeholder { kind, idx, ..Default::default() }),
         text: Some(text),
         ..Default::default()
     }
 }
 
 /// Standard placeholder boxes at 960×540, scaled to the slide size.
-fn placeholder_rect(kind: PhType, size: Size) -> deckcraft_geom::Xfrm {
+fn placeholder_rect(kind: PhType, size: Size) -> iridium_decks_geom::Xfrm {
     let sx = size.width / 960.0;
     let sy = size.height / 540.0;
     let (x, y, w, h) = match kind {
@@ -490,11 +491,11 @@ fn placeholder_rect(kind: PhType, size: Size) -> deckcraft_geom::Xfrm {
         PhType::SlideNum => (684.0, 500.0, 216.0, 28.0),
         _ => (60.0, 29.0, 840.0, 104.0),
     };
-    deckcraft_geom::Xfrm::new(x * sx, y * sy, w * sx, h * sy)
+    iridium_decks_geom::Xfrm::new(x * sx, y * sy, w * sx, h * sy)
 }
 
-fn slide_number_paragraph() -> deckcraft_model::Paragraph {
-    deckcraft_model::Paragraph {
+fn slide_number_paragraph() -> iridium_decks_model::Paragraph {
+    iridium_decks_model::Paragraph {
         runs: vec![Run { text: "‹#›".into(), props: Default::default(), kind: RunKind::Field { field: "slidenum".into() } }],
         ..Default::default()
     }

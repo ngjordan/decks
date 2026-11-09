@@ -23,29 +23,29 @@ pub(super) fn designer(app: &mut SlideApp, ui: &mut Ui) {
     let w = ui.available_width() - 8.0;
     let ppp = ui.ctx().pixels_per_point();
     let px = (w * ppp).round().max(16.0) as u32;
-    let ideas = deckcraft_engine::cmd::ideas::ideas_for(&doc, idx);
-    let themes = deckcraft_model::theme::builtin_themes();
+    let ideas = iridium_decks_engine::cmd::ideas::ideas_for(&doc, idx);
+    let themes = iridium_decks_model::theme::builtin_themes();
     let cache_id = egui::Id::unique("design-idea-thumbs");
     let key = (key_doc.0, key_doc.1, idx, px);
     let mut cache: IdeaThumbs = ui.ctx().data_mut(|d| d.get_temp(cache_id)).unwrap_or_default();
     if cache.key != key || cache.tex.is_empty() {
         cache = IdeaThumbs { key, tex: vec![] };
-        let mut render = |name: String, d: &deckcraft_model::Presentation| {
+        let mut render = |name: String, d: &iridium_decks_model::Presentation| {
             let (px, h) = crate::textures::fit_size(
                 (px, (px as f64 * d.slide_size.height / d.slide_size.width.max(1.0)).clamp(1.0, 1e9) as u32),
                 crate::textures::max_side(ui.ctx()),
             );
-            let img = deckcraft_render::render_slide(
+            let img = iridium_decks_render::render_slide(
                 d,
                 idx,
-                &deckcraft_render::RenderOpts { scale: px as f64 / d.slide_size.width.max(1.0), size: Some((px, h)), ..Default::default() },
+                &iridium_decks_render::RenderOpts { scale: px as f64 / d.slide_size.width.max(1.0), size: Some((px, h)), ..Default::default() },
             );
             let tex = crate::textures::upload_editor(ui.ctx(), format!("idea-{name}"), crate::textures::to_color_image(&img, false));
             cache.tex.push((name, tex, px, h));
         };
         for (id, _) in &ideas {
             let mut d = (*doc).clone();
-            if deckcraft_engine::cmd::ideas::apply_idea(&mut d, &sel, idx, id).is_ok() {
+            if iridium_decks_engine::cmd::ideas::apply_idea(&mut d, &sel, idx, id).is_ok() {
                 render(format!("layout:{id}"), &d);
             }
         }

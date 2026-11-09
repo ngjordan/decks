@@ -1,18 +1,18 @@
 [package]
-name = "deckcraft-pdf"
+name = "iridium-decks-pdf"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Iridium Decks PDF export (craft-pdf/Krilla): slides, notes pages and handouts with a selectable text layer, links and bookmarks"
+description = "Decks PDF export (craft-pdf/Krilla): slides, notes pages and handouts with a selectable text layer, links and bookmarks"
 
 [lints]
 workspace = true
 
 [dependencies]
-deckcraft-model = { workspace = true }
-deckcraft-fonts = { workspace = true }
-deckcraft-text = { workspace = true }
-deckcraft-render = { workspace = true }
+iridium-decks-model = { workspace = true }
+iridium-decks-fonts = { workspace = true }
+iridium-decks-text = { workspace = true }
+iridium-decks-render = { workspace = true }
 craft-pdf = { workspace = true }
 kurbo = { workspace = true }
 serde = { workspace = true }

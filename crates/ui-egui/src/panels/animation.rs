@@ -10,7 +10,7 @@ pub(super) fn animation(app: &mut SlideApp, ui: &mut Ui) {
     let Some(slide) = st.current_slide() else { return };
     let anims = slide.animations.clone();
     let size = (st.doc.slide_size.width, st.doc.slide_size.height);
-    let tl = deckcraft_anim::Timeline::new(slide, size.0, size.1);
+    let tl = iridium_decks_anim::Timeline::new(slide, size.0, size.1);
     let effects = tl.effects();
     let names: Vec<(u32, String)> = st.shapes().iter().map(|s| (s.id.0, s.name.clone())).collect();
     let selected: Vec<u32> = st.selection.shapes.iter().map(|i| i.0).collect();

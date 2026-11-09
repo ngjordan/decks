@@ -24,7 +24,7 @@ pub(super) fn transitions(app: &mut SlideApp, ui: &mut Ui) {
         }
     });
     group(ui, |ui| {
-        let list = deckcraft_model::anim::TRANSITIONS;
+        let list = iridium_decks_model::anim::TRANSITIONS;
         let shown: Vec<_> = list.iter().take(12).collect();
         let sel = shown.iter().position(|x| x.0 == kind);
         if let Some(i) = widgets::gallery(
@@ -64,7 +64,7 @@ pub(super) fn transitions(app: &mut SlideApp, ui: &mut Ui) {
         let r = big_button(ui, Icon::EffectOptions, "Effect\nOptions", !rows.is_empty());
         egui::Popup::menu(&r).show(|ui| {
             for &(o, on) in &rows {
-                if ui.selectable_label(on, deckcraft_model::anim::transition_option_label(&kind, o)).clicked() {
+                if ui.selectable_label(on, iridium_decks_model::anim::transition_option_label(&kind, o)).clicked() {
                     run(app, "transition.options", json!({"option": o}));
                     ui.close();
                 }
@@ -91,7 +91,7 @@ pub(super) fn transitions(app: &mut SlideApp, ui: &mut Ui) {
                         run(app, "transition.sound", json!({"stopPrevious": true}));
                     }
                     ui.separator();
-                    for (id, label) in deckcraft_engine::sounds::BUILTIN {
+                    for (id, label) in iridium_decks_engine::sounds::BUILTIN {
                         if ui.button(label).clicked() {
                             let lp = cur.as_ref().is_some_and(|t| t.sound_loop);
                             run(app, "transition.sound", json!({"builtin": id, "loop": lp}));
@@ -240,6 +240,6 @@ pub fn paint_transition_tile(p: &egui::Painter, r: Rect, (id, label): (&str, &st
 
 /// One row of Transitions ▸ Effect Options: the stored option and whether it is the current one.
 pub(super) fn transition_effect_rows(kind: &str, current: Option<&str>) -> Vec<(&'static str, bool)> {
-    let opts = deckcraft_model::anim::TRANSITIONS.iter().find(|x| x.0 == kind).map(|x| x.4).unwrap_or(&[]);
+    let opts = iridium_decks_model::anim::TRANSITIONS.iter().find(|x| x.0 == kind).map(|x| x.4).unwrap_or(&[]);
     marked_options(opts, current)
 }

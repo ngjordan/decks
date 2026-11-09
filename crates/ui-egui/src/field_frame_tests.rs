@@ -2,12 +2,12 @@
 //! pane or ribbon it sits on and had no outline, so only its label (or hint) was visible (#1204).
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use deckcraft_engine::Session;
 use egui::accesskit::Role;
 use egui::epaint::Shape;
 use egui::{Color32, Rect, Stroke};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::{Services, SlideApp, theme};

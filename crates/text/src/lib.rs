@@ -25,13 +25,13 @@ pub mod datetime;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
-use deckcraft_fonts::script::{self, joins_following, joins_preceding};
-use deckcraft_fonts::{FontDb, FontFace, FontSlot, ScriptTag, ShapeParams};
-use deckcraft_geom::{Point, Rect};
-use deckcraft_model::resolve::{self, Ctx};
-use deckcraft_model::text::{Align, Anchor, AutoFit, BodyProps, Bullet, Caps, ParaProps, RunKind, RunProps, Spacing, Strike, TextBody, TextDir};
-use deckcraft_model::{Fill, Shape};
+use iridium_decks_color::Rgba;
+use iridium_decks_fonts::script::{self, joins_following, joins_preceding};
+use iridium_decks_fonts::{FontDb, FontFace, FontSlot, ScriptTag, ShapeParams};
+use iridium_decks_geom::{Point, Rect};
+use iridium_decks_model::resolve::{self, Ctx};
+use iridium_decks_model::text::{Align, Anchor, AutoFit, BodyProps, Bullet, Caps, ParaProps, RunKind, RunProps, Spacing, Strike, TextBody, TextDir};
+use iridium_decks_model::{Fill, Shape};
 use unicode_segmentation::UnicodeSegmentation;
 
 mod autonum;

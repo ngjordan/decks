@@ -1,8 +1,8 @@
 //! Add Animation (#1370): the menu scrolls, so the last effect can be reached and added.
 
-use deckcraft_engine::Session;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::{Services, SlideApp};
@@ -40,7 +40,7 @@ fn open_add_animation(h: &mut Harness<'static, SlideApp>, window: egui::Vec2) {
     h.run_steps(3);
 }
 
-fn added_effect(h: &Harness<'_, SlideApp>) -> Option<(String, deckcraft_model::anim::AnimClass)> {
+fn added_effect(h: &Harness<'_, SlideApp>) -> Option<(String, iridium_decks_model::anim::AnimClass)> {
     h.state().session.active().and_then(|d| d.current_slide()).and_then(|s| s.animations.first()).map(|a| (a.effect.clone(), a.class))
 }
 
@@ -57,5 +57,5 @@ fn the_last_effect_is_reachable_by_scrolling() {
     assert!(row.min.y >= 0.0 && row.max.y <= 700.0, "a scrolled effect stays inside the window: {row:?}");
     h.get_by_label("Neutron — Motion").click();
     h.run_steps(3);
-    assert_eq!(added_effect(&h), Some(("neutron".into(), deckcraft_model::anim::AnimClass::Path)));
+    assert_eq!(added_effect(&h), Some(("neutron".into(), iridium_decks_model::anim::AnimClass::Path)));
 }

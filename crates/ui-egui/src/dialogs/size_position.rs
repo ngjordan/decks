@@ -13,11 +13,11 @@ fn publish_dim(d: &mut Dialog, key: &str, exact: f64, shown: String) {
     d.fields.insert(format!("{key}Pt"), exact.to_string());
 }
 
-fn selection_xfrm(app: &SlideApp) -> Option<deckcraft_geom::Xfrm> {
+fn selection_xfrm(app: &SlideApp) -> Option<iridium_decks_geom::Xfrm> {
     let st = app.session.active()?;
     let id = *st.selection.shapes.first()?;
     let sh = st.shape(id)?;
-    Some(deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh))
+    Some(iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh))
 }
 
 fn seed_size_position(app: &SlideApp, d: &mut Dialog) {

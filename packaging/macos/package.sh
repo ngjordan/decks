@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Build, sign and (optionally) notarize the macOS release artifacts:
 #
-#   $DIST/iridium-decks-<version>-macos-<arch>.dmg          Iridium Decks.app on a drag-to-Applications DMG
-#   $DIST/deckcraft-cli-<version>-macos-<arch>.zip      the headless CLI
+#   $DIST/iridium-decks-<version>-macos-<arch>.dmg          Decks.app on a drag-to-Applications DMG
+#   $DIST/iridium-decks-cli-<version>-macos-<arch>.zip      the headless CLI
 #
 # Usage: packaging/macos/package.sh [--arch universal|aarch64|x86_64] [--skip-build]
 #
@@ -39,9 +39,9 @@ export MACOSX_DEPLOYMENT_TARGET=11.0
 IDENTITY="${MACOS_SIGN_IDENTITY:--}"
 SHORT_VERSION="${VERSION%%-*}"
 WORK="$CARGO_TARGET_DIR/macos-package"
-APP="$WORK/Iridium Decks.app"
+APP="$WORK/Decks.app"
 DMG="$DIST/iridium-decks-$VERSION-macos-$ARCH.dmg"
-CLI_ZIP="$DIST/deckcraft-cli-$VERSION-macos-$ARCH.zip"
+CLI_ZIP="$DIST/iridium-decks-cli-$VERSION-macos-$ARCH.zip"
 
 NOTARIZE=0
 if [[ "$IDENTITY" = "-" ]]; then
@@ -52,18 +52,18 @@ else
   warn "macOS: APPLE_ID / APPLE_PASSWORD / APPLE_TEAM_ID incomplete; signed but not notarized"
 fi
 
-echo "==> Iridium Decks $VERSION for macOS ($ARCH), identity: $IDENTITY, notarize: $NOTARIZE"
+echo "==> Decks $VERSION for macOS ($ARCH), identity: $IDENTITY, notarize: $NOTARIZE"
 
 # ---- build -------------------------------------------------------------------------------------
 if [[ "$SKIP_BUILD" = 0 ]]; then
   args=()
   for t in "${TARGETS[@]}"; do args+=(--target "$t"); done
-  (cd "$ROOT" && cargo build --release --locked -p deckcraft -p deckcraft-cli "${args[@]}")
+  (cd "$ROOT" && cargo build --release --locked -p iridium-decks -p iridium-decks-cli "${args[@]}")
 fi
 
 rm -rf "$WORK"
 mkdir -p "$WORK/bin"
-for bin in deckcraft deckcraft-cli; do
+for bin in iridium-decks iridium-decks-cli; do
   inputs=()
   for t in "${TARGETS[@]}"; do inputs+=("$CARGO_TARGET_DIR/$t/release/$bin"); done
   lipo -create -output "$WORK/bin/$bin" "${inputs[@]}"
@@ -112,30 +112,30 @@ notarize() {
   fi
 }
 
-# ---- Iridium Decks.app ----------------------------------------------------------------------------
+# ---- Decks.app ----------------------------------------------------------------------------
 echo "==> assembling $APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 # Executable and icon carry the display name (CFBundleExecutable / CFBundleIconFile).
-cp "$WORK/bin/deckcraft" "$APP/Contents/MacOS/Iridium Decks"
-cp "$ROOT/assets/app-icon/iridium-decks.icns" "$APP/Contents/Resources/Iridium Decks.icns"
+cp "$WORK/bin/iridium-decks" "$APP/Contents/MacOS/Decks"
+cp "$ROOT/assets/app-icon/iridium-decks.icns" "$APP/Contents/Resources/Decks.icns"
 # The licences and README, as in the CLI zip, plus the licences of the embedded craft-fonts
 # fonts when built with CRAFT_FONTS_DIR. Before signing, so the seal covers them.
 copy_docs "$APP/Contents/Resources"
 sed -e "s/@VERSION@/$VERSION/g" -e "s/@SHORT_VERSION@/$SHORT_VERSION/g" \
-  -e "s/@BUILD_SHA@/${DECKCRAFT_BUILD_SHA:-unknown}/g" \
+  -e "s/@BUILD_SHA@/${IRIDIUM_DECKS_BUILD_SHA:-unknown}/g" \
   "$HERE/Info.plist.in" >"$APP/Contents/Info.plist"
 plutil -lint "$APP/Contents/Info.plist"
 printf 'APPL????' >"$APP/Contents/PkgInfo"
 
 # Sign inside-out: nested code first, then the bundle itself (no --deep on the final signature).
 # Today the only nested code is the main executable; frameworks/helpers would be signed here too.
-sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Iridium Decks"
+sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP/Contents/MacOS/Decks"
 sign --options runtime --entitlements "$HERE/entitlements.plist" "$APP"
 codesign --verify --strict --deep --verbose=2 "$APP"
 
 if [[ "$NOTARIZE" = 1 ]]; then
-  ditto -c -k --keepParent "$APP" "$WORK/Iridium Decks-notarize.zip"
-  notarize "$WORK/Iridium Decks-notarize.zip"
+  ditto -c -k --keepParent "$APP" "$WORK/Decks-notarize.zip"
+  notarize "$WORK/Decks-notarize.zip"
   stapler_retry staple "$APP"
   stapler_retry validate "$APP"
   spctl --assess --type execute -vvv "$APP"
@@ -145,7 +145,7 @@ fi
 echo "==> building $DMG"
 STAGE="$WORK/dmg"
 mkdir -p "$STAGE"
-ditto "$APP" "$STAGE/Iridium Decks.app"
+ditto "$APP" "$STAGE/Decks.app"
 ln -s /Applications "$STAGE/Applications"
 # Finder window layout: background, icon size and positions (packaging/macos/dmg/README.md).
 mkdir -p "$STAGE/.background"
@@ -155,7 +155,7 @@ rm -f "$DMG" "$WORK/raw.dmg"
 # makehybrid + convert builds the image without attaching a device, unlike `create -srcfolder`,
 # which is flaky on CI runners ("Resource busy") and hangs in sandboxed sessions.
 # The volume name has no version: .DS_Store finds the background through an alias that includes it.
-hdiutil makehybrid -hfs -hfs-volume-name "Iridium Decks" -hfs-openfolder "$STAGE" -o "$WORK/raw.dmg" "$STAGE"
+hdiutil makehybrid -hfs -hfs-volume-name "Decks" -hfs-openfolder "$STAGE" -o "$WORK/raw.dmg" "$STAGE"
 hdiutil convert "$WORK/raw.dmg" -format UDZO -imagekey zlib-level=9 -o "$DMG"
 rm -f "$WORK/raw.dmg"
 sign "$DMG"
@@ -169,17 +169,17 @@ fi
 
 # ---- CLI ---------------------------------------------------------------------------------------
 echo "==> building $CLI_ZIP"
-CLI_DIR="$WORK/deckcraft-cli-$VERSION-macos-$ARCH"
+CLI_DIR="$WORK/iridium-decks-cli-$VERSION-macos-$ARCH"
 mkdir -p "$CLI_DIR"
-cp "$WORK/bin/deckcraft-cli" "$CLI_DIR/"
+cp "$WORK/bin/iridium-decks-cli" "$CLI_DIR/"
 copy_docs "$CLI_DIR"
-sign --options runtime "$CLI_DIR/deckcraft-cli"
-codesign --verify --strict --verbose=2 "$CLI_DIR/deckcraft-cli"
+sign --options runtime "$CLI_DIR/iridium-decks-cli"
+codesign --verify --strict --verbose=2 "$CLI_DIR/iridium-decks-cli"
 rm -f "$CLI_ZIP"
 ditto -c -k --keepParent "$CLI_DIR" "$CLI_ZIP"
 # A bare Mach-O can't carry a stapled ticket; Gatekeeper looks the notarization up online.
 if [[ "$NOTARIZE" = 1 ]]; then notarize "$CLI_ZIP"; fi
 
-"$WORK/bin/deckcraft-cli" --version
+"$WORK/bin/iridium-decks-cli" --version
 echo "==> done"
 ls -lh "$DMG" "$CLI_ZIP"

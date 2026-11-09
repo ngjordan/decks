@@ -12,7 +12,7 @@ pub(super) fn scale_shapes(shapes: &mut [Shape], sx: f64, sy: f64, k: f64, ox: f
             x.h *= sy;
         }
         if let Some(t) = sh.text.as_mut() {
-            deckcraft_model::edit::format_all(t, &|r| {
+            iridium_decks_model::edit::format_all(t, &|r| {
                 if let Some(sz) = r.size.as_mut() {
                     *sz = (*sz * k).max(1.0);
                 }
@@ -84,7 +84,7 @@ pub(super) fn header_footer(s: &mut Session, p: &Value) -> Result<Value> {
         if let Some(v) = str_param(p, "dateFormat") {
             // Refused rather than ignored: a format that renders nothing would leave the
             // placeholder showing its saved text for ever.
-            if !deckcraft_text::datetime::DATE_KINDS.contains(&v) {
+            if !iridium_decks_text::datetime::DATE_KINDS.contains(&v) {
                 return Err(bad("design.headerFooter", "dateFormat: one of datetime1…datetime13"));
             }
             hf.date_format = v.into();
@@ -110,7 +110,7 @@ pub(super) fn header_footer(s: &mut Session, p: &Value) -> Result<Value> {
         for i in list {
             let Some(layout) = doc.slides.get(i).map(|x| x.layout) else { continue };
             let lay = doc.layout(layout).map(|(_, l)| l.clone());
-            let is_title = lay.as_ref().is_some_and(|l| l.kind == deckcraft_model::LayoutType::Title);
+            let is_title = lay.as_ref().is_some_and(|l| l.kind == iridium_decks_model::LayoutType::Title);
             let want = |k: PhType| {
                 !(hf.hide_on_title && is_title)
                     && match k {
@@ -137,7 +137,7 @@ pub(super) fn header_footer(s: &mut Session, p: &Value) -> Result<Value> {
                         let Some(lp) = lp else { continue };
                         let body = match k {
                             PhType::SlideNum => TextBody {
-                                paragraphs: vec![deckcraft_model::Paragraph {
+                                paragraphs: vec![iridium_decks_model::Paragraph {
                                     runs: vec![Run {
                                         text: "‹#›".into(),
                                         props: Default::default(),
@@ -148,7 +148,7 @@ pub(super) fn header_footer(s: &mut Session, p: &Value) -> Result<Value> {
                                 ..Default::default()
                             },
                             PhType::Date if hf.date_text.is_empty() => TextBody {
-                                paragraphs: vec![deckcraft_model::Paragraph {
+                                paragraphs: vec![iridium_decks_model::Paragraph {
                                     runs: vec![Run {
                                         text: date_now(&hf.date_format),
                                         props: Default::default(),
@@ -190,13 +190,15 @@ pub(super) fn header_footer(s: &mut Session, p: &Value) -> Result<Value> {
 
 /// The date field type `format` names, `datetime1` when it is empty or unknown.
 fn date_kind(format: &str) -> &str {
-    if deckcraft_text::datetime::DATE_KINDS.contains(&format) { format } else { "datetime1" }
+    if iridium_decks_text::datetime::DATE_KINDS.contains(&format) { format } else { "datetime1" }
 }
 
 /// The saved text of a date field of `format`, as it shows now.
 fn date_now(format: &str) -> String {
     let kind = date_kind(format);
-    deckcraft_text::datetime::DateTime::now_local().and_then(|now| deckcraft_text::datetime::field_text(kind, None, now)).unwrap_or_else(today)
+    iridium_decks_text::datetime::DateTime::now_local()
+        .and_then(|now| iridium_decks_text::datetime::field_text(kind, None, now))
+        .unwrap_or_else(today)
 }
 
 /// Point a slide's date placeholder at a fixed date (its own plain text) or, for an empty
@@ -204,7 +206,7 @@ fn date_now(format: &str) -> String {
 fn set_date(sh: &mut Shape, fixed: &str, format: &str) {
     let runs = || sh.text.iter().flat_map(|t| &t.paragraphs).flat_map(|p| &p.runs);
     let field_now = runs().find_map(|r| match &r.kind {
-        RunKind::Field { field } if deckcraft_text::datetime::is_date_field(field) => Some(field.clone()),
+        RunKind::Field { field } if iridium_decks_text::datetime::is_date_field(field) => Some(field.clone()),
         _ => None,
     });
     let has_field = field_now.is_some();
@@ -218,7 +220,7 @@ fn set_date(sh: &mut Shape, fixed: &str, format: &str) {
         _ if !has_field && sh.text.as_ref().is_some_and(|t| t.text() == fixed) => return,
         _ => (fixed.to_string(), RunKind::Text),
     };
-    let para = deckcraft_model::Paragraph { runs: vec![Run { text, props, kind }], ..Default::default() };
+    let para = iridium_decks_model::Paragraph { runs: vec![Run { text, props, kind }], ..Default::default() };
     sh.text = Some(TextBody { paragraphs: vec![para], ..sh.text.clone().unwrap_or_default() });
 }
 
@@ -230,7 +232,7 @@ pub fn today() -> String {
 
 /// What date field `kind` shows now (empty if unknown or there is no clock).
 pub fn date_field_text(kind: &str) -> String {
-    use deckcraft_text::datetime::{DateTime, field_text};
+    use iridium_decks_text::datetime::{DateTime, field_text};
     DateTime::now_local().and_then(|now| field_text(kind, None, now)).unwrap_or_default()
 }
 
@@ -253,8 +255,8 @@ pub fn civil(z: i64) -> (i64, u32, u32) {
 
 #[cfg(test)]
 mod header_footer_date_tests {
-    use deckcraft_model::PhType;
-    use deckcraft_model::text::RunKind;
+    use iridium_decks_model::PhType;
+    use iridium_decks_model::text::RunKind;
     use serde_json::json;
 
     use crate::Session;
@@ -280,8 +282,8 @@ mod header_footer_date_tests {
     }
 
     fn sample(kind: &str) -> String {
-        let now = deckcraft_text::datetime::DateTime::now_local().expect("a local date");
-        deckcraft_text::datetime::field_text(kind, None, now).expect("a sample")
+        let now = iridium_decks_text::datetime::DateTime::now_local().expect("a local date");
+        iridium_decks_text::datetime::field_text(kind, None, now).expect("a sample")
     }
 
     /// Runs `design.headerFooter` and checks the slide's date run is an automatic `kind` field.

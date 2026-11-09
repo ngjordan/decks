@@ -1,12 +1,12 @@
 //! Tables: cell fills from the table style (or overrides), borders, and cell text.
 
-use deckcraft_color::{ColorTransform, Rgba, SchemeSlot};
-use deckcraft_model::resolve::Ctx;
-use deckcraft_model::style::{ColorRef, Fill};
-use deckcraft_model::table::{Cell, Table, TableBorder, TablePart, TablePartStyle, TableStyleDef};
-use deckcraft_model::text::{Anchor, TextBody, TextDir};
-use deckcraft_model::{Presentation, Shape};
-use deckcraft_text::Fields;
+use iridium_decks_color::{ColorTransform, Rgba, SchemeSlot};
+use iridium_decks_model::resolve::Ctx;
+use iridium_decks_model::style::{ColorRef, Fill};
+use iridium_decks_model::table::{Cell, Table, TableBorder, TablePart, TablePartStyle, TableStyleDef};
+use iridium_decks_model::text::{Anchor, TextBody, TextDir};
+use iridium_decks_model::{Presentation, Shape};
+use iridium_decks_text::Fields;
 use kurbo::{Affine, BezPath, Rect, Shape as _};
 use vello_cpu::{RenderContext, peniko};
 
@@ -166,7 +166,7 @@ impl PresetPart {
 
 /// Tint `k` of accent `a`.
 fn tint(a: Rgba, k: i32) -> Rgba {
-    deckcraft_color::apply(a, &[ColorTransform::Tint(k)])
+    iridium_decks_color::apply(a, &[ColorTransform::Tint(k)])
 }
 
 fn light1_look(a: Rgba, p: PresetPart, on: impl Fn(Rgba) -> Rgba) -> CellLook {
@@ -190,9 +190,9 @@ fn dark1_look(a: Rgba, p: PresetPart) -> CellLook {
         fill: Some(if p.header {
             Rgba::BLACK
         } else if p.banded {
-            deckcraft_color::apply(a, &[ColorTransform::Shade(60000)])
+            iridium_decks_color::apply(a, &[ColorTransform::Shade(60000)])
         } else {
-            deckcraft_color::apply(a, &[ColorTransform::Shade(75000)])
+            iridium_decks_color::apply(a, &[ColorTransform::Shade(75000)])
         }),
         text: Some(Rgba::WHITE),
         bold: p.header || p.total || p.first_col,
@@ -323,7 +323,7 @@ fn row_heights_with_def(rctx: &Ctx, style_def: Option<&TableStyleDef>, t: &Table
             let (Some(x0), Some(x1)) = (xs.get(ci), xs.get(c1)) else { continue };
             let body = cell_body_with_def(rctx, style_def, t, ri, ci, cell);
             let tmp = Shape::table_cell(body.clone());
-            let need = deckcraft_text::fit_height(rctx, &tmp, &body, Rect::new(*x0, 0.0, *x1, h.max(1.0)), fields);
+            let need = iridium_decks_text::fit_height(rctx, &tmp, &body, Rect::new(*x0, 0.0, *x1, h.max(1.0)), fields);
             if need.is_finite() {
                 h = h.max(need.min(20_000.0));
             }
@@ -382,7 +382,7 @@ pub fn draw(
     m: Affine,
     _w: f64,
     _h: f64,
-    fields: &dyn deckcraft_text::Fields,
+    fields: &dyn iridium_decks_text::Fields,
     editing: bool,
 ) -> Option<kurbo::Rect> {
     let _ = pres;
@@ -394,7 +394,7 @@ pub fn draw(
     if let Some(all) = rects.iter().map(|(_, _, r)| *r).reduce(|a, b| a.union(b)) {
         for (bg, ph) in style_bg.into_iter().chain(own_bg) {
             ctx.set_transform(m);
-            crate::paint::fill_path(ctx, rctx, &bg, ph, &all.to_path(0.1), all, m, deckcraft_geom::preset::FillMode::Norm, 1.0, rctx.pres);
+            crate::paint::fill_path(ctx, rctx, &bg, ph, &all.to_path(0.1), all, m, iridium_decks_geom::preset::FillMode::Norm, 1.0, rctx.pres);
         }
     }
     for (r, c, rect) in &rects {
@@ -403,12 +403,21 @@ pub fn draw(
         ctx.set_transform(m);
         match &cell.fill {
             Some(f) => {
-                crate::paint::fill_path(ctx, rctx, f, None, &rect.to_path(0.1), *rect, m, deckcraft_geom::preset::FillMode::Norm, 1.0, rctx.pres)
+                crate::paint::fill_path(ctx, rctx, f, None, &rect.to_path(0.1), *rect, m, iridium_decks_geom::preset::FillMode::Norm, 1.0, rctx.pres)
             }
             None => match &lk.paint {
-                Some((f, ph)) => {
-                    crate::paint::fill_path(ctx, rctx, f, *ph, &rect.to_path(0.1), *rect, m, deckcraft_geom::preset::FillMode::Norm, 1.0, rctx.pres)
-                }
+                Some((f, ph)) => crate::paint::fill_path(
+                    ctx,
+                    rctx,
+                    f,
+                    *ph,
+                    &rect.to_path(0.1),
+                    *rect,
+                    m,
+                    iridium_decks_geom::preset::FillMode::Norm,
+                    1.0,
+                    rctx.pres,
+                ),
                 None => {
                     if let Some(fc) = lk.fill.filter(|f| f.a > 0) {
                         ctx.set_paint(color(fc, 1.0));
@@ -476,7 +485,8 @@ pub fn draw(
         let tmp = Shape::table_cell(body.clone());
         #[cfg(test)]
         TEXT_CELLS_DRAWN.with(|n| n.set(n.get() + 1));
-        let mut l = deckcraft_text::layout(rctx, &tmp, &body, &deckcraft_text::Opts { rect: *rect, fields, prompt_color: None, no_shrink: false });
+        let mut l =
+            iridium_decks_text::layout(rctx, &tmp, &body, &iridium_decks_text::Opts { rect: *rect, fields, prompt_color: None, no_shrink: false });
         if editing {
             crate::preview_empty_bullets(&mut l);
         }

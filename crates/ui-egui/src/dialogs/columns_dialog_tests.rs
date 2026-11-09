@@ -1,9 +1,9 @@
 //! The Columns dialog: Home › Columns › More Columns… and Format Shape › Text Box › Columns… open it
 //! with the text box's values, and OK sets the number and spacing in one undo step.
 
-use deckcraft_engine::Session;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::{Services, SlideApp};

@@ -24,7 +24,7 @@ pub(super) fn fill_transparency_to_apply(shown_percent: f32, seed_percent: f32) 
     Some(f64::from(shown) / 100.0)
 }
 
-fn format_tabs(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
+fn format_tabs(app: &mut SlideApp, ui: &mut Ui, sh: &iridium_decks_model::Shape) {
     // Tabs as icons.
     ui.horizontal(|ui| {
         for (tab, icon, tip) in [
@@ -46,7 +46,7 @@ fn format_tabs(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
     });
 }
 
-fn effects_tab(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
+fn effects_tab(app: &mut SlideApp, ui: &mut Ui, sh: &iridium_decks_model::Shape) {
     ui.label(egui::RichText::new("Shadow").font(theme::bold(13.0)));
     let fx = sh.effects.clone().unwrap_or_default();
     if let Some(v) = effect_presets::shadow_row(ui, effect_presets::shadow_preset_id(&fx)) {
@@ -137,12 +137,12 @@ fn effects_tab(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
 
 /// A group keeps no slide background fill of its own. It shows Slide background fill when every
 /// shape or text box in it has one, including when the group keeps a fill that a picture in it uses.
-fn members_have_background_fill(sh: &deckcraft_model::Shape) -> bool {
+fn members_have_background_fill(sh: &iridium_decks_model::Shape) -> bool {
     if !matches!(sh.kind, ShapeKind::Group { .. }) {
         return false;
     }
     let (mut any, mut all) = (false, true);
-    deckcraft_model::walk(sh.children(), &mut |m, _| {
+    iridium_decks_model::walk(sh.children(), &mut |m, _| {
         if matches!(m.kind, ShapeKind::Shape) {
             any = true;
             all &= m.fill == Some(Fill::Background);
@@ -156,14 +156,14 @@ fn selection_takes_background_fill(app: &SlideApp) -> bool {
     let mut ok = false;
     if let Some(st) = app.session.active() {
         for s in st.selected_shapes() {
-            deckcraft_model::walk(std::slice::from_ref(s), &mut |m, _| ok |= matches!(m.kind, ShapeKind::Shape));
+            iridium_decks_model::walk(std::slice::from_ref(s), &mut |m, _| ok |= matches!(m.kind, ShapeKind::Shape));
         }
     }
     ok
 }
 
 /// Format Shape ▸ Size & Properties: size, rotation, scale, position and alt text.
-fn size_tab(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape, x: deckcraft_model::Xfrm, single: bool, uid: u64) {
+fn size_tab(app: &mut SlideApp, ui: &mut Ui, sh: &iridium_decks_model::Shape, x: iridium_decks_model::Xfrm, single: bool, uid: u64) {
     let lock_id = ui.scope_id().with("fmt-lock-aspect");
     let mut lock: bool = ui.data_mut(|d| d.get_temp(lock_id).unwrap_or(false));
     let locked = lock;
@@ -262,7 +262,7 @@ pub(super) fn format_shape(app: &mut SlideApp, ui: &mut Ui) {
         ui.label(egui::RichText::new("Select a shape to format it.").color(t.text_dim));
         return;
     };
-    let x = deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, &sh);
+    let x = iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, &sh);
     // Scale and a centre origin work from the shown shape's size, so they need a single shape.
     let single = st.selected_shapes().len() == 1;
     let uid = st.uid;
@@ -442,7 +442,7 @@ pub(super) fn format_shape(app: &mut SlideApp, ui: &mut Ui) {
                 }
                 let mut rot = g.rotate_with_shape;
                 if ui.checkbox(&mut rot, "Rotate with shape").changed() {
-                    let ng = deckcraft_model::style::Gradient { rotate_with_shape: rot, ..g.clone() };
+                    let ng = iridium_decks_model::style::Gradient { rotate_with_shape: rot, ..g.clone() };
                     run(app, "shape.fill", json!({"gradient": crate::fillui::gradient_json(&ng)}));
                 }
             }
@@ -506,8 +506,8 @@ fn line_choice(app: &mut SlideApp, ui: &mut Ui, label: &str, key: &str, current:
 
 /// The rest of PowerPoint's Line page: compound type, cap and join types, and the begin and end
 /// arrows with their sizes.
-fn line_details(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
-    use deckcraft_model::style::{Compound, LineCap, LineJoin};
+fn line_details(app: &mut SlideApp, ui: &mut Ui, sh: &iridium_decks_model::Shape) {
+    use iridium_decks_model::style::{Compound, LineCap, LineJoin};
     let l = sh.line.clone().unwrap_or_default();
     let compound = match l.compound.unwrap_or_default() {
         Compound::Single => "single",
@@ -601,7 +601,7 @@ fn pick_fill_picture(app: &mut SlideApp) {
         && let Some(path) = pick("picture")
         && let Some(Ok(bytes)) = app.services.read.as_ref().map(|r| r(&path))
     {
-        run(app, "shape.fill", json!({"picture": deckcraft_engine::cmd::base64_encode(&bytes)}));
+        run(app, "shape.fill", json!({"picture": iridium_decks_engine::cmd::base64_encode(&bytes)}));
     }
 }
 
@@ -619,8 +619,8 @@ fn pic_drag(app: &mut SlideApp, ui: &mut Ui, label: &str, value: f64, suffix: &s
 }
 
 /// Format Shape ▸ Fill ▸ Picture or texture fill: source, tiling, offsets, transparency.
-fn picture_fill_options(app: &mut SlideApp, ui: &mut Ui, id: u32, pf: &deckcraft_model::style::PictureFill) {
-    use deckcraft_model::style::PictureMode;
+fn picture_fill_options(app: &mut SlideApp, ui: &mut Ui, id: u32, pf: &iridium_decks_model::style::PictureFill) {
+    use iridium_decks_model::style::PictureMode;
     ui.horizontal(|ui| {
         ui.label("Picture source");
         if ui.button("Insert…").clicked() {
@@ -730,7 +730,7 @@ fn three_d_drag(app: &mut SlideApp, ui: &mut Ui, label: &str, value: f64, suffix
 
 /// Format Shape ▸ Effects ▸ 3-D Format and 3-D Rotation.
 fn three_d_options(app: &mut SlideApp, ui: &mut Ui, id: u32, raw: Option<&str>) {
-    use deckcraft_engine::cmd::three_d::{BEVELS, CAMERAS, LIGHTS, MATERIALS, Shape3d};
+    use iridium_decks_engine::cmd::three_d::{BEVELS, CAMERAS, LIGHTS, MATERIALS, Shape3d};
     let s3 = raw.map(Shape3d::parse).unwrap_or_default();
     let with_none: Vec<&str> = std::iter::once("none").chain(BEVELS.iter().copied()).collect();
     ui.add_space(6.0);
@@ -760,7 +760,7 @@ fn three_d_options(app: &mut SlideApp, ui: &mut Ui, id: u32, raw: Option<&str>) 
 }
 
 /// The transparency (0–1) of a shape's first text run as stored on it.
-pub(crate) fn text_transparency_of(sh: &deckcraft_model::Shape) -> f64 {
+pub(crate) fn text_transparency_of(sh: &iridium_decks_model::Shape) -> f64 {
     let run = sh.text.as_ref().and_then(|t| t.paragraphs.iter().flat_map(|p| p.runs.iter()).next());
     match run.and_then(|r| r.props.fill.as_ref()) {
         Some(Fill::Solid { color }) => 1.0 - color.alpha(),
@@ -770,7 +770,7 @@ pub(crate) fn text_transparency_of(sh: &deckcraft_model::Shape) -> f64 {
 }
 
 /// Text Fill › Transparency, as in PowerPoint's Format Shape › Text Options (#32).
-pub(crate) fn text_transparency_slider(app: &mut SlideApp, ui: &mut Ui, sh: &deckcraft_model::Shape) {
+pub(crate) fn text_transparency_slider(app: &mut SlideApp, ui: &mut Ui, sh: &iridium_decks_model::Shape) {
     ui.horizontal(|ui| {
         let label = ui.label("Transparency");
         let id = ui.scope_id().with(("text-transparency", sh.id));

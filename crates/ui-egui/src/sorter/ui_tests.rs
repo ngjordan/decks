@@ -1,9 +1,9 @@
 //! Slide Sorter sections: add, rename, collapse, and dragging a whole section.
 
-use deckcraft_engine::Session;
 use egui::Pos2;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
 use serde_json::json;
 
 use crate::{Services, SlideApp};

@@ -98,7 +98,7 @@ fn commit_album(s: &mut Session, items: Vec<AlbumItem>, opts: AlbumOpts, replace
         };
         let at = if let Some((_, ids)) = &replace {
             let st = s.doc()?;
-            let indices: Vec<usize> = ids.iter().filter_map(|id| st.doc.slide_index(deckcraft_model::SlideId(*id as u32))).collect();
+            let indices: Vec<usize> = ids.iter().filter_map(|id| st.doc.slide_index(iridium_decks_model::SlideId(*id as u32))).collect();
             let Some(at) = indices.iter().copied().min() else {
                 return Err(bad("insert.photoAlbumEdit", "that photo album is no longer in this presentation"));
             };
@@ -205,7 +205,7 @@ fn album_opts(p: &Value) -> Result<AlbumOpts> {
         Some(Value::String(s)) if s.trim().is_empty() => None,
         Some(Value::String(s)) => {
             let name = s.trim();
-            let found = deckcraft_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name));
+            let found = iridium_decks_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name));
             let Some(t) = found else {
                 return Err(bad("insert.photoAlbum", format!("unknown theme `{name}`")));
             };
@@ -289,7 +289,7 @@ fn album_items(p: &Value) -> Result<Vec<AlbumItem>> {
         if !ct.starts_with("image/") {
             return Err(bad("insert.photoAlbum", format!("{name} is not a picture")));
         }
-        if ct != "image/svg+xml" && deckcraft_render::decode_image(&bytes).is_none() {
+        if ct != "image/svg+xml" && iridium_decks_render::decode_image(&bytes).is_none() {
             return Err(bad("insert.photoAlbum", format!("{name}: the picture can't be read")));
         }
         let (px_w, px_h) = image_px(&bytes);
@@ -433,7 +433,7 @@ struct AlbumMark {
 }
 
 fn parse_album_mark(raw: &str) -> Option<AlbumMark> {
-    let rest = raw.strip_prefix("deckcraft-album:")?;
+    let rest = raw.strip_prefix("iridium-decks-album:")?;
     let (id_str, rest) = rest.split_once(';').unwrap_or((rest, ""));
     let id = id_str.parse::<u32>().ok().filter(|id| *id != 0)?;
     let mut mark = AlbumMark { id, layout: String::new(), frame: String::new(), captions: false, grayscale: false, theme: String::new() };
@@ -456,7 +456,7 @@ fn parse_album_mark(raw: &str) -> Option<AlbumMark> {
 fn album_marker(id: u32, opts: &AlbumOpts) -> String {
     let theme = opts.theme.as_deref().unwrap_or("");
     format!(
-        "deckcraft-album:{id};layout={};frame={};captions={};gray={};theme={theme}",
+        "iridium-decks-album:{id};layout={};frame={};captions={};gray={};theme={theme}",
         opts.layout_key,
         opts.frame_key,
         if opts.captions { 1 } else { 0 },
@@ -471,7 +471,7 @@ fn stamp_album_slide(s: &mut Session, album_id: u32, opts: &AlbumOpts) -> Result
             return Err(bad("insert.photoAlbum", "no slide to mark"));
         };
         let slide = std::sync::Arc::make_mut(slide);
-        if slide.raw_ext.as_deref().is_none_or(|ext| ext.starts_with("deckcraft-album:")) {
+        if slide.raw_ext.as_deref().is_none_or(|ext| ext.starts_with("iridium-decks-album:")) {
             slide.raw_ext = Some(marker);
         }
         slide.name = "Photo Album".into();
@@ -497,11 +497,11 @@ fn album_id_param(p: &Value) -> Option<u32> {
     }
 }
 
-fn slides_with_album(doc: &deckcraft_model::Presentation, id: u32) -> Vec<u64> {
+fn slides_with_album(doc: &iridium_decks_model::Presentation, id: u32) -> Vec<u64> {
     doc.slides.iter().filter(|s| s.raw_ext.as_deref().and_then(parse_album_mark).is_some_and(|m| m.id == id)).map(|s| u64::from(s.id.0)).collect()
 }
 
-fn album_name_run(doc: &deckcraft_model::Presentation, index: usize) -> Vec<u64> {
+fn album_name_run(doc: &iridium_decks_model::Presentation, index: usize) -> Vec<u64> {
     if doc.slides.get(index).is_none_or(|s| s.name != "Photo Album") {
         return Vec::new();
     }
@@ -545,11 +545,11 @@ fn album_target(s: &Session, p: &Value) -> Result<(u32, Vec<u64>)> {
     Err(bad("insert.photoAlbumEdit", "this slide is not part of a photo album"))
 }
 
-fn pic_count(slide: &deckcraft_model::Slide) -> usize {
+fn pic_count(slide: &iridium_decks_model::Slide) -> usize {
     slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).count()
 }
 
-fn infer_album(slides: &[&deckcraft_model::Slide], theme_now: &str) -> (String, String, bool, bool, String) {
+fn infer_album(slides: &[&iridium_decks_model::Slide], theme_now: &str) -> (String, String, bool, bool, String) {
     let max_pics = slides.iter().map(|s| pic_count(s)).max().unwrap_or(1);
     let per = if max_pics >= 3 {
         "4"
@@ -592,10 +592,10 @@ fn infer_album(slides: &[&deckcraft_model::Slide], theme_now: &str) -> (String, 
     (layout, frame.into(), captions, any && gray, theme_now.to_string())
 }
 
-fn items_from_slides(doc: &deckcraft_model::Presentation, slides: &[&deckcraft_model::Slide]) -> Vec<Value> {
+fn items_from_slides(doc: &iridium_decks_model::Presentation, slides: &[&iridium_decks_model::Slide]) -> Vec<Value> {
     let mut items = Vec::new();
     for slide in slides {
-        let pics: Vec<&deckcraft_model::Shape> = slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).collect();
+        let pics: Vec<&iridium_decks_model::Shape> = slide.shapes.iter().filter(|sh| matches!(sh.kind, ShapeKind::Picture { .. })).collect();
         if pics.is_empty() {
             let text = slide
                 .shapes
@@ -632,9 +632,9 @@ fn items_from_slides(doc: &deckcraft_model::Presentation, slides: &[&deckcraft_m
 fn album_seed(s: &Session) -> Result<Value> {
     let (id, ids) = album_target(s, &Value::Null)?;
     let st = s.doc()?;
-    let slides: Vec<&deckcraft_model::Slide> =
-        ids.iter().filter_map(|sid| u32::try_from(*sid).ok()).filter_map(|n| st.doc.slide(deckcraft_model::SlideId(n))).collect();
-    let theme_now = st.doc.masters.first().map(|m| m.theme.name.clone()).filter(|n| !n.is_empty()).unwrap_or_else(|| "Iridium Decks".into());
+    let slides: Vec<&iridium_decks_model::Slide> =
+        ids.iter().filter_map(|sid| u32::try_from(*sid).ok()).filter_map(|n| st.doc.slide(iridium_decks_model::SlideId(n))).collect();
+    let theme_now = st.doc.masters.first().map(|m| m.theme.name.clone()).filter(|n| !n.is_empty()).unwrap_or_else(|| "Decks".into());
     let inferred = infer_album(&slides, &theme_now);
     let mark = slides.first().and_then(|sl| sl.raw_ext.as_deref().and_then(parse_album_mark));
     let (layout, frame, captions, grayscale, theme) = if let Some(mark) = mark {

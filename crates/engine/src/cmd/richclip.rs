@@ -1,12 +1,12 @@
 //! Rich text on the system clipboard, as HTML.
 //!
-//! Pages and Keynote put copied text on the pasteboard as HTML (and plain text). Iridium Decks writes
+//! Pages and Keynote put copied text on the pasteboard as HTML (and plain text). Decks writes
 //! the same pair when it copies, and reads it back on paste: bold, italic and underline survive.
 //! Anything else in the markup is skipped. A hostile fragment is capped, never executed.
 
 use std::borrow::Cow;
 
-use deckcraft_model::text::{Paragraph, Run, RunProps, TextBody};
+use iridium_decks_model::text::{Paragraph, Run, RunProps, TextBody};
 
 const MAX_HTML: usize = 1 << 20;
 const MAX_PARAS: usize = 2_000;
@@ -26,7 +26,7 @@ pub fn body_to_html(body: &TextBody) -> String {
                 return plain_html(body);
             }
             match &r.kind {
-                deckcraft_model::text::RunKind::Break => {
+                iridium_decks_model::text::RunKind::Break => {
                     if !push_if_fits(&mut out, "<br>", close.len() + 4) {
                         return plain_html(body);
                     }
@@ -54,7 +54,7 @@ fn plain_html(body: &TextBody) -> String {
             return String::new();
         }
         for r in &p.runs {
-            let fits = if matches!(&r.kind, deckcraft_model::text::RunKind::Break) {
+            let fits = if matches!(&r.kind, iridium_decks_model::text::RunKind::Break) {
                 push_if_fits(&mut out, "<br>", 4)
             } else {
                 push_escaped_bounded(&mut out, &r.text, 4)

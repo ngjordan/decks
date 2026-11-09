@@ -3,9 +3,9 @@
 
 use std::collections::HashSet;
 
-use deckcraft_engine::Target;
-use deckcraft_model::SlideId;
 use egui::{Align2, Color32, CornerRadius, Rect, Role, Sense, Stroke, Ui, WidgetInfo, pos2, vec2};
+use iridium_decks_engine::Target;
+use iridium_decks_model::SlideId;
 use serde_json::json;
 
 use crate::SlideApp;
@@ -370,11 +370,11 @@ fn master_list(app: &mut SlideApp, ui: &mut Ui) {
                     (wpx, (wpx as f64 * doc.slide_size.height / doc.slide_size.width.max(1.0)).clamp(1.0, 1e9) as u32),
                     crate::textures::max_side(ui.ctx()),
                 );
-                let pic = deckcraft_render::render_layout(
+                let pic = iridium_decks_render::render_layout(
                     &doc,
                     mi,
                     li,
-                    &deckcraft_render::RenderOpts {
+                    &iridium_decks_render::RenderOpts {
                         scale: px.0 as f64 / doc.slide_size.width.max(1.0),
                         edit: true,
                         size: Some(px),
@@ -420,7 +420,7 @@ mod tests {
 
     use super::*;
     use crate::Services;
-    use deckcraft_engine::Session;
+    use iridium_decks_engine::Session;
 
     fn harness() -> Harness<'static, SlideApp> {
         let mut h = Harness::builder().with_size(egui::vec2(1200.0, 800.0)).build_ui_state(

@@ -23,12 +23,16 @@ pub(super) fn background(s: &mut Session, p: &Value) -> Result<Value> {
         BgOp::Set(Some(Background::Fill { fill: Fill::solid(c) }))
     } else if let Some(i) = style {
         // Background styles: 3 theme bg fills × 4 colours (bg1, bg2, tx1, tx2).
-        let slots =
-            [deckcraft_color::SchemeSlot::Bg1, deckcraft_color::SchemeSlot::Bg2, deckcraft_color::SchemeSlot::Tx2, deckcraft_color::SchemeSlot::Tx1];
+        let slots = [
+            iridium_decks_color::SchemeSlot::Bg1,
+            iridium_decks_color::SchemeSlot::Bg2,
+            iridium_decks_color::SchemeSlot::Tx2,
+            iridium_decks_color::SchemeSlot::Tx1,
+        ];
         let i = i.clamp(1, 12) - 1;
         BgOp::Set(Some(Background::Ref {
             idx: 1001 + (i / 4) as u32,
-            color: deckcraft_model::ColorRef::scheme(slots.get(i % 4).copied().unwrap_or(deckcraft_color::SchemeSlot::Bg1)),
+            color: iridium_decks_model::ColorRef::scheme(slots.get(i % 4).copied().unwrap_or(iridium_decks_color::SchemeSlot::Bg1)),
         }))
     } else if let Some(g) = p.get("gradient") {
         let mut g = crate::cmd::shape::gradient_param(g).ok_or_else(|| bad("design.background", "gradient needs two or more `stops`"))?;
@@ -36,10 +40,10 @@ pub(super) fn background(s: &mut Session, p: &Value) -> Result<Value> {
         BgOp::Set(Some(Background::Fill { fill: Fill::Gradient(g) }))
     } else if let Some(pt) = p.get("pattern") {
         BgOp::Set(Some(Background::Fill {
-            fill: Fill::Pattern(deckcraft_model::style::PatternFill {
+            fill: Fill::Pattern(iridium_decks_model::style::PatternFill {
                 preset: pt.get("preset").and_then(Value::as_str).unwrap_or("pct50").to_string(),
-                fg: pt.get("fg").and_then(color_value).unwrap_or(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent1)),
-                bg: pt.get("bg").and_then(color_value).unwrap_or(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Bg1)),
+                fg: pt.get("fg").and_then(color_value).unwrap_or(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent1)),
+                bg: pt.get("bg").and_then(color_value).unwrap_or(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Bg1)),
             }),
         }))
     } else if p.get("picture").is_some() {
@@ -47,7 +51,7 @@ pub(super) fn background(s: &mut Session, p: &Value) -> Result<Value> {
             crate::cmd::insert::media_bytes(&with_param(p, "data", p.get("picture").cloned().unwrap_or_default()), "design.background")?;
         let ct = crate::cmd::insert::content_type(&name, &bytes);
         let media = s.edit(|doc, _| doc.add_media(&name, ct, bytes).ok_or_else(|| bad("design.background", NO_ID_SPACE)))?;
-        let mut pf = deckcraft_model::style::PictureFill { media, ..Default::default() };
+        let mut pf = iridium_decks_model::style::PictureFill { media, ..Default::default() };
         if let Some(pp) = &props {
             apply_picture_props(&mut pf, pp);
         }
@@ -228,22 +232,22 @@ fn adjust_background(bg: &mut Background, props: Option<&Value>, transparency: O
     }
 }
 
-fn set_picture_transparency(pf: &mut deckcraft_model::style::PictureFill, t: f64) {
+fn set_picture_transparency(pf: &mut iridium_decks_model::style::PictureFill, t: f64) {
     let a = 1.0 - t.clamp(0.0, 1.0);
     pf.alpha = (a < 1.0).then_some(a);
 }
 
-fn set_solid_transparency(color: &mut deckcraft_model::ColorRef, t: f64) {
-    color.mods.retain(|m| !matches!(m, deckcraft_color::ColorTransform::Alpha(_)));
+fn set_solid_transparency(color: &mut iridium_decks_model::ColorRef, t: f64) {
+    color.mods.retain(|m| !matches!(m, iridium_decks_color::ColorTransform::Alpha(_)));
     let t = t.clamp(0.0, 1.0);
     if t > 0.0 {
-        color.mods.push(deckcraft_color::ColorTransform::Alpha(((1.0 - t) * 100_000.0).round() as i32));
+        color.mods.push(iridium_decks_color::ColorTransform::Alpha(((1.0 - t) * 100_000.0).round() as i32));
     }
 }
 
 /// Picture-fill options for Format Background (tile, offsets, scale, alignment, mirror, stretch).
-fn apply_picture_props(pf: &mut deckcraft_model::style::PictureFill, pp: &Value) {
-    use deckcraft_model::style::PictureMode;
+fn apply_picture_props(pf: &mut iridium_decks_model::style::PictureFill, pp: &Value) {
+    use iridium_decks_model::style::PictureMode;
     let f = |k: &str| pp.get(k).and_then(Value::as_f64).filter(|v| v.is_finite());
     if let Some(up) = pp.get("rotateWithShape").and_then(Value::as_bool) {
         pf.upright = !up;

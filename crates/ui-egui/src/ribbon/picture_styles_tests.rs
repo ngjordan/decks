@@ -2,11 +2,11 @@
 //! every style.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use deckcraft_engine::Session;
-use deckcraft_engine::cmd::picture_style::STYLES;
-use deckcraft_model::{Geom, ShapeId};
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
+use iridium_decks_engine::cmd::picture_style::STYLES;
+use iridium_decks_model::{Geom, ShapeId};
 use serde_json::json;
 
 use crate::{Services, SlideApp};
@@ -16,8 +16,8 @@ fn picture_format(width: f32) -> (Harness<'static, SlideApp>, ShapeId) {
     let mut s = Session::with_new();
     s.execute("slide.layout", &json!({"layout": "blank"})).unwrap();
     let pixels = (0..4).flat_map(|_| [40, 120, 200, 255]).collect();
-    let png = deckcraft_render::Image { width: 2, height: 2, pixels }.to_png();
-    let data = deckcraft_engine::cmd::base64_encode(&png);
+    let png = iridium_decks_render::Image { width: 2, height: 2, pixels }.to_png();
+    let data = iridium_decks_engine::cmd::base64_encode(&png);
     let id = s.execute("insert.picture", &json!({"data": data, "name": "a.png", "rect": [200, 100, 400, 250]})).unwrap()["id"].as_u64().unwrap();
     s.execute("edit.select", &json!({"ids": [id]})).unwrap();
     let mut app = SlideApp::new(s, Services::default());

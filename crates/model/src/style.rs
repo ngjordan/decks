@@ -1,6 +1,6 @@
 //! Colours, fills, lines and effects.
 
-use deckcraft_color::{ColorScheme, ColorTransform, Rgba, SchemeSlot};
+use iridium_decks_color::{ColorScheme, ColorTransform, Rgba, SchemeSlot};
 use serde::{Deserialize, Serialize};
 
 use crate::MediaId;
@@ -50,10 +50,10 @@ impl ColorRef {
             ColorBase::Rgb { rgb } => *rgb,
             ColorBase::Scheme { slot: SchemeSlot::PhClr } => ph.unwrap_or_else(|| scheme.get(SchemeSlot::Accent1)),
             ColorBase::Scheme { slot } => scheme.get(*slot),
-            ColorBase::Preset { name } => deckcraft_color::preset(name).unwrap_or(Rgba::BLACK),
+            ColorBase::Preset { name } => iridium_decks_color::preset(name).unwrap_or(Rgba::BLACK),
             ColorBase::System { last, .. } => *last,
         };
-        deckcraft_color::apply(base, &self.mods)
+        iridium_decks_color::apply(base, &self.mods)
     }
     /// Alpha (0–1) from the `alpha`, `alphaMod` and `alphaOff` transforms, applied in order.
     pub fn alpha(&self) -> f64 {

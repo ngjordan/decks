@@ -4,10 +4,10 @@
 #
 # Exports:
 #   ROOT                    workspace root
-#   VERSION                 [workspace.package] version from Cargo.toml (override: DECKCRAFT_VERSION)
+#   VERSION                 [workspace.package] version from Cargo.toml (override: IRIDIUM_DECKS_VERSION)
 #   DIST                    output directory for release artifacts (default: $ROOT/dist/release)
-#   DECKCRAFT_BUILD_SHA    git commit shown in the About dialog (crates/ui-egui/src/dialogs/about.rs version_line)
-#   DECKCRAFT_BUILD_DATE    UTC build date, YYYY-MM-DD
+#   IRIDIUM_DECKS_BUILD_SHA    git commit shown in the About dialog (crates/ui-egui/src/dialogs/about.rs version_line)
+#   IRIDIUM_DECKS_BUILD_DATE    UTC build date, YYYY-MM-DD
 #   CARGO_TARGET_DIR        cargo's target dir (default: $ROOT/target)
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -23,7 +23,7 @@ workspace_version() {
   return
 }
 
-VERSION="${DECKCRAFT_VERSION:-$(workspace_version)}"
+VERSION="${IRIDIUM_DECKS_VERSION:-$(workspace_version)}"
 if [[ -z "$VERSION" ]]; then
   echo "error: could not read [workspace.package] version from $ROOT/Cargo.toml" >&2
   exit 1
@@ -34,11 +34,11 @@ DIST="${DIST:-$ROOT/dist/release}"
 mkdir -p "$DIST"
 export DIST
 
-if [[ -z "${DECKCRAFT_BUILD_SHA:-}" ]]; then
-  DECKCRAFT_BUILD_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
+if [[ -z "${IRIDIUM_DECKS_BUILD_SHA:-}" ]]; then
+  IRIDIUM_DECKS_BUILD_SHA="$(git -C "$ROOT" rev-parse HEAD 2>/dev/null || true)"
 fi
-export DECKCRAFT_BUILD_SHA
-export DECKCRAFT_BUILD_DATE="${DECKCRAFT_BUILD_DATE:-$(date -u +%Y-%m-%d)}"
+export IRIDIUM_DECKS_BUILD_SHA
+export IRIDIUM_DECKS_BUILD_DATE="${IRIDIUM_DECKS_BUILD_DATE:-$(date -u +%Y-%m-%d)}"
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$ROOT/target}"
 
 # Emit a GitHub Actions warning (plain stderr outside Actions).

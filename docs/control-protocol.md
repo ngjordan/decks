@@ -29,7 +29,7 @@ Coordinates are slide points (1/72 inch; a 16:9 slide is 960 × 540) unless note
 
 | Method | Params | What it does |
 |---|---|---|
-| `engine.execute` / `ui.menu.invoke` / `command` | `{command, params}` | Run any command (see `engine.commands`; `deckcraft-cli describe COMMAND` documents one) |
+| `engine.execute` / `ui.menu.invoke` / `command` | `{command, params}` | Run any command (see `engine.commands`; `iridium-decks-cli describe COMMAND` documents one) |
 | `engine.commands` | — | Every command: id, label, menu path, shortcut, params doc, enabled / disabled reason |
 | `document.inspect` | — | Slides, sections, layouts, shapes, selection |
 | `slide.actions` | `{index?}` | Actions on one slide; returns `{index, slideId, actions}`. Each action has an `owner` (shape id/name and group path; text actions also include paragraph/run indexes and run text, plus table row/cell indexes for table text), `event` (`click`, `hover`, `textLink`, or `textHover`), action `type`, `target`, and the full `hyperlink`. Listing is read-only and never executes an action. An empty slide returns `"actions": []`. |
@@ -52,5 +52,5 @@ Coordinates are slide points (1/72 inch; a 16:9 slide is 960 × 540) unless note
 | `show.start` / `show.end` | `{from?: slide index, custom?: name, reading?}` | Slide show. `custom` plays that custom show from its first slide and does not change Set Up. With no `from` and no `custom`, playback starts at the first slide of the show order. A `from` that is not a slide of the deck (negative, not a whole number, past the end) is refused; a hidden slide plays |
 | `app.open` / `app.save` / `app.export` / `app.quit` | `{path, …}` | Files (export takes the `file.export` params, e.g. `{"path": "deck.pdf", "layout": "handouts", "perPage": 3}` or `{"path": "deck.gif", "width": "large", "secondsPerSlide": 3, "loop": false}`, or `{"path": "slide.png", "transparentBackground": true}` for a PNG without the slide background) |
 
-The MCP server (`deckcraft-cli mcp`, see [mcp.md](mcp.md)) wraps the same methods for Claude
-and other agents; `deckcraft-cli app --method METHOD [PARAMS]` sends one request from a shell.
+The MCP server (`iridium-decks-cli mcp`, see [mcp.md](mcp.md)) wraps the same methods for Claude
+and other agents; `iridium-decks-cli app --method METHOD [PARAMS]` sends one request from a shell.

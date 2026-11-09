@@ -141,14 +141,14 @@ impl Session {
                 let v = {
                     let st = self.doc()?;
                     let Some(sh) = st.shape(id) else { return Ok(Value::Null) };
-                    let tr = deckcraft_render::shape_geometry(sh, orig.w, orig.h).text_rect;
-                    let hs = deckcraft_geom::warp::handles(&name, &base, tr);
+                    let tr = iridium_decks_render::shape_geometry(sh, orig.w, orig.h).text_rect;
+                    let hs = iridium_decks_geom::warp::handles(&name, &base, tr);
                     let Some(h) = hs.iter().find(|h| h.index == index) else { return Ok(Value::Null) };
                     h.value_at(orig.affine().inverse() * p)
                 };
                 self.edit(|doc, sel| {
                     let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("adjust", "no slide"))?;
-                    if let Some(sh) = deckcraft_model::find_shape_mut(list, id) {
+                    if let Some(sh) = iridium_decks_model::find_shape_mut(list, id) {
                         set_warp_adj(sh, &name, &base, index, v);
                     }
                     Ok(())
@@ -231,7 +231,7 @@ impl Session {
         self.edit(|doc, sel| {
             let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("move", "no slide"))?;
             for (id, o) in &origs2 {
-                if let Some(sh) = deckcraft_model::find_shape_mut(list, *id) {
+                if let Some(sh) = iridium_decks_model::find_shape_mut(list, *id) {
                     sh.xfrm = Some(Xfrm { x: o.x + d.x, y: o.y + d.y, ..*o });
                 }
             }
@@ -257,7 +257,7 @@ impl Session {
         let st = self.doc()?;
         let Some(sh) = st.shape(id).cloned() else { return Ok(Value::Null) };
         let local = orig.affine().inverse() * p;
-        let geo = deckcraft_render::shape_geometry(&sh, orig.w, orig.h);
+        let geo = iridium_decks_render::shape_geometry(&sh, orig.w, orig.h);
         let Some(h) = geo.handles.iter().find(|h| h.index == index) else { return Ok(Value::Null) };
         let free2d = matches!(sh.geom.preset_name(), Some(n) if n.contains("Callout") && !n.contains("Arrow"));
         let vals: Vec<(usize, f64)> = if free2d {
@@ -269,10 +269,10 @@ impl Session {
         };
         self.edit(|doc, sel| {
             let list = crate::shapes_mut(doc, sel).ok_or_else(|| cmd::bad("adjust", "no slide"))?;
-            if let Some(sh) = deckcraft_model::find_shape_mut(list, id)
-                && let deckcraft_model::Geom::Preset { name, adj } = &mut sh.geom
+            if let Some(sh) = iridium_decks_model::find_shape_mut(list, id)
+                && let iridium_decks_model::Geom::Preset { name, adj } = &mut sh.geom
             {
-                let defaults = deckcraft_geom::preset::info(name).map(|x| x.defaults).unwrap_or(&[]);
+                let defaults = iridium_decks_geom::preset::info(name).map(|x| x.defaults).unwrap_or(&[]);
                 for (i, v) in &vals {
                     while adj.len() <= *i {
                         let k = adj.len();
@@ -289,7 +289,7 @@ impl Session {
     }
 
     fn drag_create(&mut self, start: Point, p: Point, mods: Mods, tol: f64) {
-        let line = matches!(&self.tool.kind, ToolKind::Shape { preset } if deckcraft_geom::preset::is_line_like(preset));
+        let line = matches!(&self.tool.kind, ToolKind::Shape { preset } if iridium_decks_geom::preset::is_line_like(preset));
         let x = if line {
             let mut q = if mods.shift { constrain_45(start, p) } else { p };
             if let Some((_, _, at)) = self.update_sites(q, tol, None) {

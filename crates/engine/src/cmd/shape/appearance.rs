@@ -9,7 +9,7 @@ pub(super) fn adjust(s: &mut Session, p: &Value) -> Result<Value> {
     let v = f64_param(p, "value").ok_or_else(|| bad("shape.adjust", "missing `value`"))?;
     edit_geometry(s, p, "shape.adjust", |sh| {
         if let Geom::Preset { name, adj } = &mut sh.geom {
-            let defaults = deckcraft_geom::preset::info(name).map(|x| x.defaults).unwrap_or(&[]);
+            let defaults = iridium_decks_geom::preset::info(name).map(|x| x.defaults).unwrap_or(&[]);
             while adj.len() <= i {
                 let k = adj.len();
                 adj.push(defaults.get(k).copied().unwrap_or(0.0));
@@ -23,7 +23,7 @@ pub(super) fn adjust(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Rectangles and rounded rectangles become custom geometry whose corners are smoothed
-/// ([`deckcraft_geom::squircle`]); the radius is the rounded rectangle's own unless `radius` says.
+/// ([`iridium_decks_geom::squircle`]); the radius is the rounded rectangle's own unless `radius` says.
 pub(super) fn smooth_corners(s: &mut Session, p: &Value) -> Result<Value> {
     const CMD: &str = "shape.smoothCorners";
     let smoothing =
@@ -41,7 +41,7 @@ pub(super) fn smooth_corners(s: &mut Session, p: &Value) -> Result<Value> {
         // (re-smoothing as the slider moves), never an arbitrary freeform.
         let custom = match (&sh.geom, radius) {
             (Geom::Custom { paths }, Some(r)) => match paths.as_slice() {
-                [only] => (0..=100).any(|k| deckcraft_geom::squircle::path_d(only.w, only.h, r, f64::from(k) / 100.0) == only.d),
+                [only] => (0..=100).any(|k| iridium_decks_geom::squircle::path_d(only.w, only.h, r, f64::from(k) / 100.0) == only.d),
                 _ => false,
             },
             _ => false,
@@ -52,10 +52,10 @@ pub(super) fn smooth_corners(s: &mut Session, p: &Value) -> Result<Value> {
             _ => return Err(bad(CMD, "only rectangles, rounded rectangles and shapes already smoothed with this `radius` can be smoothed")),
         };
         sh.geom = Geom::Custom {
-            paths: vec![deckcraft_model::CustomPath {
+            paths: vec![iridium_decks_model::CustomPath {
                 w: x.w,
                 h: x.h,
-                d: deckcraft_geom::squircle::path_d(x.w, x.h, r, smoothing),
+                d: iridium_decks_geom::squircle::path_d(x.w, x.h, r, smoothing),
                 ..Default::default()
             }],
         };
@@ -65,7 +65,7 @@ pub(super) fn smooth_corners(s: &mut Session, p: &Value) -> Result<Value> {
 
 pub(super) fn change(s: &mut Session, p: &Value) -> Result<Value> {
     let name = str_param(p, "preset").ok_or_else(|| bad("shape.change", "missing `preset`"))?;
-    let info = deckcraft_geom::preset::info(name).ok_or_else(|| bad("shape.change", format!("unknown preset `{name}`")))?;
+    let info = iridium_decks_geom::preset::info(name).ok_or_else(|| bad("shape.change", format!("unknown preset `{name}`")))?;
     edit_geometry(s, p, "shape.change", |sh| {
         sh.geom = Geom::preset(info.name);
         Ok(())
@@ -113,14 +113,14 @@ pub(crate) fn gradient_param(v: &Value) -> Option<Gradient> {
         stops,
         shape,
         rotate_with_shape: v.get("rotateWithShape").and_then(Value::as_bool).unwrap_or(true),
-        flip: v.get("flip").and_then(Value::as_str).and_then(deckcraft_model::style::GradientFlip::from_xml),
+        flip: v.get("flip").and_then(Value::as_str).and_then(iridium_decks_model::style::GradientFlip::from_xml),
     })
 }
 
 /// Fill and outline apply to a group's visible members as well as its container. Other edits
 /// (notably geometry) still target only the selected shape. The whole traversal stays in one edit.
-fn edit_group_appearance(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut deckcraft_model::Shape) -> Result<()>) -> Result<Value> {
-    fn apply(sh: &mut deckcraft_model::Shape, depth: usize, f: &dyn Fn(&mut deckcraft_model::Shape) -> Result<()>) -> Result<()> {
+fn edit_group_appearance(s: &mut Session, p: &Value, cmd: &str, f: impl Fn(&mut iridium_decks_model::Shape) -> Result<()>) -> Result<Value> {
+    fn apply(sh: &mut iridium_decks_model::Shape, depth: usize, f: &dyn Fn(&mut iridium_decks_model::Shape) -> Result<()>) -> Result<()> {
         if depth > 64 {
             return Ok(());
         }
@@ -153,7 +153,7 @@ pub(super) fn fill(s: &mut Session, p: &Value) -> Result<Value> {
         let mut any = false;
         for id in targets(s, p)? {
             if let Some(sh) = st.shape(id) {
-                deckcraft_model::walk(std::slice::from_ref(sh), &mut |sh, _| any |= matches!(sh.kind, deckcraft_model::ShapeKind::Shape));
+                iridium_decks_model::walk(std::slice::from_ref(sh), &mut |sh, _| any |= matches!(sh.kind, iridium_decks_model::ShapeKind::Shape));
             }
         }
         if !any {
@@ -161,8 +161,8 @@ pub(super) fn fill(s: &mut Session, p: &Value) -> Result<Value> {
         }
     }
     edit_group_appearance(s, p, "shape.fill", |sh| {
-        if background && !matches!(sh.kind, deckcraft_model::ShapeKind::Shape) {
-            if matches!(sh.kind, deckcraft_model::ShapeKind::Group { .. }) && !group_fill_used(sh, 0) {
+        if background && !matches!(sh.kind, iridium_decks_model::ShapeKind::Shape) {
+            if matches!(sh.kind, iridium_decks_model::ShapeKind::Group { .. }) && !group_fill_used(sh, 0) {
                 sh.fill = None;
             }
             return Ok(());
@@ -174,11 +174,11 @@ pub(super) fn fill(s: &mut Session, p: &Value) -> Result<Value> {
 /// Only a shape or text box (`p:sp`) saves a slide background fill (`useBgFill`). Pictures,
 /// connectors, tables and charts keep their fill, and a group's own fill is cleared unless one
 /// of them is filled with it (`grpFill`).
-fn group_fill_used(sh: &deckcraft_model::Shape, depth: usize) -> bool {
+fn group_fill_used(sh: &iridium_decks_model::Shape, depth: usize) -> bool {
     depth <= 64
         && sh.children().iter().any(|c| match c.kind {
-            deckcraft_model::ShapeKind::Shape => false,
-            deckcraft_model::ShapeKind::Group { .. } => matches!(c.fill, None | Some(Fill::Group)) && group_fill_used(c, depth + 1),
+            iridium_decks_model::ShapeKind::Shape => false,
+            iridium_decks_model::ShapeKind::Group { .. } => matches!(c.fill, None | Some(Fill::Group)) && group_fill_used(c, depth + 1),
             _ => c.fill == Some(Fill::Group),
         })
 }
@@ -244,23 +244,23 @@ pub(super) fn line(s: &mut Session, p: &Value) -> Result<Value> {
     let head = str_param(p, "head").map(line_end);
     let tail = str_param(p, "tail").map(line_end);
     let cap = str_param(p, "cap").map(|c| match c {
-        "round" => deckcraft_model::style::LineCap::Round,
-        "square" => deckcraft_model::style::LineCap::Square,
-        _ => deckcraft_model::style::LineCap::Flat,
+        "round" => iridium_decks_model::style::LineCap::Round,
+        "square" => iridium_decks_model::style::LineCap::Square,
+        _ => iridium_decks_model::style::LineCap::Flat,
     });
     let compound = str_param(p, "compound").map(|c| match c {
-        "double" => deckcraft_model::style::Compound::Double,
-        "thickThin" => deckcraft_model::style::Compound::ThickThin,
-        "thinThick" => deckcraft_model::style::Compound::ThinThick,
-        "triple" => deckcraft_model::style::Compound::Triple,
-        _ => deckcraft_model::style::Compound::Single,
+        "double" => iridium_decks_model::style::Compound::Double,
+        "thickThin" => iridium_decks_model::style::Compound::ThickThin,
+        "thinThick" => iridium_decks_model::style::Compound::ThinThick,
+        "triple" => iridium_decks_model::style::Compound::Triple,
+        _ => iridium_decks_model::style::Compound::Single,
     });
     let end_size = |k: &str| str_param(p, k).filter(|v| matches!(*v, "sm" | "med" | "lg")).map(str::to_string);
     let (head_size, tail_size) = (end_size("headSize"), end_size("tailSize"));
     let join = str_param(p, "join").map(|c| match c {
-        "bevel" => deckcraft_model::style::LineJoin::Bevel,
-        "miter" => deckcraft_model::style::LineJoin::Miter,
-        _ => deckcraft_model::style::LineJoin::Round,
+        "bevel" => iridium_decks_model::style::LineJoin::Bevel,
+        "miter" => iridium_decks_model::style::LineJoin::Miter,
+        _ => iridium_decks_model::style::LineJoin::Round,
     });
     edit_group_appearance(s, p, "shape.line", |sh| {
         if reset {
@@ -563,7 +563,7 @@ pub(super) fn quick_style(s: &mut Session, p: &Value) -> Result<Value> {
         sh.line.clone_from(&l);
         sh.effects = None;
         if let Some(t) = sh.text.as_mut() {
-            deckcraft_model::edit::format_all(t, &|r| r.fill = None);
+            iridium_decks_model::edit::format_all(t, &|r| r.fill = None);
         }
         Ok(())
     })
@@ -576,6 +576,6 @@ mod tests {
     #[test]
     fn gradient_parameters_keep_flip_mode() {
         let gradient = gradient_param(&json!({"stops": [[0, "#ff0000"], [1, "#0000ff"]], "flip": "xy"})).expect("gradient");
-        assert_eq!(gradient.flip, Some(deckcraft_model::style::GradientFlip::Xy));
+        assert_eq!(gradient.flip, Some(iridium_decks_model::style::GradientFlip::Xy));
     }
 }

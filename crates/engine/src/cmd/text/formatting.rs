@@ -50,7 +50,7 @@ pub(crate) fn format_run_levels(
             .filter_map(|id| {
                 let sh = st.shape(*id).filter(|sh| sh.ph.is_some())?;
                 let ctx = ctx.as_ref()?;
-                Some((*id, (0..LIST_LEVELS).map(|l| deckcraft_model::resolve::level_style(ctx, sh, l).run).collect()))
+                Some((*id, (0..LIST_LEVELS).map(|l| iridium_decks_model::resolve::level_style(ctx, sh, l).run).collect()))
             })
             .collect()
     } else {
@@ -144,7 +144,7 @@ fn master_levels(st: &DocState, t: &TextSel, range: (Pos, Pos)) -> Vec<(u8, RunP
     }
     levels.sort_unstable();
     levels.dedup();
-    levels.into_iter().map(|l| (l, deckcraft_model::resolve::level_style(&ctx, sh, l).run)).collect()
+    levels.into_iter().map(|l| (l, iridium_decks_model::resolve::level_style(&ctx, sh, l).run)).collect()
 }
 
 /// What `format_run` formats while editing: the selection, or for a bare caret the word it's in
@@ -195,7 +195,7 @@ pub(crate) fn link_text(s: &mut Session, link: Hyperlink, display: &str) -> Resu
 
 /// Apply paragraph changes to the paragraphs touched by the selection (or all paragraphs of the
 /// selected shapes).
-pub(crate) fn format_para(s: &mut Session, f: &(dyn Fn(&mut deckcraft_model::text::Paragraph) + Send + Sync)) -> Result<Value> {
+pub(crate) fn format_para(s: &mut Session, f: &(dyn Fn(&mut iridium_decks_model::text::Paragraph) + Send + Sync)) -> Result<Value> {
     let st = s.doc()?;
     if let Some(t) = st.selection.text.clone() {
         let (a, b) = t.ordered();
@@ -260,9 +260,9 @@ pub(crate) fn format_para(s: &mut Session, f: &(dyn Fn(&mut deckcraft_model::tex
 }
 
 /// Apply a paragraph change to one level of a body's list style.
-fn format_list_level(body: &mut TextBody, l: u8, f: &(dyn Fn(&mut deckcraft_model::text::Paragraph) + Send + Sync)) {
+fn format_list_level(body: &mut TextBody, l: u8, f: &(dyn Fn(&mut iridium_decks_model::text::Paragraph) + Send + Sync)) {
     let mut lvl = body.list_style.level(l).cloned().unwrap_or_default();
-    let mut p = deckcraft_model::text::Paragraph { level: l, props: lvl.para, ..Default::default() };
+    let mut p = iridium_decks_model::text::Paragraph { level: l, props: lvl.para, ..Default::default() };
     f(&mut p);
     // A level change (indent/outdent) means nothing for a list-style level.
     if p.level == l {
@@ -272,7 +272,7 @@ fn format_list_level(body: &mut TextBody, l: u8, f: &(dyn Fn(&mut deckcraft_mode
 }
 
 /// Apply body (text box) changes to the edited or selected shapes.
-pub(crate) fn format_body(s: &mut Session, f: &(dyn Fn(&mut deckcraft_model::text::BodyProps) + Send + Sync)) -> Result<Value> {
+pub(crate) fn format_body(s: &mut Session, f: &(dyn Fn(&mut iridium_decks_model::text::BodyProps) + Send + Sync)) -> Result<Value> {
     let st = s.doc()?;
     let ids: Vec<ShapeId> = match &st.selection.text {
         Some(t) if !t.notes => vec![t.shape],

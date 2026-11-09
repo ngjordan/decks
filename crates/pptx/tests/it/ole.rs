@@ -2,7 +2,7 @@
 
 use std::io::{Cursor, Read, Write};
 
-use deckcraft_model::{ShapeKind, defaults};
+use iridium_decks_model::{ShapeKind, defaults};
 
 fn png() -> Vec<u8> {
     let mut out = Cursor::new(vec![]);
@@ -14,7 +14,7 @@ fn png() -> Vec<u8> {
 
 /// An exported deck with `parts` added (or replaced) and `edit` applied to every part's text.
 fn with_parts(parts: &[(&str, Vec<u8>)], edit: impl Fn(&str, String) -> String) -> Vec<u8> {
-    let base = deckcraft_pptx::export(&defaults::new_presentation(None)).expect("export");
+    let base = iridium_decks_pptx::export(&defaults::new_presentation(None)).expect("export");
     let mut z = zip::ZipArchive::new(Cursor::new(base)).expect("zip");
     let mut out = zip::ZipWriter::new(Cursor::new(Vec::new()));
     let o = zip::write::SimpleFileOptions::default();
@@ -76,7 +76,7 @@ fn ole_deck(spid_in_vml: &str) -> Vec<u8> {
 }
 
 fn object_preview(bytes: &[u8]) -> Option<Vec<u8>> {
-    let p = deckcraft_pptx::import(bytes).expect("import");
+    let p = iridium_decks_pptx::import(bytes).expect("import");
     let s = p.slides[0].shapes.iter().find(|s| s.name == "Object 3").expect("object");
     match &s.kind {
         ShapeKind::Opaque { preview, label, .. } => {
@@ -122,7 +122,7 @@ fn an_ole_objects_fallback_picture_gives_it_its_fill_and_outline() {
         })
     };
     let object = |bytes: Vec<u8>| {
-        let p = deckcraft_pptx::import(&bytes).expect("import");
+        let p = iridium_decks_pptx::import(&bytes).expect("import");
         let s = p.slides[0].shapes.iter().find(|s| s.name == "Object 3").expect("object").clone();
         assert!(matches!(&s.kind, ShapeKind::Opaque { preview: Some(_), label, .. } if label == "Equation.3"), "{:?}", s.kind);
         s
@@ -130,17 +130,17 @@ fn an_ole_objects_fallback_picture_gives_it_its_fill_and_outline() {
     let filled = object(deck(pic(
         r#"<a:solidFill><a:srgbClr val="FF9900"/></a:solidFill><a:ln w="12700"><a:solidFill><a:srgbClr val="0000FF"/></a:solidFill></a:ln>"#,
     )));
-    let orange = deckcraft_model::style::Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0xFF, 0x99, 0)));
+    let orange = iridium_decks_model::style::Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0xFF, 0x99, 0)));
     assert_eq!(filled.fill, Some(orange.clone()));
     assert_eq!(filled.line.as_ref().and_then(|l| l.width), Some(1.0));
     // Saved as its preview picture (its kept XML can't be written back), it keeps the fill.
-    let mut p = deckcraft_pptx::import(&deck(pic(r#"<a:solidFill><a:srgbClr val="FF9900"/></a:solidFill>"#))).expect("import");
+    let mut p = iridium_decks_pptx::import(&deck(pic(r#"<a:solidFill><a:srgbClr val="FF9900"/></a:solidFill>"#))).expect("import");
     for s in &mut std::sync::Arc::make_mut(&mut p.slides[0]).shapes {
         if let ShapeKind::Opaque { xml, .. } = &mut s.kind {
             xml.clear();
         }
     }
-    let back = deckcraft_pptx::import(&deckcraft_pptx::export(&p).expect("export")).expect("reimport");
+    let back = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).expect("export")).expect("reimport");
     let saved = back.slides[0].shapes.iter().find(|s| s.name == "Object 3").expect("object");
     assert!(matches!(saved.kind, ShapeKind::Picture { .. }), "{:?}", saved.kind);
     assert_eq!(saved.fill, Some(orange));

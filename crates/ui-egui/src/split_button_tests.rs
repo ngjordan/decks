@@ -2,11 +2,11 @@
 //! half, while Group and Rotate keep a real main action beside their options arrow.
 #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-use deckcraft_engine::Session;
-use deckcraft_model::ShapeId;
 use egui::accesskit::Role;
 use egui_kittest::Harness;
 use egui_kittest::kittest::Queryable;
+use iridium_decks_engine::Session;
+use iridium_decks_model::ShapeId;
 use serde_json::json;
 
 use crate::{Services, SlideApp};

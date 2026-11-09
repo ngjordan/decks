@@ -112,7 +112,7 @@ impl BoxGeom {
         }
         let inner = Rect::new(r.x0 + ins_l, r.y0 + ins_t, (r.x1 - ins_r).max(r.x0 + ins_l), (r.y1 - ins_b).max(r.y0 + ins_t));
         // Text that follows a WordArt arch or circle is set on one line per paragraph.
-        let follow = bp.warp.as_deref().is_some_and(deckcraft_geom::warp::is_follow);
+        let follow = bp.warp.as_deref().is_some_and(iridium_decks_geom::warp::is_follow);
         let wrap = bp.wrap.unwrap_or(true) && !follow && !matches!(bp.autofit, Some(AutoFit::Shape) if shape.text_box && !bp.wrap.unwrap_or(true));
         let ncols = bp.columns.unwrap_or(1).clamp(1, 16) as usize;
         let col_gap = bp.col_spacing.unwrap_or(0.0).max(0.0);

@@ -2,9 +2,9 @@
 
 use std::io::{Cursor, Read, Write};
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::PictureFill;
-use deckcraft_model::{Geom, PhType, Placeholder, Shape, ShapeId, ShapeKind, defaults};
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::style::PictureFill;
+use iridium_decks_model::{Geom, PhType, Placeholder, Shape, ShapeId, ShapeKind, defaults};
 
 /// `bytes` with `edit` applied to every slide part.
 fn edit_slides(bytes: &[u8], edit: impl Fn(String) -> String) -> Vec<u8> {
@@ -38,7 +38,7 @@ fn a_placeholder_without_geometry_takes_its_layouts() {
             s.geom = Geom::Preset { name: "ellipse".into(), adj: vec![] };
         }
     }
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
     // Strip the slide's own geometry, as PowerPoint writes inheriting placeholders.
     let bare = edit_slides(&bytes, |s| {
         let mut s = s;
@@ -48,7 +48,7 @@ fn a_placeholder_without_geometry_takes_its_layouts() {
         }
         s
     });
-    let q = deckcraft_pptx::import(&bare).expect("import");
+    let q = iridium_decks_pptx::import(&bare).expect("import");
     let phs: Vec<_> = q.slides[0].shapes.iter().filter(|s| s.ph.is_some()).collect();
     assert!(!phs.is_empty());
     for s in phs {
@@ -61,7 +61,7 @@ fn a_placeholder_without_geometry_takes_its_layouts() {
             s.geom = Geom::Preset { name: "triangle".into(), adj: vec![] };
         }
     }
-    let q = deckcraft_pptx::import(&deckcraft_pptx::export(&p).expect("export")).expect("import");
+    let q = iridium_decks_pptx::import(&iridium_decks_pptx::export(&p).expect("export")).expect("import");
     assert!(q.slides[0].shapes.iter().filter(|s| s.ph.is_some()).all(|s| matches!(&s.geom, Geom::Preset { name, .. } if name == "triangle")));
 }
 
@@ -96,7 +96,7 @@ fn a_picture_placeholder_without_geometry_takes_its_layouts() {
         ..Default::default()
     };
     std::sync::Arc::make_mut(&mut p.slides[0]).shapes = vec![pic];
-    let bytes = deckcraft_pptx::export(&p).expect("export");
+    let bytes = iridium_decks_pptx::export(&p).expect("export");
     let bare = edit_slides(&bytes, |mut s| {
         while let Some(i) = s.find("<a:prstGeom") {
             let Some(j) = s[i..].find("</a:prstGeom>").map(|j| j + i + "</a:prstGeom>".len()) else { break };
@@ -104,7 +104,7 @@ fn a_picture_placeholder_without_geometry_takes_its_layouts() {
         }
         s
     });
-    let q = deckcraft_pptx::import(&bare).expect("import");
+    let q = iridium_decks_pptx::import(&bare).expect("import");
     let photo = q.slides[0].shapes.iter().find(|s| matches!(s.kind, ShapeKind::Picture { .. })).expect("picture");
     assert!(matches!(&photo.geom, Geom::Preset { name, .. } if name == "ellipse"), "{:?}", photo.geom);
 }

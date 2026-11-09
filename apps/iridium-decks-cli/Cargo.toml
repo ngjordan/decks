@@ -1,0 +1,22 @@
+[package]
+name = "iridium-decks-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Decks on the command line: render, convert, run commands, inspect, and serve MCP"
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "iridium-decks-cli"
+path = "src/main.rs"
+
+[dependencies]
+iridium-decks-engine = { workspace = true }
+iridium-decks-mcp = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+zip = { workspace = true }

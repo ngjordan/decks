@@ -1,6 +1,6 @@
 //! Themes: colour scheme, font scheme and format scheme (the fill/line/effect "style matrix").
 
-use deckcraft_color::{ColorScheme, ColorTransform, Rgba, SchemeSlot};
+use iridium_decks_color::{ColorScheme, ColorTransform, Rgba, SchemeSlot};
 use serde::{Deserialize, Serialize};
 
 use crate::style::{ColorRef, Effects, Fill, Glow, Gradient, GradientShape, GradientStop, Line, Shadow};
@@ -68,8 +68,8 @@ pub struct Theme {
 impl Default for Theme {
     fn default() -> Self {
         builtin_themes().into_iter().next().unwrap_or_else(|| Theme {
-            name: "Iridium Decks".into(),
-            colors: ColorScheme { name: "Iridium Decks".into(), colors: [Rgba::BLACK; 12] },
+            name: "Decks".into(),
+            colors: ColorScheme { name: "Decks".into(), colors: [Rgba::BLACK; 12] },
             fonts: FontScheme::default(),
             format: FormatScheme::default(),
             raw_extra: None,
@@ -119,7 +119,7 @@ pub fn default_format() -> FormatScheme {
         })
     };
     FormatScheme {
-        name: "Iridium Decks".into(),
+        name: "Decks".into(),
         fills: vec![Fill::solid(ph()), grad(110000, 92000), grad(105000, 80000)],
         lines: vec![Line::solid(ph(), 0.75), Line::solid(ph(), 1.0), Line::solid(ph(), 1.5)],
         effects: vec![
@@ -190,11 +190,8 @@ pub fn builtin_themes() -> Vec<Theme> {
     };
     vec![
         t(
-            "Iridium Decks",
-            scheme(
-                "Iridium Decks",
-                ["000000", "FFFFFF", "1E2B3C", "EDEBE7", "2E6FD8", "F26B1D", "2EA36F", "8A5CD8", "D83F6B", "E3B21C", "2E6FD8", "7A5BA6"],
-            ),
+            "Decks",
+            scheme("Decks", ["000000", "FFFFFF", "1E2B3C", "EDEBE7", "2E6FD8", "F26B1D", "2EA36F", "8A5CD8", "D83F6B", "E3B21C", "2E6FD8", "7A5BA6"]),
             "Inter",
             "Inter",
         ),

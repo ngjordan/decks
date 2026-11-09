@@ -96,7 +96,7 @@ pub(crate) fn shape_para(
             bullet_face(db, &mut st, &ch);
             // A face the cascade still picks may lack the bullet: draw the dot rather than .notdef.
             let chars: Vec<char> = ch.chars().collect();
-            let ch = if deckcraft_fonts::covers_cluster(&st.face, &chars) { ch } else { "•".into() };
+            let ch = if iridium_decks_fonts::covers_cluster(&st.face, &chars) { ch } else { "•".into() };
             bullet_face(db, &mut st, &ch);
             Some((ch, st))
         }
@@ -121,7 +121,7 @@ pub(crate) fn shape_para(
 /// and other symbols missing from the text font), by the usual fallback.
 fn bullet_face(db: &FontDb, st: &mut Style, label: &str) {
     let chars: Vec<char> = label.chars().collect();
-    if !chars.is_empty() && !deckcraft_fonts::covers_cluster(&st.face, &chars) {
+    if !chars.is_empty() && !iridium_decks_fonts::covers_cluster(&st.face, &chars) {
         st.face = db.cascade(&chars, std::slice::from_ref(&st.face), st.style_name);
     }
 }
@@ -189,8 +189,9 @@ fn shape_cells(
         // (`a:sym`), which PowerPoint uses for the symbol codes alone (Wingdings' space is about
         // four times a text font's).
         // Emoji, and pictographs asked to look like text (U+FE0E), pick their own face.
-        let neutral =
-            cluster.iter().all(|c| script::script_of(*c).is_none()) && !deckcraft_fonts::is_emoji_cluster(cluster) && !cluster.contains(&'\u{FE0E}');
+        let neutral = cluster.iter().all(|c| script::script_of(*c).is_none())
+            && !iridium_decks_fonts::is_emoji_cluster(cluster)
+            && !cluster.contains(&'\u{FE0E}');
         // A symbol-font character (U+F0xx) with an `a:sym` font draws in that font when it's there.
         // Some installed Symbol faces (Apple's on macOS) have no private-use mapping: they map the
         // glyphs to real Unicode, so the PUA code is remapped to that character when shaping.
@@ -207,7 +208,7 @@ fn shape_cells(
                 if neutral
                     && !p.is_color()
                     && !is_symbol_font(&p.family)
-                    && deckcraft_fonts::covers_cluster(p, cluster)
+                    && iridium_decks_fonts::covers_cluster(p, cluster)
                     && char_style.get(a.wrapping_sub(1)) == Some(&si) =>
             {
                 p.clone()
@@ -352,16 +353,16 @@ pub(crate) const SUB_SUPER: f64 = 0.66;
 /// it: kerning only where the run asks for it (`kern`), and no standard or contextual ligatures in
 /// Latin, Greek and Cyrillic ("fi", "ffi" and Calibri's "ti" stay apart). Other scripts need
 /// their ligatures (Arabic lam-alef), and emoji sequences are joined by them.
-pub(crate) fn shaping_features(cells: &[Cell], styles: &[Style], script: Option<ScriptTag>) -> Vec<deckcraft_fonts::Feature> {
+pub(crate) fn shaping_features(cells: &[Cell], styles: &[Style], script: Option<ScriptTag>) -> Vec<iridium_decks_fonts::Feature> {
     let mut f = vec![];
     if !cells.first().and_then(|c| styles.get(c.style)).is_some_and(|st| st.kern) {
-        f.extend(deckcraft_fonts::feature("-kern"));
+        f.extend(iridium_decks_fonts::feature("-kern"));
     }
     let alphabetic = matches!(script.as_ref(), Some(b"Latn" | b"Grek" | b"Cyrl"));
     let emoji = cells.iter().any(|c| matches!(c.ch as u32, 0x200D | 0x20E3 | 0xFE0F | 0x2600..=0x27BF | 0x1F000..=0x1FAFF | 0xE0020..=0xE007F));
     if alphabetic && !emoji {
-        f.extend(deckcraft_fonts::feature("-liga"));
-        f.extend(deckcraft_fonts::feature("-clig"));
+        f.extend(iridium_decks_fonts::feature("-liga"));
+        f.extend(iridium_decks_fonts::feature("-clig"));
     }
     f
 }
@@ -389,7 +390,7 @@ fn shape_item(
     let features = shaping_features(cells.get(range.clone()).unwrap_or(&[]), styles, script);
     let params = ShapeParams { features: &features, rtl, script, language: lang };
     let sym = styles.get(first.style).and_then(|st| st.sym.as_deref());
-    let glyphs = deckcraft_fonts::shape_range(face, text, b0..b1, &params, |ch| {
+    let glyphs = iridium_decks_fonts::shape_range(face, text, b0..b1, &params, |ch| {
         let ch = if upper { caps_char(ch) } else { ch };
         symbol_map_char(face, ch, sym).unwrap_or(ch)
     });
@@ -437,7 +438,7 @@ fn shape_item(
             && let Some(&(gid, 1)) = lig.get(&h)
         {
             let s = cells.get(h).map(scale_of).unwrap_or(0.0);
-            let carets = deckcraft_fonts::ligature_carets(face, gid);
+            let carets = iridium_decks_fonts::ligature_carets(face, gid);
             if carets.len() + 1 >= m {
                 bounds.extend(carets.iter().take(m - 1).map(|c| (*c as f64 * s).clamp(0.0, w)));
             }

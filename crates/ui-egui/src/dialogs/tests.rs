@@ -1,5 +1,5 @@
-use deckcraft_model::text::{Action, Hyperlink, Run, TextBody};
-use deckcraft_model::{Presentation, SlideId};
+use iridium_decks_model::text::{Action, Hyperlink, Run, TextBody};
+use iridium_decks_model::{Presentation, SlideId};
 
 use super::{
     CurrentLink, HyperlinkSeed, common_click, hyperlink_command, hyperlink_seed_of, hyperlink_should_apply, link_covering, seed_from, seed_of_link,
@@ -26,7 +26,7 @@ fn header_footer_apply_keeps_an_existing_date_format() {
     use serde_json::json;
 
     use crate::SlideApp;
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("design.headerFooter", &json!({"date": true, "dateText": "", "dateFormat": "datetime4", "all": true})).unwrap();
     // A file whose document-level format is unset, as an imported deck's is.
     Arc::make_mut(&mut session.doc_mut().unwrap().doc).header_footer.date_format = String::new();
@@ -38,12 +38,12 @@ fn header_footer_apply_keeps_an_existing_date_format() {
             .slides
             .iter()
             .flat_map(|sl| sl.shapes.iter())
-            .filter(|sh| sh.ph_type() == Some(deckcraft_model::PhType::Date))
+            .filter(|sh| sh.ph_type() == Some(iridium_decks_model::PhType::Date))
             .flat_map(|sh| sh.text.iter())
             .flat_map(|t| t.paragraphs.iter())
             .flat_map(|p| p.runs.iter())
             .filter_map(|r| match &r.kind {
-                deckcraft_model::text::RunKind::Field { field } => Some(field.clone()),
+                iridium_decks_model::text::RunKind::Field { field } => Some(field.clone()),
                 _ => None,
             })
             .collect()
@@ -74,7 +74,7 @@ fn export_dialog_writes_an_animated_gif() {
     use serde_json::json;
 
     use crate::SlideApp;
-    let dir = std::env::temp_dir().join(format!("deckcraft-ui-gif-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-ui-gif-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("deck.gif");
     let picked = path.to_string_lossy().to_string();
@@ -87,7 +87,7 @@ fn export_dialog_writes_an_animated_gif() {
         })),
         ..Default::default()
     };
-    let mut session = deckcraft_engine::Session::with_new();
+    let mut session = iridium_decks_engine::Session::with_new();
     session.execute("slide.new", &json!({})).unwrap();
     let mut harness = egui_kittest::Harness::builder().with_size(vec2(1200.0, 900.0)).build_ui_state(
         |ui, app: &mut SlideApp| {
@@ -135,7 +135,7 @@ fn export_dialog_writes_a_png_with_a_transparent_background() {
     use serde_json::json;
 
     use crate::SlideApp;
-    let dir = std::env::temp_dir().join(format!("deckcraft-ui-png-clear-{}", std::process::id()));
+    let dir = std::env::temp_dir().join(format!("iridium-decks-ui-png-clear-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     let path = dir.join("slide.png");
     let picked = path.to_string_lossy().to_string();
@@ -145,7 +145,7 @@ fn export_dialog_writes_a_png_with_a_transparent_background() {
             app.logic(ui.ctx());
             app.ui(ui);
         },
-        SlideApp::new(deckcraft_engine::Session::with_new(), services),
+        SlideApp::new(iridium_decks_engine::Session::with_new(), services),
     );
     harness.run_steps(2);
     harness.state_mut().run("app.exportDialog", json!({})).unwrap();
@@ -162,7 +162,7 @@ fn export_dialog_writes_a_png_with_a_transparent_background() {
     harness.key_press(egui::Key::Enter);
     harness.run_steps(2);
     assert!(harness.state().dialog.is_none(), "the dialog closes after exporting");
-    let img = deckcraft_render::decode_image(&std::fs::read(&path).unwrap()).unwrap();
+    let img = iridium_decks_render::decode_image(&std::fs::read(&path).unwrap()).unwrap();
     assert_eq!(img.get_pixel(2, 2).0[3], 0, "the background is left out");
     let _ = std::fs::remove_dir_all(&dir);
 }
@@ -259,8 +259,8 @@ fn the_open_dialog_reads_the_caret_word_and_the_shape_click() {
         slide.shapes[0].text = Some(body);
         slide.shapes[0].id
     };
-    let mut st = deckcraft_engine::DocState::new(doc, None, "t".into());
-    st.selection.text = Some(deckcraft_engine::TextSel { shape: shape_id, anchor: (0, 8), caret: (0, 8), ..Default::default() });
+    let mut st = iridium_decks_engine::DocState::new(doc, None, "t".into());
+    st.selection.text = Some(iridium_decks_engine::TextSel { shape: shape_id, anchor: (0, 8), caret: (0, 8), ..Default::default() });
     let seed = hyperlink_seed_of(Some(&st));
     assert_eq!(seed.mode, "url");
     assert_eq!(seed.url, "https://example.org");
@@ -282,7 +282,7 @@ fn the_open_dialog_reads_the_caret_word_and_the_shape_click() {
     assert_eq!(seed.tip, "shape tip");
     assert!(seed.highlight);
 
-    st.selection.text = Some(deckcraft_engine::TextSel { shape: shape_id, anchor: (0, 11), caret: (0, 11), ..Default::default() });
+    st.selection.text = Some(iridium_decks_engine::TextSel { shape: shape_id, anchor: (0, 11), caret: (0, 11), ..Default::default() });
     let seed = hyperlink_seed_of(Some(&st));
     assert_eq!(seed, HyperlinkSeed::blank(), "a caret at the end of the word inserts a new link");
 }

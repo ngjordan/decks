@@ -1,11 +1,11 @@
 //! Insert tab: shapes, text boxes, pictures, tables, charts, audio, video, WordArt, fields.
 
-use deckcraft_color::SchemeSlot;
-use deckcraft_geom::Xfrm;
-use deckcraft_model::chart::ChartType;
-use deckcraft_model::style::PictureFill;
-use deckcraft_model::text::{AutoFit, RunKind, TextBody};
-use deckcraft_model::{Chart, ColorRef, Fill, Geom, Line, MediaClip, Shape, ShapeId, ShapeKind, ShapeStyle, Table};
+use iridium_decks_color::SchemeSlot;
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::chart::ChartType;
+use iridium_decks_model::style::PictureFill;
+use iridium_decks_model::text::{AutoFit, RunKind, TextBody};
+use iridium_decks_model::{Chart, ColorRef, Fill, Geom, Line, MediaClip, Shape, ShapeId, ShapeKind, ShapeStyle, Table};
 use serde_json::{Value, json};
 
 use super::{
@@ -163,7 +163,7 @@ pub fn specs() -> Vec<CommandSpec> {
 
 /// Default size for a click-inserted shape (1 inch square, PowerPoint style).
 fn default_rect(s: &Session, w: f64, h: f64) -> Xfrm {
-    let size = s.active().map(|d| d.doc.slide_size).unwrap_or(deckcraft_model::defaults::WIDE);
+    let size = s.active().map(|d| d.doc.slide_size).unwrap_or(iridium_decks_model::defaults::WIDE);
     Xfrm::new((size.width - w) / 2.0, (size.height - h) / 2.0, w, h)
 }
 
@@ -180,7 +180,7 @@ pub(crate) fn auto_name_base(shape: &Shape) -> String {
         _ => shape
             .geom
             .preset_name()
-            .and_then(deckcraft_geom::preset::info)
+            .and_then(iridium_decks_geom::preset::info)
             .map(|i| i.label.split(':').next().unwrap_or(i.label).trim().to_string())
             .unwrap_or_else(|| "Shape".into()),
     }
@@ -214,8 +214,8 @@ pub(crate) fn add_shape(s: &mut Session, cmd: &str, mut shape: Shape, select: bo
 
 fn insert_shape(s: &mut Session, p: &Value) -> Result<Value> {
     let preset = str_param(p, "preset").unwrap_or("rect");
-    let info = deckcraft_geom::preset::info(preset).ok_or_else(|| bad("shape.insert", format!("unknown preset `{preset}`")))?;
-    let line_like = deckcraft_geom::preset::is_line_like(preset);
+    let info = iridium_decks_geom::preset::info(preset).ok_or_else(|| bad("shape.insert", format!("unknown preset `{preset}`")))?;
+    let line_like = iridium_decks_geom::preset::is_line_like(preset);
     let rect = rect_param(p, "rect").unwrap_or_else(|| default_rect(s, 72.0, if line_like { 0.0 } else { 72.0 }));
     let adj: Vec<f64> = p.get("adj").and_then(Value::as_array).map(|a| a.iter().filter_map(Value::as_f64).collect()).unwrap_or_default();
     let mut shape = Shape {
@@ -237,14 +237,14 @@ fn insert_shape(s: &mut Session, p: &Value) -> Result<Value> {
         }
         if let Some(tb) = shape.text.as_mut() {
             for para in &mut tb.paragraphs {
-                para.props.align = Some(deckcraft_model::text::Align::Center);
+                para.props.align = Some(iridium_decks_model::text::Align::Center);
             }
         }
     } else {
         shape.kind = if preset.contains("Connector") { ShapeKind::Connector { start: None, end: None } } else { ShapeKind::Shape };
         if preset == "straightConnector1" {
-            shape.line = Some(deckcraft_model::Line {
-                tail: Some(deckcraft_model::style::LineEnd { kind: "triangle".into(), w: "med".into(), len: "med".into() }),
+            shape.line = Some(iridium_decks_model::Line {
+                tail: Some(iridium_decks_model::style::LineEnd { kind: "triangle".into(), w: "med".into(), len: "med".into() }),
                 ..Default::default()
             });
         }
@@ -258,7 +258,7 @@ fn insert_shape(s: &mut Session, p: &Value) -> Result<Value> {
 
 fn presets(_s: &mut Session, _p: &Value) -> Result<Value> {
     Ok(Value::Array(
-        deckcraft_geom::preset::CATALOG.iter().map(|i| json!({"name": i.name, "label": i.label, "category": i.category.label()})).collect(),
+        iridium_decks_geom::preset::CATALOG.iter().map(|i| json!({"name": i.name, "label": i.label, "category": i.category.label()})).collect(),
     ))
 }
 
@@ -279,11 +279,11 @@ fn insert_icon(s: &mut Session, p: &Value) -> Result<Value> {
         name: icon.label.to_string(),
         xfrm: Some(rect),
         geom: Geom::Custom {
-            paths: vec![deckcraft_model::CustomPath {
+            paths: vec![iridium_decks_model::CustomPath {
                 w: crate::icons::VIEW,
                 h: crate::icons::VIEW,
                 d,
-                fill: deckcraft_geom::preset::FillMode::None,
+                fill: iridium_decks_geom::preset::FillMode::None,
                 stroke: true,
             }],
         },
@@ -291,8 +291,8 @@ fn insert_icon(s: &mut Session, p: &Value) -> Result<Value> {
         line: Some(Line {
             fill: Some(Fill::solid(ColorRef::scheme(SchemeSlot::Tx1))),
             width: Some(crate::icons::stroke_width(icon, rect.w, rect.h)),
-            cap: Some(deckcraft_model::style::LineCap::Round),
-            join: Some(deckcraft_model::style::LineJoin::Round),
+            cap: Some(iridium_decks_model::style::LineCap::Round),
+            join: Some(iridium_decks_model::style::LineJoin::Round),
             ..Default::default()
         }),
         style: Some(ShapeStyle::line(SchemeSlot::Tx1)),
@@ -366,7 +366,7 @@ fn smart_art(s: &mut Session, p: &Value) -> Result<Value> {
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_model::text::RunKind;
+    use iridium_decks_model::text::RunKind;
     use serde_json::json;
 
     use crate::Session;
@@ -379,21 +379,21 @@ mod tests {
         s.doc().unwrap().history.undo.len()
     }
 
-    fn date_run(s: &Session) -> Option<deckcraft_model::Run> {
+    fn date_run(s: &Session) -> Option<iridium_decks_model::Run> {
         s.doc()
             .unwrap()
             .current_slide()
             .unwrap()
             .shapes
             .iter()
-            .find(|x| x.ph_type() == Some(deckcraft_model::PhType::Date))
+            .find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date))
             .and_then(|x| x.text.as_ref())
             .and_then(|t| t.paragraphs.first())
             .and_then(|p| p.runs.first())
             .cloned()
     }
 
-    fn title_field(s: &Session) -> deckcraft_model::Run {
+    fn title_field(s: &Session) -> iridium_decks_model::Run {
         let title = s.doc().unwrap().current_slide().unwrap().shapes[0].text.clone().unwrap();
         title.paragraphs[0].runs.iter().find(|r| r.text.contains(':') || matches!(r.kind, RunKind::Field { .. })).cloned().unwrap()
     }
@@ -440,8 +440,8 @@ mod tests {
         let mut s = session();
         edit_title(&mut s);
         let before = undo(&s);
-        let now = deckcraft_text::datetime::DateTime::now_local().unwrap();
-        let expect = deckcraft_text::datetime::field_text("datetime1", Some("en-GB"), now).unwrap();
+        let now = iridium_decks_text::datetime::DateTime::now_local().unwrap();
+        let expect = iridium_decks_text::datetime::field_text("datetime1", Some("en-GB"), now).unwrap();
         s.execute("insert.dateTime", &json!({"format": "datetime1", "update": false, "language": "en-GB"})).unwrap();
         let title = s.doc().unwrap().current_slide().unwrap().shapes[0].text.clone().unwrap();
         let run = title.paragraphs[0].runs.iter().find(|r| r.text == expect).cloned().unwrap();
@@ -495,7 +495,7 @@ mod tests {
             let (id, master) = {
                 let st = s.doc().unwrap();
                 let m = crate::page_master(&st.doc, st.selection.target).unwrap().clone();
-                (m.shapes.iter().find(|x| x.ph_type() == Some(deckcraft_model::PhType::Date)).unwrap().id.0, m)
+                (m.shapes.iter().find(|x| x.ph_type() == Some(iridium_decks_model::PhType::Date)).unwrap().id.0, m)
             };
             assert!(master.shapes.iter().find(|x| x.id.0 == id).and_then(|x| x.text.as_ref()).is_none_or(|t| t.text().is_empty()));
             s.execute("edit.select", &json!({"ids": [id]})).unwrap();
@@ -514,7 +514,7 @@ mod tests {
                 .cloned()
                 .unwrap();
             assert!(matches!(run.kind, RunKind::Field { ref field } if field == "datetime10"), "{view}: {run:?}");
-            let placed = deckcraft_render::place_master_texts(&st.doc, m, 1);
+            let placed = iridium_decks_render::place_master_texts(&st.doc, m, 1);
             assert!(placed.iter().any(|p| p.body.text() == run.text && run.text.contains(':')), "{view}: the page shows the date");
             s.execute("edit.undo", &json!({})).unwrap();
             let st = s.doc().unwrap();
@@ -537,8 +537,8 @@ mod tests {
                 .unwrap();
             assert_eq!(run.props.lang.as_deref(), Some("en-GB"), "{view}: {run:?}");
             assert_eq!(v["text"].as_str(), Some(run.text.as_str()), "{view}: the answer reports the written text: {v}");
-            let now = deckcraft_text::datetime::DateTime::now_local().unwrap();
-            let gb = deckcraft_text::datetime::field_text("datetime1", Some("en-GB"), now);
+            let now = iridium_decks_text::datetime::DateTime::now_local().unwrap();
+            let gb = iridium_decks_text::datetime::field_text("datetime1", Some("en-GB"), now);
             assert_eq!(Some(run.text.as_str()), gb.as_deref(), "{view}: the date in en-GB order (dd/mm/yyyy)");
             // No date placeholder: refused, nothing changed.
             let key = if view == "view.handoutMaster" { "handout.placeholders" } else { "notes.placeholders" };
@@ -554,8 +554,8 @@ mod tests {
         let mut s = session();
         s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
         s.execute("slide.go", &json!({"index": 0})).unwrap();
-        let now = deckcraft_text::datetime::DateTime::now_local().unwrap();
-        let clock = deckcraft_text::datetime::field_text("datetime10", Some("en-US"), now).unwrap();
+        let now = iridium_decks_text::datetime::DateTime::now_local().unwrap();
+        let clock = iridium_decks_text::datetime::field_text("datetime10", Some("en-US"), now).unwrap();
         let v = s.execute("insert.dateTime", &json!({"format": "datetime10", "language": "en_US"})).unwrap();
         assert_eq!(v["where"], "footer");
         let run = date_run(&s).unwrap();
@@ -565,7 +565,7 @@ mod tests {
         s.execute("slide.go", &json!({"index": 1})).unwrap();
         assert!(date_run(&s).is_none(), "the other slide keeps its own footer");
         s.execute("slide.go", &json!({"index": 0})).unwrap();
-        let fixed = deckcraft_text::datetime::field_text("datetime12", None, now).unwrap();
+        let fixed = iridium_decks_text::datetime::field_text("datetime12", None, now).unwrap();
         s.execute("insert.dateTime", &json!({"format": "datetime12", "update": false})).unwrap();
         let run = date_run(&s).unwrap();
         assert_eq!((run.kind, run.text), (RunKind::Text, fixed));

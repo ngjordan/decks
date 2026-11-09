@@ -9,7 +9,7 @@ impl SlideApp {
 
     /// First slide Play from Start should open: the custom show or range, skipping hidden slides.
     pub fn show_start_index(&self) -> usize {
-        self.session.active().and_then(|d| deckcraft_anim::show_order(&d.doc).first().copied()).unwrap_or(0)
+        self.session.active().and_then(|d| iridium_decks_anim::show_order(&d.doc).first().copied()).unwrap_or(0)
     }
 
     /// The slide `show.start {from}` names: `Ok(None)` when absent, `Err` when it is not a slide of
@@ -43,7 +43,7 @@ impl SlideApp {
 
     /// Play custom show `name` from its first slide. Set Up Slide Show is left as it was.
     pub fn start_custom_show(&mut self, name: &str, reading: bool) {
-        let state = self.session.active().and_then(|d| deckcraft_anim::ShowState::play_custom(&d.doc, name));
+        let state = self.session.active().and_then(|d| iridium_decks_anim::ShowState::play_custom(&d.doc, name));
         let Some(state) = state else { return };
         let from = state.slide;
         self.start_show(from, reading);
@@ -67,7 +67,7 @@ impl SlideApp {
     }
 
     /// Timeline and playhead for this frame's canvas raster. `None` when the editor should draw the slide at rest.
-    pub fn anim_preview_draw(&self) -> Option<(deckcraft_anim::Timeline, f64)> {
+    pub fn anim_preview_draw(&self) -> Option<(iridium_decks_anim::Timeline, f64)> {
         self.anim_preview.as_ref().map(|p| (p.timeline.clone(), p.elapsed))
     }
 
@@ -79,7 +79,7 @@ impl SlideApp {
         let alive = self.show.is_none()
             && self.session.active().is_some_and(|d| {
                 d.uid == uid
-                    && d.selection.target == deckcraft_engine::Target::Slides
+                    && d.selection.target == iridium_decks_engine::Target::Slides
                     && d.selection.slide == slide
                     && d.doc.slides.get(slide).is_some_and(|s| std::sync::Arc::as_ptr(s) as usize == ptr)
             });
@@ -106,7 +106,7 @@ impl SlideApp {
             let Some(d) = self.session.active() else {
                 return Err("no presentation is open".into());
             };
-            if d.selection.target != deckcraft_engine::Target::Slides {
+            if d.selection.target != iridium_decks_engine::Target::Slides {
                 return Err("animation preview plays the current slide".into());
             }
             let slide = d.selection.slide;
@@ -114,7 +114,7 @@ impl SlideApp {
                 return Err("no slide to preview".into());
             };
             let ptr = std::sync::Arc::as_ptr(slide_arc) as usize;
-            let timeline = deckcraft_anim::ShowState::timeline(&d.doc, slide);
+            let timeline = iridium_decks_anim::ShowState::timeline(&d.doc, slide);
             (d.uid, slide, ptr, timeline)
         };
         if timeline.is_empty() {

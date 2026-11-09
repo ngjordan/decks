@@ -1,6 +1,6 @@
 use super::render::fit;
 use super::{Click, HitShape, Hyperlink, PlacedShape, Presentation, Rect, ShapeId, Show, SlideApp, Ui, pos2, vec2};
-use deckcraft_anim::AnimState;
+use iridium_decks_anim::AnimState;
 
 /// The media-host voice for slide transition sounds (no shape has this id).
 pub(crate) const TRANSITION_SOUND: ShapeId = ShapeId(u32::MAX);
@@ -36,7 +36,7 @@ pub(super) fn show_media(app: &mut SlideApp, show: &mut Show, doc_uid: u64, doc:
     }
     if let Some(media) = sound {
         // Loop Until Next Sound: it repeats until another slide's sound or Stop Previous Sound.
-        let clip = deckcraft_model::MediaClip { media, volume: 1.0, loop_play: sound_loop, ..Default::default() };
+        let clip = iridium_decks_model::MediaClip { media, volume: 1.0, loop_play: sound_loop, ..Default::default() };
         app.media.play(doc_uid, doc, TRANSITION_SOUND, &clip, None, crate::media::Owner::Show);
     }
     if let Some(i) = cur {
@@ -81,7 +81,7 @@ fn media_bar_rect(shape: Rect) -> Rect {
     }
 }
 
-pub(super) fn slide_media_bars(srect: Rect, doc: &Presentation, slide: usize) -> Vec<(ShapeId, deckcraft_model::MediaClip, Rect, Rect)> {
+pub(super) fn slide_media_bars(srect: Rect, doc: &Presentation, slide: usize) -> Vec<(ShapeId, iridium_decks_model::MediaClip, Rect, Rect)> {
     let k = srect.width() / doc.slide_size.width.max(1.0) as f32;
     crate::media::slide_media(doc, slide)
         .into_iter()
@@ -99,7 +99,7 @@ pub(super) fn media_bar_target(
     doc: &Presentation,
     show: &Show,
     srect: Rect,
-) -> Option<(ShapeId, deckcraft_model::MediaClip, Rect)> {
+) -> Option<(ShapeId, iridium_decks_model::MediaClip, Rect)> {
     if !doc.show.show_media_controls || show.pen || show.ended || show.blank.is_some() {
         return None;
     }
@@ -123,7 +123,7 @@ pub(super) fn pointer_on_media_bar(ctx: &egui::Context, ui: &Ui, doc: &Presentat
 }
 
 /// The media shape under the pointer on the shown slide.
-pub(super) fn media_hit(ctx: &egui::Context, ui: &Ui, show: &Show, doc: &Presentation) -> Option<(ShapeId, deckcraft_model::MediaClip)> {
+pub(super) fn media_hit(ctx: &egui::Context, ui: &Ui, show: &Show, doc: &Presentation) -> Option<(ShapeId, iridium_decks_model::MediaClip)> {
     let p = ctx.input(|i| i.pointer.interact_pos())?;
     let full = ui.max_rect();
     let avail = if show.reading { Rect::from_min_max(full.min, pos2(full.max.x, full.max.y - 34.0)) } else { full };
@@ -187,7 +187,7 @@ pub(super) fn shapes_under_pointer(ctx: &egui::Context, ui: &Ui, show: &mut Show
     let (x, y) = ((p.x - srect.min.x) as f64 / k, (p.y - srect.min.y) as f64 / k);
     let i = show.state.slide;
     if show.links.as_ref().is_none_or(|(s, ..)| *s != i) {
-        let placed = deckcraft_render::place_slide(doc, i);
+        let placed = iridium_decks_render::place_slide(doc, i);
         show.links = Some((i, placed.links, placed.shapes));
     }
     show.timeline(doc);
@@ -253,7 +253,7 @@ impl Show {
 }
 
 /// A slide-space box on screen, the slide being drawn in `srect` at `k` pixels per point.
-pub(super) fn on_screen(srect: Rect, k: f32, x: &deckcraft_geom::Xfrm) -> Rect {
+pub(super) fn on_screen(srect: Rect, k: f32, x: &iridium_decks_geom::Xfrm) -> Rect {
     Rect::from_min_size(pos2(srect.min.x + x.x as f32 * k, srect.min.y + x.y as f32 * k), vec2(x.w as f32 * k, x.h as f32 * k))
 }
 
@@ -272,13 +272,13 @@ pub(super) fn gif_hit(ctx: &egui::Context, ui: &Ui, show: &Show, doc_uid: u64, d
 mod hit_tests {
     use super::*;
 
-    fn shape(id: u32, parent: Option<usize>, rect: deckcraft_geom::Rect) -> PlacedShape {
+    fn shape(id: u32, parent: Option<usize>, rect: iridium_decks_geom::Rect) -> PlacedShape {
         PlacedShape { id: ShapeId(id), parent, is_group: parent.is_none(), rect, link: None }
     }
 
     #[test]
     fn motion_path_moves_the_hit_box() {
-        let shapes = [shape(1, None, deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let shapes = [shape(1, None, iridium_decks_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
         let states = [AnimState { offset_x: 50.0, scale_x: 2.0, ..Default::default() }];
 
         let moved = hit_point((65.0, 20.0), &shapes, &states, 0);
@@ -289,7 +289,7 @@ mod hit_tests {
 
     #[test]
     fn scale_and_rotation_move_the_hit_box() {
-        let shapes = [shape(1, None, deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let shapes = [shape(1, None, iridium_decks_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
         let states = [AnimState { scale_x: 2.0, scale_y: 1.0, rotate: 90.0, ..Default::default() }];
 
         // The shape center is (20, 20); local (25, 25) scales and rotates to (15, 30).
@@ -299,8 +299,10 @@ mod hit_tests {
 
     #[test]
     fn parent_animation_does_not_move_child_hit_box() {
-        let shapes =
-            [shape(1, None, deckcraft_geom::Rect::new(0.0, 0.0, 100.0, 100.0)), shape(2, Some(0), deckcraft_geom::Rect::new(10.0, 10.0, 30.0, 30.0))];
+        let shapes = [
+            shape(1, None, iridium_decks_geom::Rect::new(0.0, 0.0, 100.0, 100.0)),
+            shape(2, Some(0), iridium_decks_geom::Rect::new(10.0, 10.0, 30.0, 30.0)),
+        ];
         let states = [AnimState { offset_x: 40.0, ..Default::default() }, AnimState::default()];
 
         let unchanged = hit_point((15.0, 20.0), &shapes, &states, 1);

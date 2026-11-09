@@ -9,11 +9,11 @@ pub fn ime_area(app: &SlideApp, xf: Xf) -> Option<Rect> {
         if ts.notes {
             return None;
         }
-        if let Some((top, bot)) = deckcraft_engine::cmd::text::caret_line(st, ts) {
+        if let Some((top, bot)) = iridium_decks_engine::cmd::text::caret_line(st, ts) {
             return Some(Rect::from_two_pos(xf.to_screen(top), xf.to_screen(bot)).expand2(vec2(1.0, 0.0)));
         }
         let sh = st.shape(ts.shape)?;
-        return Some(screen_rect(xf, &deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)));
+        return Some(screen_rect(xf, &iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)));
     }
     if st.selection.shapes.len() != 1 {
         return None;
@@ -22,7 +22,7 @@ pub fn ime_area(app: &SlideApp, xf: Xf) -> Option<Rect> {
     if sh.is_line() {
         return None;
     }
-    Some(screen_rect(xf, &deckcraft_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)))
+    Some(screen_rect(xf, &iridium_decks_engine::cmd::xfrm_of(&st.doc, &st.selection, sh)))
 }
 
 /// Turn the input method on for the slide while it takes typing, with its candidate window at

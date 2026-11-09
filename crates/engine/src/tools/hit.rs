@@ -11,7 +11,7 @@ pub(super) fn text_member_at(st: &crate::DocState, sh: &Shape, p: Point, tol: f6
     let ShapeKind::Group { children, child } = &sh.kind else { return None };
     let x = xfrm_of(&st.doc, &st.selection, sh);
     let ch = Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
-    member_at(children, deckcraft_geom::group_child_affine(&x, ch), p, tol)
+    member_at(children, iridium_decks_geom::group_child_affine(&x, ch), p, tol)
 }
 
 /// Depth-first (topmost-first) search of `children` for a text-holding shape under `p`.
@@ -26,7 +26,7 @@ fn member_at(children: &[Shape], to_abs: Affine, p: Point, tol: f64) -> Option<S
         }
         if let ShapeKind::Group { children: gc, child: gch } = &c.kind {
             let gch = Rect::new(gch.x, gch.y, gch.x + gch.w, gch.y + gch.h);
-            let nested = to_abs * deckcraft_geom::group_child_affine(&cx, gch);
+            let nested = to_abs * iridium_decks_geom::group_child_affine(&cx, gch);
             if let Some(id) = member_at(gc, nested, p, tol) {
                 return Some(id);
             }
@@ -55,7 +55,7 @@ pub(super) fn shape_in_front(st: &crate::DocState, shapes: &[Shape], target: Sha
         if s.id == target {
             return false;
         }
-        if deckcraft_model::find_shape(std::slice::from_ref(s), target).is_some() {
+        if iridium_decks_model::find_shape(std::slice::from_ref(s), target).is_some() {
             // The group holding the text: look among its members.
             return shape_in_front(st, s.children(), target, p, tol, depth + 1);
         }
@@ -234,7 +234,7 @@ pub(super) fn hit_shape(st: &crate::DocState, sh: &Shape, p: Point, tol: f64) ->
         ShapeKind::Group { children, child } => {
             // A group is hit when any child is hit; the group is what gets selected.
             let ch = Rect::new(child.x, child.y, child.x + child.w, child.y + child.h);
-            let m = deckcraft_geom::group_child_affine(&x, ch);
+            let m = iridium_decks_geom::group_child_affine(&x, ch);
             let q = m.inverse() * p;
             for c in children.iter().rev() {
                 if let Some(cx) = c.xfrm {
@@ -256,9 +256,9 @@ pub(super) fn hit_shape(st: &crate::DocState, sh: &Shape, p: Point, tol: f64) ->
         }
         _ => {
             if sh.is_line() {
-                let geo = deckcraft_render::shape_geometry(sh, x.w, x.h);
+                let geo = iridium_decks_render::shape_geometry(sh, x.w, x.h);
                 let lw = sh.line.as_ref().and_then(|l| l.width).unwrap_or(1.0);
-                if deckcraft_geom::near_path(&geo.outline(), local, tol.max(lw)) {
+                if iridium_decks_geom::near_path(&geo.outline(), local, tol.max(lw)) {
                     return Some(Hit::Shape { id: sh.id, text: false });
                 }
                 return None;
@@ -270,13 +270,14 @@ pub(super) fn hit_shape(st: &crate::DocState, sh: &Shape, p: Point, tol: f64) ->
             let has_text = matches!(sh.kind, ShapeKind::Shape) && (sh.text.as_ref().is_some_and(|t| !t.is_empty()) || sh.ph.is_some() || sh.text_box);
             // Match rendering: an explicit No Fill overrides the style, and style/theme fills
             // can themselves be No Fill. Empty, text-less interiors then let clicks through.
-            let fill =
-                cmd::text::ctx_for(&st.doc, &st.selection).map(|ctx| deckcraft_model::resolve::fill(&ctx, sh).0).unwrap_or_else(|| sh.fill.clone());
-            let filled = !matches!(fill, None | Some(deckcraft_model::Fill::None));
-            let geo = deckcraft_render::shape_geometry(sh, x.w, x.h);
+            let fill = cmd::text::ctx_for(&st.doc, &st.selection)
+                .map(|ctx| iridium_decks_model::resolve::fill(&ctx, sh).0)
+                .unwrap_or_else(|| sh.fill.clone());
+            let filled = !matches!(fill, None | Some(iridium_decks_model::Fill::None));
+            let geo = iridium_decks_render::shape_geometry(sh, x.w, x.h);
             let in_geo = {
-                use deckcraft_geom::KurboShape;
-                geo.outline().winding(local) != 0 || deckcraft_geom::near_path(&geo.outline(), local, tol)
+                use iridium_decks_geom::KurboShape;
+                geo.outline().winding(local) != 0 || iridium_decks_geom::near_path(&geo.outline(), local, tol)
             };
             if has_text
                 || sh.ph.is_some()
@@ -290,7 +291,7 @@ pub(super) fn hit_shape(st: &crate::DocState, sh: &Shape, p: Point, tol: f64) ->
                         | ShapeKind::Opaque { .. }
                 )
                 || (filled && in_geo)
-                || deckcraft_geom::near_path(&geo.outline(), local, tol)
+                || iridium_decks_geom::near_path(&geo.outline(), local, tol)
             {
                 return Some(Hit::Shape { id: sh.id, text: has_text || matches!(sh.kind, ShapeKind::Shape) });
             }
@@ -305,6 +306,6 @@ pub fn text_pos(st: &crate::DocState, sh: &Shape, p: Point) -> (usize, usize) {
 }
 
 /// Row heights of table `t` as drawn: rows grow to fit their text.
-pub fn table_rows(st: &crate::DocState, t: &deckcraft_model::Table) -> Vec<f64> {
+pub fn table_rows(st: &crate::DocState, t: &iridium_decks_model::Table) -> Vec<f64> {
     cmd::table_drawn_heights(&st.doc, &st.selection, t)
 }

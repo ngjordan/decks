@@ -3,8 +3,8 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_media::MediaInfo;
-use deckcraft_model::{MediaId, MediaItem, Presentation, Shape, ShapeKind, defaults};
+use iridium_decks_media::MediaInfo;
+use iridium_decks_model::{MediaId, MediaItem, Presentation, Shape, ShapeKind, defaults};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, always, bad, base64_decode, base64_encode, bool_or, cmd, f64_or, has_doc, ok, opt_usize_param, str_param, usize_param};
@@ -33,11 +33,11 @@ pub fn specs() -> Vec<CommandSpec> {
             adopt
         ),
         cmd!(noundo "file.openBytes", "Open Data", [], None, "{name, data: base64}", always, open_bytes),
-        cmd!(noundo "file.save", "Save", ["File"], Some("Cmd+S"), "{path?, format?: deckcraft|pptx}", has_doc, save),
+        cmd!(noundo "file.save", "Save", ["File"], Some("Cmd+S"), "{path?, format?: iridium-decks|pptx}", has_doc, save),
         cmd!(noundo "file.saveAs", "Save As…", ["File"], Some("Cmd+Shift+S"), "{path, format?}", has_doc, save_as),
         cmd!(noundo "file.saveTemplate", "Save as Template…", ["File"], None, "{path}", has_doc, save_as),
-        cmd!(query "file.saveBytes", "Save to Data", [], None, "{format?: deckcraft|pptx} → {data: base64}", has_doc, save_bytes_cmd),
-        cmd!(noundo "file.export", "Export…", ["File"], None, "{path, format?: png|jpeg|pptx|deckcraft|outline|rtf|pdf|gif (else by path), slide?: index, all?: bool, scale?: px per pt, layout?: slides|notes|handouts (pdf), perPage?: 1|2|3|4|6|9, paper?: letter|a4|legal|a3 (pdf), orientation?: portrait|landscape (pdf), dpi?, slides?: [index]|range (\"1-3,5\"), includeHidden?, textLayer?, frame?, transparentBackground?: bool (png: leave the slide background out), width?: px 16-3840|small|medium|large|extraLarge (gif), secondsPerSlide?: 0.1-600 (gif; 5), loop?: bool (gif; true: forever)} → {path, bytes} or {files} (png, jpeg); gif adds frames, width, height, secondsPerSlide", has_doc, export),
+        cmd!(query "file.saveBytes", "Save to Data", [], None, "{format?: iridium-decks|pptx} → {data: base64}", has_doc, save_bytes_cmd),
+        cmd!(noundo "file.export", "Export…", ["File"], None, "{path, format?: png|jpeg|pptx|iridium-decks|outline|rtf|pdf|gif (else by path), slide?: index, all?: bool, scale?: px per pt, layout?: slides|notes|handouts (pdf), perPage?: 1|2|3|4|6|9, paper?: letter|a4|legal|a3 (pdf), orientation?: portrait|landscape (pdf), dpi?, slides?: [index]|range (\"1-3,5\"), includeHidden?, textLayer?, frame?, transparentBackground?: bool (png: leave the slide background out), width?: px 16-3840|small|medium|large|extraLarge (gif), secondsPerSlide?: 0.1-600 (gif; 5), loop?: bool (gif; true: forever)} → {path, bytes} or {files} (png, jpeg); gif adds frames, width, height, secondsPerSlide", has_doc, export),
         cmd!(
             query "file.info",
             "Info",
@@ -76,14 +76,14 @@ pub fn specs() -> Vec<CommandSpec> {
     ]
 }
 
-fn theme_named(name: &str) -> Option<deckcraft_model::Theme> {
-    deckcraft_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name))
+fn theme_named(name: &str) -> Option<iridium_decks_model::Theme> {
+    iridium_decks_model::theme::builtin_themes().into_iter().find(|t| t.name.eq_ignore_ascii_case(name))
 }
 
-fn slide_size(p: &Value) -> deckcraft_geom::Size {
+fn slide_size(p: &Value) -> iridium_decks_geom::Size {
     p.get("size")
         .and_then(Value::as_array)
-        .and_then(|a| Some(deckcraft_geom::Size::new(a.first()?.as_f64()?, a.get(1)?.as_f64()?)))
+        .and_then(|a| Some(iridium_decks_geom::Size::new(a.first()?.as_f64()?, a.get(1)?.as_f64()?)))
         .filter(|s| s.width >= 1.0 && s.height >= 1.0 && s.width < 5000.0 && s.height < 5000.0)
         .unwrap_or(defaults::WIDE)
 }
@@ -135,7 +135,7 @@ pub fn open_presentation(name: &str, bytes: &[u8]) -> Result<Presentation> {
 /// What a file lost on opening.
 #[derive(Debug, Default, Clone)]
 pub struct Damage {
-    /// Pictures and media a `.deckcraft` file had lost or damaged.
+    /// Pictures and media a `.iridium-decks` file had lost or damaged.
     pub media: Vec<String>,
     /// Slides a `.pptx` lists but that couldn't be read, so they are not in the presentation.
     pub slides: Vec<String>,
@@ -149,40 +149,40 @@ impl Damage {
 
 /// [`open_presentation`], plus what the file had lost or damaged.
 pub fn open_checked(name: &str, bytes: &[u8]) -> Result<(Presentation, Damage)> {
-    if deckcraft_format::sniff(bytes) {
-        let (p, media) = deckcraft_format::load_checked(bytes).map_err(|e| EngineError::Other(e.to_string()))?;
+    if iridium_decks_format::sniff(bytes) {
+        let (p, media) = iridium_decks_format::load_checked(bytes).map_err(|e| EngineError::Other(e.to_string()))?;
         return Ok((p, Damage { media, slides: vec![] }));
     }
     open_other(name, bytes).map(|(p, slides)| (p, Damage { media: vec![], slides }))
 }
 
 fn open_other(name: &str, bytes: &[u8]) -> Result<(Presentation, Vec<String>)> {
-    if deckcraft_pptx::sniff(bytes) {
-        let (mut p, lost_slides) = deckcraft_pptx::import_checked(bytes).map_err(|e| EngineError::Other(e.to_string()))?;
-        deckcraft_format::repair(&mut p);
+    if iridium_decks_pptx::sniff(bytes) {
+        let (mut p, lost_slides) = iridium_decks_pptx::import_checked(bytes).map_err(|e| EngineError::Other(e.to_string()))?;
+        iridium_decks_format::repair(&mut p);
         probe_clips(&mut p);
         return Ok((p, lost_slides));
     }
-    if deckcraft_pptx::is_encrypted(bytes) {
-        return Err(EngineError::Other(format!("{name} is password-protected. Iridium Decks can't open password-protected presentations yet.")));
+    if iridium_decks_pptx::is_encrypted(bytes) {
+        return Err(EngineError::Other(format!("{name} is password-protected. Decks can't open password-protected presentations yet.")));
     }
     let lower = name.to_ascii_lowercase();
-    let rtf = deckcraft_format::rtf::sniff_rtf(bytes);
+    let rtf = iridium_decks_format::rtf::sniff_rtf(bytes);
     if rtf || lower.ends_with(".txt") || lower.ends_with(".md") {
         let text = String::from_utf8_lossy(bytes);
-        let text = if rtf { std::borrow::Cow::Owned(deckcraft_format::rtf::rtf_to_outline(&text)) } else { text };
+        let text = if rtf { std::borrow::Cow::Owned(iridium_decks_format::rtf::rtf_to_outline(&text)) } else { text };
         let mut p = defaults::blank_presentation(defaults::WIDE, Default::default(), false);
         if lower.ends_with(".md") {
-            deckcraft_format::markdown_to_slides(&mut p, &text);
+            iridium_decks_format::markdown_to_slides(&mut p, &text);
         } else {
-            deckcraft_format::outline_to_slides(&mut p, &text);
+            iridium_decks_format::outline_to_slides(&mut p, &text);
         }
         if p.slides.is_empty() {
             p = defaults::new_presentation(None);
         }
         return Ok((p, vec![]));
     }
-    Err(EngineError::Other(format!("{name}: not a presentation Iridium Decks can read")))
+    Err(EngineError::Other(format!("{name}: not a presentation Decks can read")))
 }
 
 /// Fill in each audio and video clip's length and picture size from its bytes: a `.pptx` doesn't
@@ -197,7 +197,7 @@ fn probe_clips(p: &mut Presentation) {
                 && (m.duration_ms == 0 || m.width == 0 && m.height == 0)
                 && let Some(info) = probed
                     .entry(m.media)
-                    .or_insert_with(|| media.iter().find(|i| i.id == m.media).and_then(|i| deckcraft_media::probe_headers(&i.data).ok()))
+                    .or_insert_with(|| media.iter().find(|i| i.id == m.media).and_then(|i| iridium_decks_media::probe_headers(&i.data).ok()))
             {
                 if m.duration_ms == 0 {
                     m.duration_ms = info.duration_ms.min(u32::MAX as u64) as u32;
@@ -224,7 +224,7 @@ fn probe_clips(p: &mut Presentation) {
 /// An outline file's text: RTF is read into the tab-indented outline, anything else as UTF-8.
 pub fn outline_text(bytes: &[u8]) -> String {
     let text = String::from_utf8_lossy(bytes);
-    if deckcraft_format::rtf::sniff_rtf(bytes) { deckcraft_format::rtf::rtf_to_outline(&text) } else { text.into_owned() }
+    if iridium_decks_format::rtf::sniff_rtf(bytes) { iridium_decks_format::rtf::rtf_to_outline(&text) } else { text.into_owned() }
 }
 
 pub fn add_opened(s: &mut Session, name: &str, path: Option<String>, p: Presentation) -> usize {
@@ -254,7 +254,7 @@ pub struct LoadedFile {
 pub fn read_presentation_file(path: &str) -> Result<LoadedFile> {
     let bytes = crate::io::read_file(path).map_err(EngineError::Other)?;
     let (doc, damaged) = open_checked(path, &bytes)?;
-    let native = deckcraft_format::sniff(&bytes) || deckcraft_pptx::sniff(&bytes);
+    let native = iridium_decks_format::sniff(&bytes) || iridium_decks_pptx::sniff(&bytes);
     Ok(LoadedFile { path: path.to_string(), doc, native, damaged })
 }
 
@@ -337,37 +337,37 @@ fn report_damage(s: &mut Session, damaged: &Damage) -> Result<()> {
     Ok(())
 }
 
-/// Encode the presentation in `format` (`deckcraft`, `pptx`, `potx`, `ppsx`, `outline`, `pdf`, `gif`).
+/// Encode the presentation in `format` (`iridium-decks`, `pptx`, `potx`, `ppsx`, `outline`, `pdf`, `gif`).
 pub fn save_bytes(doc: &Presentation, format: &str) -> Result<Vec<u8>> {
     match format {
-        f @ ("pptx" | "potx" | "ppsx") => deckcraft_pptx::export_as(doc, f).map_err(|e| EngineError::Other(e.to_string())),
-        "outline" | "txt" => Ok(deckcraft_format::slides_to_outline(doc).into_bytes()),
-        "rtf" => Ok(deckcraft_format::rtf::slides_to_rtf(doc).into_bytes()),
-        "pdf" => deckcraft_pdf::export(doc, &Default::default()).map_err(|e| EngineError::Other(e.to_string())),
+        f @ ("pptx" | "potx" | "ppsx") => iridium_decks_pptx::export_as(doc, f).map_err(|e| EngineError::Other(e.to_string())),
+        "outline" | "txt" => Ok(iridium_decks_format::slides_to_outline(doc).into_bytes()),
+        "rtf" => Ok(iridium_decks_format::rtf::slides_to_rtf(doc).into_bytes()),
+        "pdf" => iridium_decks_pdf::export(doc, &Default::default()).map_err(|e| EngineError::Other(e.to_string())),
         "gif" => gif_bytes(doc, &Value::Null),
         "png" | "jpeg" | "jpg" => Err(EngineError::Other("saving a presentation as a single image isn't supported; use file.export".into())),
-        _ => deckcraft_format::save(doc).map_err(|e| EngineError::Other(e.to_string())),
+        _ => iridium_decks_format::save(doc).map_err(|e| EngineError::Other(e.to_string())),
     }
 }
 
 /// Paper sizes for notes and handouts, for the UI's Print page.
-pub use deckcraft_pdf::{PAPERS, paper_size};
+pub use iridium_decks_pdf::{PAPERS, paper_size};
 
 /// PDF options from command params: `{layout: slides|notes|handouts, perPage, dpi, slides,
 /// includeHidden, textLayer, frame, paper: letter|a4|legal|a3, orientation: portrait|landscape}` for a presentation of `count` slides. `slides` is a list of
 /// 0-based indices or a range as typed in PowerPoint's Print page (`"1-3, 5"`, 1-based).
-pub fn pdf_options(p: &Value, count: usize) -> Result<deckcraft_pdf::PdfOptions> {
-    let mut o = deckcraft_pdf::PdfOptions { layout: deckcraft_pdf::PageLayout::Slides, ..Default::default() };
+pub fn pdf_options(p: &Value, count: usize) -> Result<iridium_decks_pdf::PdfOptions> {
+    let mut o = iridium_decks_pdf::PdfOptions { layout: iridium_decks_pdf::PageLayout::Slides, ..Default::default() };
     o.layout = match str_param(p, "layout").unwrap_or("slides") {
-        "notes" => deckcraft_pdf::PageLayout::Notes,
+        "notes" => iridium_decks_pdf::PageLayout::Notes,
         "handouts" => {
             let per_page = opt_usize_param(p, "perPage", "file.export")?.unwrap_or(6);
             if ![1, 2, 3, 4, 6, 9].contains(&per_page) {
                 return Err(bad("file.export", format!("perPage {per_page} isn't one of 1, 2, 3, 4, 6, 9")));
             }
-            deckcraft_pdf::PageLayout::Handouts { per_page: per_page as u8 }
+            iridium_decks_pdf::PageLayout::Handouts { per_page: per_page as u8 }
         }
-        _ => deckcraft_pdf::PageLayout::Slides,
+        _ => iridium_decks_pdf::PageLayout::Slides,
     };
     o.dpi = f64_or(p, "dpi", o.dpi).clamp(36.0, 600.0);
     o.slides = match p.get("slides") {
@@ -384,8 +384,8 @@ pub fn pdf_options(p: &Value, count: usize) -> Result<deckcraft_pdf::PdfOptions>
         other => return Err(bad("file.export", format!("orientation “{other}” isn't portrait or landscape"))),
     };
     let paper = str_param(p, "paper").unwrap_or("letter");
-    o.paper = deckcraft_pdf::paper_size(paper, landscape).ok_or_else(|| {
-        let ids: Vec<&str> = deckcraft_pdf::PAPERS.iter().map(|p| p.0).collect();
+    o.paper = iridium_decks_pdf::paper_size(paper, landscape).ok_or_else(|| {
+        let ids: Vec<&str> = iridium_decks_pdf::PAPERS.iter().map(|p| p.0).collect();
         bad("file.export", format!("paper “{paper}” isn't one of {}", ids.join(", ")))
     })?;
     Ok(o)
@@ -425,15 +425,15 @@ pub fn parse_slide_range(text: &str, count: usize) -> Result<Vec<usize>> {
 
 /// PDF bytes for `doc` with [`pdf_options`] from `p`.
 pub fn pdf_bytes(doc: &Presentation, p: &Value) -> Result<Vec<u8>> {
-    deckcraft_pdf::export(doc, &pdf_options(p, doc.slides.len())?).map_err(|e| EngineError::Other(e.to_string()))
+    iridium_decks_pdf::export(doc, &pdf_options(p, doc.slides.len())?).map_err(|e| EngineError::Other(e.to_string()))
 }
 
 /// The output extensions [`format_for_path`] maps to a writer of that format.
-pub const WRITABLE_EXTENSIONS: &[&str] = &["deckcraft", "pptx", "potx", "ppsx", "pdf", "png", "jpg", "jpeg", "gif", "txt", "md", "rtf"];
+pub const WRITABLE_EXTENSIONS: &[&str] = &["iridium-decks", "pptx", "potx", "ppsx", "pdf", "png", "jpg", "jpeg", "gif", "txt", "md", "rtf"];
 
 /// The format a file named `path` is written in, or `None` when its extension names no format
-/// Iridium Decks writes (`.odp`, `.svg`, no extension …): [`format_for_path`] would save
-/// those as native `.deckcraft` bytes under the wrong name.
+/// Decks writes (`.odp`, `.svg`, no extension …): [`format_for_path`] would save
+/// those as native `.iridium-decks` bytes under the wrong name.
 pub fn writable_format_for_path(path: &str) -> Option<&'static str> {
     let ext = std::path::Path::new(path).extension()?.to_str()?.to_ascii_lowercase();
     WRITABLE_EXTENSIONS.contains(&ext.as_str()).then(|| format_for_path(path))
@@ -465,7 +465,7 @@ pub fn format_for_path(path: &str) -> &'static str {
     } else if l.ends_with(".rtf") {
         "rtf"
     } else {
-        "deckcraft"
+        "iridium-decks"
     }
 }
 
@@ -509,18 +509,18 @@ fn save_as(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 fn save_bytes_cmd(s: &mut Session, p: &Value) -> Result<Value> {
-    let format = str_param(p, "format").unwrap_or("deckcraft");
+    let format = str_param(p, "format").unwrap_or("iridium-decks");
     let bytes = save_bytes(&s.doc()?.doc, format)?;
     Ok(json!({"data": base64_encode(&bytes), "bytes": bytes.len()}))
 }
 
 /// `scale` for rendering `doc`'s slides to an image: within 0.01–16, and small enough that the
-/// slide fits the renderer's largest picture ([`deckcraft_render::MAX_SIDE`]). Past that the
+/// slide fits the renderer's largest picture ([`iridium_decks_render::MAX_SIDE`]). Past that the
 /// renderer clips, so a 4× export of a 4032 pt slide came out cropped to its first 16,000 pixels.
 pub fn image_scale(doc: &Presentation, scale: f64) -> f64 {
     let scale = if scale.is_finite() { scale.clamp(0.01, 16.0) } else { 1.0 };
     let longest = doc.slide_size.width.max(doc.slide_size.height).max(1.0);
-    scale.min(f64::from(deckcraft_render::MAX_SIDE) / longest)
+    scale.min(f64::from(iridium_decks_render::MAX_SIDE) / longest)
 }
 
 /// Render slide `index` (current when absent) to PNG bytes.
@@ -531,17 +531,17 @@ pub fn render_png(doc: &Presentation, index: usize, scale: f64, edit: bool) -> (
 /// [`render_png`]; `transparent` leaves the slide background out (#784).
 pub fn render_png_with(doc: &Presentation, index: usize, scale: f64, edit: bool, transparent: bool) -> (Vec<u8>, u32, u32) {
     let scale = image_scale(doc, scale);
-    let opts = deckcraft_render::RenderOpts { scale, edit, transparent_background: transparent, ..Default::default() };
-    let img = deckcraft_render::render_slide(doc, index, &opts);
-    (img.to_png_at(deckcraft_render::dpi_for_scale(scale)), img.width, img.height)
+    let opts = iridium_decks_render::RenderOpts { scale, edit, transparent_background: transparent, ..Default::default() };
+    let img = iridium_decks_render::render_slide(doc, index, &opts);
+    (img.to_png_at(iridium_decks_render::dpi_for_scale(scale)), img.width, img.height)
 }
 
 fn finite_scale(scale: f64) -> f64 {
     if scale.is_finite() { scale.clamp(0.01, 16.0) } else { 1.0 }
 }
 
-fn picture_bytes(img: &deckcraft_render::Image, format: &str, scale: f64) -> Vec<u8> {
-    let dpi = deckcraft_render::dpi_for_scale(scale);
+fn picture_bytes(img: &iridium_decks_render::Image, format: &str, scale: f64) -> Vec<u8> {
+    let dpi = iridium_decks_render::dpi_for_scale(scale);
     if format == "png" { img.to_png_at(dpi) } else { img.to_jpeg_at(92, Some(dpi)) }
 }
 
@@ -570,7 +570,7 @@ fn color_at(s: &mut Session, p: &Value) -> Result<Value> {
     };
     let (x, y) = (coord("x")?, coord("y")?);
     let scale = f64_or(p, "scale", 2.0).clamp(0.01, 16.0);
-    let img = deckcraft_render::render_slide(&st.doc, i, &deckcraft_render::RenderOpts { scale, ..Default::default() });
+    let img = iridium_decks_render::render_slide(&st.doc, i, &iridium_decks_render::RenderOpts { scale, ..Default::default() });
     let (px, py) = (x * scale, y * scale);
     let inside = px >= 0.0 && py >= 0.0 && px < f64::from(img.width) && py < f64::from(img.height);
     let [r, g, b, a] =
@@ -601,10 +601,10 @@ fn export(s: &mut Session, p: &Value) -> Result<Value> {
             let scale = image_scale(&st.doc, scale);
             let mut written = vec![];
             for (k, i) in slides.iter().enumerate() {
-                let img = deckcraft_render::render_slide(
+                let img = iridium_decks_render::render_slide(
                     &st.doc,
                     *i,
-                    &deckcraft_render::RenderOpts { scale, transparent_background: transparent, ..Default::default() },
+                    &iridium_decks_render::RenderOpts { scale, transparent_background: transparent, ..Default::default() },
                 );
                 let bytes = picture_bytes(&img, &format, scale);
                 let out = if slides.len() == 1 {
@@ -644,7 +644,7 @@ fn export(s: &mut Session, p: &Value) -> Result<Value> {
                 "secondsPerSlide": f64::from(out.delay_cs) / 100.0,
             }))
         }
-        "pptx" | "potx" | "ppsx" | "deckcraft" | "outline" | "txt" | "rtf" => {
+        "pptx" | "potx" | "ppsx" | "iridium-decks" | "outline" | "txt" | "rtf" => {
             let bytes = save_bytes(&st.doc, &format)?;
             write_file(&path, &bytes)?;
             Ok(json!({"path": path, "bytes": bytes.len()}))
@@ -784,7 +784,7 @@ mod tests {
     }
 
     fn scratch(name: &str) -> std::path::PathBuf {
-        let dir = std::env::temp_dir().join(format!("deckcraft-write-file-{}-{name}", std::process::id()));
+        let dir = std::env::temp_dir().join(format!("iridium-decks-write-file-{}-{name}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
@@ -793,13 +793,13 @@ mod tests {
     #[test]
     fn write_file_does_not_touch_a_predictable_saving_sibling() {
         let dir = scratch("sibling");
-        let dest = dir.join("deck.deckcraft");
+        let dest = dir.join("deck.iridium-decks");
         let dest_str = dest.to_str().unwrap();
         std::fs::write(&dest, b"old").unwrap();
-        std::fs::write(dir.join("deck.deckcraft.saving"), b"precious").unwrap();
+        std::fs::write(dir.join("deck.iridium-decks.saving"), b"precious").unwrap();
         write_file(dest_str, b"new").unwrap();
         assert_eq!(std::fs::read(&dest).unwrap(), b"new");
-        assert_eq!(std::fs::read(dir.join("deck.deckcraft.saving")).unwrap(), b"precious");
+        assert_eq!(std::fs::read(dir.join("deck.iridium-decks.saving")).unwrap(), b"precious");
         let names: Vec<_> = std::fs::read_dir(&dir).unwrap().map(|e| e.unwrap().file_name()).collect();
         assert_eq!(names.len(), 2, "no temporary file may be left behind: {names:?}");
         let _ = std::fs::remove_dir_all(&dir);

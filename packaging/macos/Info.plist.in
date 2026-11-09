@@ -7,13 +7,13 @@
   <key>CFBundleDevelopmentRegion</key>
   <string>en</string>
   <key>CFBundleDisplayName</key>
-  <string>Iridium Decks</string>
+  <string>Decks</string>
   <key>CFBundleName</key>
-  <string>Iridium Decks</string>
+  <string>Decks</string>
   <key>CFBundleExecutable</key>
-  <string>Iridium Decks</string>
+  <string>Decks</string>
   <key>CFBundleIdentifier</key>
-  <string>ph.iridium.decks</string>
+  <string>ph.decks</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -24,12 +24,12 @@
   <string>@SHORT_VERSION@</string>
   <key>CFBundleVersion</key>
   <string>@SHORT_VERSION@</string>
-  <key>Iridium DecksVersion</key>
+  <key>DecksVersion</key>
   <string>@VERSION@</string>
-  <key>Iridium DecksBuildCommit</key>
+  <key>DecksBuildCommit</key>
   <string>@BUILD_SHA@</string>
   <key>CFBundleIconFile</key>
-  <string>Iridium Decks</string>
+  <string>Decks</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.productivity</string>
   <!-- Must match MACOSX_DEPLOYMENT_TARGET in package.sh. Big Sur is the first release on
@@ -43,27 +43,27 @@
   <key>NSRequiresAquaSystemAppearance</key>
   <false/>
   <key>NSHumanReadableCopyright</key>
-  <string>Copyright © the Iridium Decks authors. MIT OR Apache-2.0.</string>
+  <string>Copyright © the Decks authors. MIT OR Apache-2.0.</string>
 
-  <!-- The documents Iridium Decks opens, so Finder's Open With and "Change All" can offer it (the
-       Apple events arrive through apps/deckcraft/src/apple_events.rs). PowerPoint stays the
-       preferred app for its formats unless the user picks Iridium Decks. The same set as the Windows
-       installer (deckcraft.wxs) and the Linux desktop file; a test in apps/deckcraft keeps
+  <!-- The documents Decks opens, so Finder's Open With and "Change All" can offer it (the
+       Apple events arrive through apps/iridium-decks/src/apple_events.rs). PowerPoint stays the
+       preferred app for its formats unless the user picks Decks. The same set as the Windows
+       installer (iridium-decks.wxs) and the Linux desktop file; a test in apps/iridium-decks keeps
        them equal. -->
   <key>CFBundleDocumentTypes</key>
   <array>
     <dict>
       <key>CFBundleTypeName</key>
-      <string>Iridium Decks Presentation</string>
+      <string>Decks Presentation</string>
       <key>CFBundleTypeRole</key>
       <string>Editor</string>
       <key>LSHandlerRank</key>
       <string>Owner</string>
       <key>CFBundleTypeIconFile</key>
-      <string>Iridium Decks</string>
+      <string>Decks</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>ph.iridium.decks.presentation</string>
+        <string>ph.decks.presentation</string>
       </array>
     </dict>
     <dict>
@@ -116,27 +116,27 @@
     </dict>
   </array>
 
-  <!-- Iridium Decks's own format: a zip of a JSON manifest plus media. -->
+  <!-- Decks's own format: a zip of a JSON manifest plus media. -->
   <key>UTExportedTypeDeclarations</key>
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>ph.iridium.decks.presentation</string>
+      <string>ph.decks.presentation</string>
       <key>UTTypeDescription</key>
-      <string>Iridium Decks Presentation</string>
+      <string>Decks Presentation</string>
       <key>UTTypeConformsTo</key>
       <array>
         <string>public.data</string>
         <string>public.presentation</string>
       </array>
       <key>UTTypeIconFile</key>
-      <string>Iridium Decks</string>
+      <string>Decks</string>
       <key>UTTypeTagSpecification</key>
       <dict>
         <key>public.filename-extension</key>
-        <array><string>deckcraft</string></array>
+        <array><string>iridium-decks</string></array>
         <key>public.mime-type</key>
-        <array><string>application/x-deckcraft</string></array>
+        <array><string>application/x-iridium-decks</string></array>
       </dict>
     </dict>
   </array>

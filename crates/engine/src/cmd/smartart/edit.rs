@@ -12,7 +12,7 @@ fn diagram_group(shapes: &[Shape], id: ShapeId) -> Option<&Shape> {
             return Some(sh);
         }
         if let ShapeKind::Group { children, .. } = &sh.kind {
-            if sh.diagram.is_some() && deckcraft_model::find_shape(children, id).is_some() {
+            if sh.diagram.is_some() && iridium_decks_model::find_shape(children, id).is_some() {
                 return Some(sh);
             }
             if let Some(g) = diagram_group(children, id) {
@@ -54,7 +54,7 @@ fn regenerate(cmd: &str, doc: &mut Presentation, d: &Diagram, area: Xfrm) -> Res
 fn edit_diagram<T>(s: &mut Session, p: &Value, cmd: &str, f: impl FnOnce(&mut Diagram) -> Result<T>) -> Result<T> {
     let gid = target_group(s, p, cmd)?;
     s.edit(|doc, sel| {
-        let g = current_shapes(doc, sel).and_then(|v| deckcraft_model::find_shape(v, gid)).cloned().ok_or_else(|| bad(cmd, "no such shape"))?;
+        let g = current_shapes(doc, sel).and_then(|v| iridium_decks_model::find_shape(v, gid)).cloned().ok_or_else(|| bad(cmd, "no such shape"))?;
         let (ShapeKind::Group { children, child }, Some(mut d)) = (g.kind, g.diagram) else { return Err(bad(cmd, "not a SmartArt graphic")) };
         sync_text(&mut d, &children);
         let out = f(&mut d)?;
@@ -62,7 +62,7 @@ fn edit_diagram<T>(s: &mut Session, p: &Value, cmd: &str, f: impl FnOnce(&mut Di
         d.imported = false;
         let kids = regenerate(cmd, doc, &d, child)?;
         let shapes = crate::shapes_mut(doc, sel).ok_or_else(|| bad(cmd, "no slide"))?;
-        let sh = deckcraft_model::find_shape_mut(shapes, gid).ok_or_else(|| bad(cmd, "no such shape"))?;
+        let sh = iridium_decks_model::find_shape_mut(shapes, gid).ok_or_else(|| bad(cmd, "no such shape"))?;
         sh.kind = ShapeKind::Group { children: kids, child };
         sh.diagram = Some(d);
         sel.shapes = vec![gid];
@@ -243,7 +243,7 @@ pub(super) fn to_text(s: &mut Session, p: &Value) -> Result<Value> {
                 r.props.size = Some(size);
             }
             para.end_props.size = Some(size);
-            para.props.bullet = Some(deckcraft_model::text::Bullet::Char { char: "•".into() });
+            para.props.bullet = Some(iridium_decks_model::text::Bullet::Char { char: "•".into() });
             para.props.margin_left = Some(18.0 * (para.level as f64 + 1.0));
             para.props.indent = Some(-14.0);
             body.paragraphs.push(para);
@@ -271,7 +271,7 @@ pub(super) fn to_shapes(s: &mut Session, p: &Value) -> Result<Value> {
     let gid = target_group(s, p, CMD)?;
     s.edit(|doc, sel| {
         let shapes = crate::shapes_mut(doc, sel).ok_or_else(|| bad(CMD, "no slide"))?;
-        let g = deckcraft_model::find_shape_mut(shapes, gid).ok_or_else(|| bad(CMD, "no such shape"))?;
+        let g = iridium_decks_model::find_shape_mut(shapes, gid).ok_or_else(|| bad(CMD, "no such shape"))?;
         g.diagram = None;
         g.name = "Group".into();
         sel.shapes = vec![gid];

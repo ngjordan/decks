@@ -5,13 +5,13 @@
 
 use std::sync::Arc;
 
-use deckcraft_color::Rgba;
-use deckcraft_geom::Xfrm;
-use deckcraft_model::style::{ColorRef, Fill};
-use deckcraft_model::text::{Action, Hyperlink, LevelStyle, ListStyle, Paragraph, Run, RunProps, TextBody};
-use deckcraft_model::{Comment, CustomShow, Geom, LayoutType, PhType, Presentation, Shape, ShapeId, ShapeKind, defaults, resolve};
+use iridium_decks_color::Rgba;
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::style::{ColorRef, Fill};
+use iridium_decks_model::text::{Action, Hyperlink, LevelStyle, ListStyle, Paragraph, Run, RunProps, TextBody};
+use iridium_decks_model::{Comment, CustomShow, Geom, LayoutType, PhType, Presentation, Shape, ShapeId, ShapeKind, defaults, resolve};
 
-const CHIME: &[u8] = b"RIFFdeckcraft-chime-WAVEfmt ";
+const CHIME: &[u8] = b"RIFFiridium-decks-chime-WAVEfmt ";
 
 fn link(action: Action) -> Hyperlink {
     Hyperlink { action, tooltip: String::new(), highlight_click: false, sound: None, stop_sound: false, zoom_return: None }
@@ -22,7 +22,7 @@ fn box_at(p: &mut Presentation, name: &str, x: f64, y: f64) -> Shape {
 }
 
 fn round(p: &Presentation) -> Presentation {
-    deckcraft_pptx::import(&deckcraft_pptx::export(p).expect("export")).expect("import")
+    iridium_decks_pptx::import(&iridium_decks_pptx::export(p).expect("export")).expect("import")
 }
 
 fn shape<'a>(p: &'a Presentation, slide: usize, name: &str) -> &'a Shape {

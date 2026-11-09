@@ -9,9 +9,9 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
 
-use deckcraft_model::table::TableStyleDef;
-use deckcraft_model::text::{Action, Hyperlink, ListStyle, RunProps, Spacing, TextBody};
-use deckcraft_model::{LayoutId, Master, MasterId, MediaId, Presentation, ShapeId, ShapeKind, Slide, SlideId};
+use iridium_decks_model::table::TableStyleDef;
+use iridium_decks_model::text::{Action, Hyperlink, ListStyle, RunProps, Spacing, TextBody};
+use iridium_decks_model::{LayoutId, Master, MasterId, MediaId, Presentation, ShapeId, ShapeKind, Slide, SlideId};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, bool_or, cmd, has_doc, usize_param};
@@ -78,7 +78,7 @@ fn scale_run(run: &mut RunProps, factor: f64) {
     }
 }
 
-fn scale_shapes(shapes: &mut [deckcraft_model::Shape], sx: f64, sy: f64, depth: usize) {
+fn scale_shapes(shapes: &mut [iridium_decks_model::Shape], sx: f64, sy: f64, depth: usize) {
     if depth > 64 {
         return;
     }
@@ -195,14 +195,14 @@ fn remap(map: &HashMap<MediaId, MediaId>) -> impl FnMut(&mut MediaId) + '_ {
     }
 }
 
-fn shape_ids(shapes: &[deckcraft_model::Shape]) -> Vec<ShapeId> {
+fn shape_ids(shapes: &[iridium_decks_model::Shape]) -> Vec<ShapeId> {
     let mut v = vec![];
-    deckcraft_model::walk(shapes, &mut |sh, _| v.push(sh.id));
+    iridium_decks_model::walk(shapes, &mut |sh, _| v.push(sh.id));
     v
 }
 
 /// Point connector ends at the renumbered shapes.
-fn remap_connectors(shapes: &mut [deckcraft_model::Shape], map: &HashMap<ShapeId, ShapeId>, depth: usize) {
+fn remap_connectors(shapes: &mut [iridium_decks_model::Shape], map: &HashMap<ShapeId, ShapeId>, depth: usize) {
     if depth > 64 {
         return;
     }
@@ -250,7 +250,7 @@ fn relink_text(t: &mut TextBody, map: &HashMap<SlideId, SlideId>) {
 }
 
 /// Point the slide links under `shapes` (click and hover actions, text links) at the copies.
-fn relink_shapes(shapes: &mut [deckcraft_model::Shape], map: &HashMap<SlideId, SlideId>, depth: usize) {
+fn relink_shapes(shapes: &mut [iridium_decks_model::Shape], map: &HashMap<SlideId, SlideId>, depth: usize) {
     if depth > 64 {
         return;
     }
@@ -272,7 +272,7 @@ fn relink_shapes(shapes: &mut [deckcraft_model::Shape], map: &HashMap<SlideId, S
 }
 
 /// Fresh shape ids for `shapes`, and the old → new map.
-fn renumber(cmd: &str, doc: &mut Presentation, shapes: &mut [deckcraft_model::Shape]) -> Result<HashMap<ShapeId, ShapeId>> {
+fn renumber(cmd: &str, doc: &mut Presentation, shapes: &mut [iridium_decks_model::Shape]) -> Result<HashMap<ShapeId, ShapeId>> {
     let old = shape_ids(shapes);
     super::edit::reid(cmd, doc, shapes)?;
     let map: HashMap<ShapeId, ShapeId> = old.into_iter().zip(shape_ids(shapes)).collect();
@@ -281,7 +281,7 @@ fn renumber(cmd: &str, doc: &mut Presentation, shapes: &mut [deckcraft_model::Sh
 }
 
 /// The destination layout a reused slide moves to: same name, else same kind, else the first.
-fn matching_layout(doc: &Presentation, name: &str, kind: deckcraft_model::LayoutType) -> LayoutId {
+fn matching_layout(doc: &Presentation, name: &str, kind: iridium_decks_model::LayoutType) -> LayoutId {
     let all = || doc.masters.iter().flat_map(|m| m.layouts.iter());
     all()
         .find(|l| !name.is_empty() && l.name.eq_ignore_ascii_case(name))
@@ -291,7 +291,7 @@ fn matching_layout(doc: &Presentation, name: &str, kind: deckcraft_model::Layout
         .unwrap_or_default()
 }
 
-fn collect_table_styles(shapes: &[deckcraft_model::Shape], styles: &mut Vec<String>, seen: &mut HashSet<String>, depth: usize) {
+fn collect_table_styles(shapes: &[iridium_decks_model::Shape], styles: &mut Vec<String>, seen: &mut HashSet<String>, depth: usize) {
     if depth > 64 {
         return;
     }
@@ -305,7 +305,7 @@ fn collect_table_styles(shapes: &[deckcraft_model::Shape], styles: &mut Vec<Stri
     }
 }
 
-fn remap_table_styles(shapes: &mut [deckcraft_model::Shape], styles: &HashMap<String, String>, depth: usize) {
+fn remap_table_styles(shapes: &mut [iridium_decks_model::Shape], styles: &HashMap<String, String>, depth: usize) {
     if depth > 64 {
         return;
     }
@@ -525,11 +525,11 @@ fn copy_media(cmd: &str, doc: &mut Presentation, src: &Presentation, used: &[Med
 
 #[cfg(test)]
 mod tests {
-    use deckcraft_geom::{Size, Xfrm};
-    use deckcraft_model::style::{Artistic, Fill, PictureFill};
-    use deckcraft_model::table::TableStyleDef;
-    use deckcraft_model::text::{Action, Bullet, Hyperlink, TextBody};
-    use deckcraft_model::{Background, MediaClip, Shape, ShapeKind, Table, defaults};
+    use iridium_decks_geom::{Size, Xfrm};
+    use iridium_decks_model::style::{Artistic, Fill, PictureFill};
+    use iridium_decks_model::table::TableStyleDef;
+    use iridium_decks_model::text::{Action, Bullet, Hyperlink, TextBody};
+    use iridium_decks_model::{Background, MediaClip, Shape, ShapeKind, Table, defaults};
     use serde_json::json;
 
     use super::*;
@@ -537,14 +537,14 @@ mod tests {
     const CUSTOM_STYLE: &str = "{11111111-2222-4333-8444-555555555555}";
 
     fn styled_table_presentation(id: &str, color: &str) -> Presentation {
-        let mut p = deckcraft_model::defaults::new_presentation(None);
+        let mut p = iridium_decks_model::defaults::new_presentation(None);
         let raw = format!(
             r#"<a:tblStyle xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" styleId="{id}" styleName="Owned"><a:wholeTbl><a:tcStyle><a:fill><a:solidFill><a:srgbClr val="{color}"/></a:solidFill></a:fill></a:tcStyle></a:wholeTbl></a:tblStyle>"#
         );
         p.table_styles.push(TableStyleDef { id: id.into(), name: "Owned".into(), raw, ..Default::default() });
-        let table = deckcraft_model::Table { style: id.into(), ..deckcraft_model::Table::new(1, 1, 100.0, 24.0) };
-        let child = deckcraft_model::Shape { id: ShapeId(p.alloc_id().expect("shape id")), kind: ShapeKind::Table(table), ..Default::default() };
-        let group = deckcraft_model::Shape {
+        let table = iridium_decks_model::Table { style: id.into(), ..iridium_decks_model::Table::new(1, 1, 100.0, 24.0) };
+        let child = iridium_decks_model::Shape { id: ShapeId(p.alloc_id().expect("shape id")), kind: ShapeKind::Table(table), ..Default::default() };
+        let group = iridium_decks_model::Shape {
             id: ShapeId(p.alloc_id().expect("group id")),
             kind: ShapeKind::Group { children: vec![child], child: Default::default() },
             ..Default::default()
@@ -554,7 +554,7 @@ mod tests {
         p
     }
 
-    fn first_table_style(shapes: &[deckcraft_model::Shape]) -> Option<String> {
+    fn first_table_style(shapes: &[iridium_decks_model::Shape]) -> Option<String> {
         for shape in shapes {
             if let ShapeKind::Table(table) = &shape.kind {
                 return Some(table.style.clone());
@@ -569,8 +569,8 @@ mod tests {
     #[test]
     fn reused_grouped_table_styles_survive_native_and_pptx_round_trips_and_undo() {
         for (name, bytes) in [
-            ("source.deckcraft", deckcraft_format::save(&styled_table_presentation(CUSTOM_STYLE, "FF0000")).expect("native source")),
-            ("source.pptx", deckcraft_pptx::export(&styled_table_presentation(CUSTOM_STYLE, "FF0000")).expect("pptx source")),
+            ("source.iridium-decks", iridium_decks_format::save(&styled_table_presentation(CUSTOM_STYLE, "FF0000")).expect("native source")),
+            ("source.pptx", iridium_decks_pptx::export(&styled_table_presentation(CUSTOM_STYLE, "FF0000")).expect("pptx source")),
         ] {
             let data = super::super::base64_encode(&bytes);
             let mut session = Session::with_new();
@@ -584,8 +584,8 @@ mod tests {
             let doc = &session.doc().expect("doc").doc;
             assert!(doc.table_styles.iter().all(|style| style.id != CUSTOM_STYLE));
             session.execute("edit.redo", &json!({})).expect("redo reuse");
-            let bytes = crate::cmd::file::save_bytes(&session.doc().expect("doc").doc, "deckcraft").expect("save destination");
-            let reopened = crate::cmd::file::open_presentation("destination.deckcraft", &bytes).expect("reopen destination");
+            let bytes = crate::cmd::file::save_bytes(&session.doc().expect("doc").doc, "iridium-decks").expect("save destination");
+            let reopened = crate::cmd::file::open_presentation("destination.iridium-decks", &bytes).expect("reopen destination");
             assert!(reopened.table_styles.iter().any(|style| style.id == CUSTOM_STYLE));
             assert_eq!(first_table_style(&reopened.slides.get(1).expect("reused slide").shapes).as_deref(), Some(CUSTOM_STYLE));
         }
@@ -594,7 +594,7 @@ mod tests {
     #[test]
     fn reused_table_style_definitions_are_deduplicated_or_remapped_on_collision() {
         let source = styled_table_presentation(CUSTOM_STYLE, "FF0000");
-        let source_bytes = deckcraft_format::save(&source).expect("save source");
+        let source_bytes = iridium_decks_format::save(&source).expect("save source");
 
         let mut identical = Session::with_new();
         identical
@@ -604,7 +604,7 @@ mod tests {
             })
             .expect("seed identical definition");
         identical
-            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&source_bytes), "name": "source.deckcraft", "slides": [0]}))
+            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&source_bytes), "name": "source.iridium-decks", "slides": [0]}))
             .expect("reuse identical definition");
         let doc = &identical.doc().expect("doc").doc;
         assert_eq!(doc.table_styles.iter().filter(|style| style.id == CUSTOM_STYLE).count(), 1);
@@ -616,7 +616,7 @@ mod tests {
                 let mut own = source.table_styles.first().cloned().unwrap_or_default();
                 own.raw = own.raw.replace("FF0000", "0000FF");
                 doc.table_styles.push(own);
-                let table = deckcraft_model::Table { style: CUSTOM_STYLE.into(), ..deckcraft_model::Table::new(1, 1, 100.0, 24.0) };
+                let table = iridium_decks_model::Table { style: CUSTOM_STYLE.into(), ..iridium_decks_model::Table::new(1, 1, 100.0, 24.0) };
                 let id = ShapeId(doc.alloc_id().expect("destination table id"));
                 if let Some(slide) = doc.slides.first_mut() {
                     Arc::make_mut(slide).shapes.push(Shape { id, kind: ShapeKind::Table(table), ..Default::default() });
@@ -625,7 +625,7 @@ mod tests {
             })
             .expect("seed conflicting definition");
         conflicting
-            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&source_bytes), "name": "source.deckcraft", "slides": [0]}))
+            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&source_bytes), "name": "source.iridium-decks", "slides": [0]}))
             .expect("reuse conflicting definition");
         let doc = &conflicting.doc().expect("doc").doc;
         assert_eq!(first_table_style(&doc.slides.first().expect("destination slide").shapes).as_deref(), Some(CUSTOM_STYLE));
@@ -680,7 +680,7 @@ mod tests {
                 layout.shapes = vec![Shape { xfrm: Some(Xfrm::new(700.0, 300.0, 100.0, 50.0)), ..Default::default() }];
             }
         }
-        let bytes = deckcraft_format::save(&src).expect("source save");
+        let bytes = iridium_decks_format::save(&src).expect("source save");
         let data = super::super::base64_encode(&bytes);
         let mut session = Session::with_new();
         session
@@ -689,7 +689,7 @@ mod tests {
                 Ok(())
             })
             .expect("destination size");
-        session.execute("slide.reuse", &json!({"data": data, "name": "source.deckcraft", "slides": [0], "keepFormatting": true})).expect("reuse");
+        session.execute("slide.reuse", &json!({"data": data, "name": "source.iridium-decks", "slides": [0], "keepFormatting": true})).expect("reuse");
 
         let doc = &session.doc().expect("doc").doc;
         let reused = doc.slides.get(1).expect("reused slide");
@@ -718,8 +718,8 @@ mod tests {
         assert_eq!(imported_master.layouts.first().and_then(|l| l.shapes.first()).and_then(|s| s.xfrm), Some(Xfrm::new(350.0, 150.0, 50.0, 25.0)));
         assert_ne!(reused.id, slide_id);
 
-        let saved = deckcraft_format::save(&doc.clone()).expect("destination save");
-        let reopened = crate::cmd::file::open_presentation("destination.deckcraft", &saved).expect("destination reopen");
+        let saved = iridium_decks_format::save(&doc.clone()).expect("destination save");
+        let reopened = crate::cmd::file::open_presentation("destination.iridium-decks", &saved).expect("destination reopen");
         let reopened_shape = reopened.slides.get(1).and_then(|s| s.shapes.first()).and_then(|s| s.xfrm);
         assert_eq!(reopened_shape, Some(Xfrm::new(400.0, 200.0, 100.0, 50.0)));
     }
@@ -773,13 +773,13 @@ mod tests {
             },
         ];
         slide.background = Some(Background::Fill { fill: Fill::Picture(PictureFill { media: id(4), ..Default::default() }) });
-        slide.transition = Some(deckcraft_model::anim::Transition { sound: Some(id(7)), ..Default::default() });
-        let bytes = deckcraft_format::save(&src).expect("save");
+        slide.transition = Some(iridium_decks_model::anim::Transition { sound: Some(id(7)), ..Default::default() });
+        let bytes = iridium_decks_format::save(&src).expect("save");
 
         let mut s = Session::with_new();
         let own = vec![1u8, 2, 3];
         let own_id = s.edit(|doc, _| Ok(doc.add_media("own.bin", "application/octet-stream", own.clone()).expect("media"))).expect("own media");
-        s.execute("slide.reuse", &json!({"data": super::super::base64_encode(&bytes), "name": "src.deckcraft", "slides": [0]})).expect("reuse");
+        s.execute("slide.reuse", &json!({"data": super::super::base64_encode(&bytes), "name": "src.iridium-decks", "slides": [0]})).expect("reuse");
         let doc = &s.doc().expect("doc").doc;
         assert_eq!(doc.media(own_id).map(|m| m.data.as_slice() == own.as_slice()), Some(true), "own media untouched");
         let reused = doc.slides.get(1).expect("reused slide");
@@ -833,8 +833,8 @@ mod tests {
         if let Some(sl) = src.slides.get_mut(1).map(Arc::make_mut) {
             sl.shapes = vec![Shape { id: ShapeId(9004), click: Some(link_to(id(0))), ..Default::default() }];
         }
-        let bytes = deckcraft_format::save(&src).expect("save");
-        let reopened = crate::cmd::file::open_presentation("src.deckcraft", &bytes).expect("open");
+        let bytes = iridium_decks_format::save(&src).expect("save");
+        let reopened = crate::cmd::file::open_presentation("src.iridium-decks", &bytes).expect("open");
         let left_behind = reopened.slides.get(2).map(|s| s.id).expect("third slide");
 
         let mut s = Session::with_new();
@@ -842,7 +842,7 @@ mod tests {
             s.execute("slide.new", &json!({})).expect("new");
         }
         let out = s
-            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&bytes), "name": "src.deckcraft", "slides": [0, 1]}))
+            .execute("slide.reuse", &json!({"data": super::super::base64_encode(&bytes), "name": "src.iridium-decks", "slides": [0, 1]}))
             .expect("reuse");
         let new: Vec<SlideId> = serde_json::from_value(out.get("ids").cloned().unwrap_or_default()).expect("ids");
         let doc = &s.doc().expect("doc").doc;
@@ -874,11 +874,11 @@ mod tests {
         }
         let last_slide = src.doc().expect("doc").doc.slides.len() - 1;
         src.execute("slide.hide", &json!({"index": last_slide})).expect("hide");
-        let bytes = crate::cmd::file::save_bytes(&src.doc().expect("doc").doc, "deckcraft").expect("save");
+        let bytes = crate::cmd::file::save_bytes(&src.doc().expect("doc").doc, "iridium-decks").expect("save");
         let data = super::super::base64_encode(&bytes);
 
         let mut s = Session::with_new();
-        let listed = s.execute("slide.reuseList", &json!({"data": data, "name": "src.deckcraft"})).expect("list");
+        let listed = s.execute("slide.reuseList", &json!({"data": data, "name": "src.iridium-decks"})).expect("list");
         let slides = listed["slides"].as_array().expect("slides");
         let title = |i: usize| slides.iter().find(|x| x["index"] == i).and_then(|x| x["title"].as_str()).unwrap_or_default().to_string();
         assert!(slides.len() >= 3);
@@ -888,7 +888,7 @@ mod tests {
         assert_eq!(s.doc().expect("doc").doc.slides.len(), 1, "listing changes nothing");
 
         let last = slides.len() - 1;
-        s.execute("slide.reuse", &json!({"data": data, "name": "src.deckcraft", "slides": [last - 2, last]})).expect("reuse");
+        s.execute("slide.reuse", &json!({"data": data, "name": "src.iridium-decks", "slides": [last - 2, last]})).expect("reuse");
         let titles: Vec<String> = s.doc().expect("doc").doc.slides.iter().map(|x| x.title()).collect();
         assert!(titles.iter().any(|t| t == "Alpha") && titles.iter().any(|t| t == "Gamma"));
         assert!(!titles.iter().any(|t| t == "Beta"), "a slide that was not picked stays out");

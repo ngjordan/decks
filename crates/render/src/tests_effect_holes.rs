@@ -2,8 +2,8 @@
 //! The fixed samples cover background, hole/centre, ring, visible halos and reflected coverage.
 
 use super::{Fill, Image, RenderOpts, Rgba, render_slide};
-use deckcraft_model::style::{ColorRef, Effects, Glow, Line, Reflection, Shadow};
-use deckcraft_model::{Geom, Presentation, Shape, ShapeId, Xfrm};
+use iridium_decks_model::style::{ColorRef, Effects, Glow, Line, Reflection, Shadow};
+use iridium_decks_model::{Geom, Presentation, Shape, ShapeId, Xfrm};
 
 const PROBES: [(u32, u32); 9] = [
     (20, 20),   // Clear background.
@@ -49,7 +49,7 @@ fn scene(shape: &str, effect: Effect) -> Presentation {
         }
     }
     let slide = std::sync::Arc::make_mut(&mut p.slides[0]);
-    slide.background = Some(deckcraft_model::Background::Fill { fill: Fill::solid(ColorRef::rgb(Rgba::WHITE)) });
+    slide.background = Some(iridium_decks_model::Background::Fill { fill: Fill::solid(ColorRef::rgb(Rgba::WHITE)) });
     slide.shapes = vec![Shape {
         id: ShapeId(1596),
         xfrm: Some(Xfrm::new(50.0, 50.0, 160.0, 160.0)),
@@ -65,7 +65,7 @@ fn scene(shape: &str, effect: Effect) -> Presentation {
 fn draw(shape: &str, effect: Effect) -> Image {
     let p = scene(shape, effect);
     let image = render_slide(&p, 0, &RenderOpts { scale: 1.0, ..Default::default() });
-    if let Ok(dir) = std::env::var("DECKCRAFT_EFFECT_HOLES_QA") {
+    if let Ok(dir) = std::env::var("IRIDIUM_DECKS_EFFECT_HOLES_QA") {
         // Overwrite, so a QA directory can be reused across runs.
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(std::path::Path::new(&dir).join(format!("{shape}-{effect:?}.png")), image.to_png()).unwrap();

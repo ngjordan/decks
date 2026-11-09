@@ -127,12 +127,12 @@ pub(crate) fn border_outside(is_pic: bool, effects: Option<&Effects>) -> bool {
 /// the outline is the border, with dashes kept their length. `None` for compound lines, whose
 /// bands would not survive the doubling (they stay centred on the outline).
 pub(crate) fn outside_line(line: &Line, lw: f64) -> Option<Line> {
-    if line.compound.is_some_and(|c| c != deckcraft_model::style::Compound::Single) {
+    if line.compound.is_some_and(|c| c != iridium_decks_model::style::Compound::Single) {
         return None;
     }
     let dash = line.dash.as_ref().map(|d| {
         let p = d.pattern();
-        deckcraft_model::style::Dash::Custom {
+        iridium_decks_model::style::Dash::Custom {
             pattern: p.chunks(2).map(|c| (c.first().copied().unwrap_or(0.0) / 2.0, c.get(1).copied().unwrap_or(0.0) / 2.0)).collect(),
         }
     });
@@ -167,7 +167,7 @@ pub(crate) fn fill_opacity(rctx: &Ctx, fill: &Option<Fill>, ph: Option<Rgba>) ->
 /// top-left corner…), as PowerPoint applies them: skewed, then scaled. A perspective shadow
 /// (`algn="b"`, `sy` 23%, `kx` -20°) so lies flat along the shape's bottom edge, not around its
 /// middle.
-pub(crate) fn shadow_local(sh: &deckcraft_model::style::Shadow, w: f64, h: f64) -> Affine {
+pub(crate) fn shadow_local(sh: &iridium_decks_model::style::Shadow, w: f64, h: f64) -> Affine {
     let (ax, ay) = match sh.align.as_str() {
         "tl" => (0.0, 0.0),
         "t" => (0.5, 0.0),

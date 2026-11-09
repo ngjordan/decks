@@ -1,4 +1,4 @@
-//! Optional craft-fonts build input (https://github.com/storytold/craft-fonts, recipe from its
+//! Optional craft-fonts build input (https://github.com/ngjordan/craft-fonts, recipe from its
 //! `docs/integration.md`). With `CRAFT_FONTS_DIR=<checkout>` the fonts in its
 //! `fonts/latin-manifest.txt` (presentation fonts) and `fonts/manifest.txt` are embedded as
 //! `CRAFT_FONTS`, Latin first. Native builds additionally read
@@ -12,7 +12,7 @@
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
-/// Families Iridium Decks never embeds (AGENTS.md §1: no Adobe-authored visual design, and no Noto
+/// Families Decks never embeds (AGENTS.md §1: no Adobe-authored visual design, and no Noto
 /// CJK rebrand of Source Han on any platform).
 const EXCLUDED_FAMILIES: &[&str] = &["Source Sans 3", "Source Serif 4", "Source Han Sans", "Source Han Serif"];
 
@@ -145,7 +145,7 @@ fn manifest(dir: &std::path::Path, manifest: &std::path::Path, wasm: bool) -> Re
         let [family, style, file, scripts, ..] = f.as_slice() else {
             return Err(format!("malformed manifest line: {line}"));
         };
-        // Iridium Decks's asset policy: no Adobe-authored typefaces, even openly licensed ones.
+        // Decks's asset policy: no Adobe-authored typefaces, even openly licensed ones.
         if is_excluded_family(family) {
             continue;
         }

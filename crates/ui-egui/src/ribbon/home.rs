@@ -49,7 +49,7 @@ fn clipboard_group(app: &mut SlideApp, ui: &mut Ui) {
 }
 
 pub(super) fn layout_menu(app: &mut SlideApp, ui: &mut Ui, cmd: &str) {
-    let layouts: Vec<(String, deckcraft_model::LayoutId)> = app
+    let layouts: Vec<(String, iridium_decks_model::LayoutId)> = app
         .session
         .active()
         .and_then(|d| d.doc.masters.first().map(|m| m.layouts.iter().map(|l| (l.name.clone(), l.id)).collect()))
@@ -60,11 +60,11 @@ pub(super) fn layout_menu(app: &mut SlideApp, ui: &mut Ui, cmd: &str) {
             let resp = ui.vertical(|ui| {
                 let (rect, resp) = ui.allocate_exact_size(vec2(96.0, 54.0), Sense::click());
                 if let (Some(d), Some(li)) = (app.session.active(), idx) {
-                    let img = deckcraft_render::render_layout(
+                    let img = iridium_decks_render::render_layout(
                         &d.doc,
                         0,
                         Some(li),
-                        &deckcraft_render::RenderOpts {
+                        &iridium_decks_render::RenderOpts {
                             scale: 192.0 / d.doc.slide_size.width.max(1.0),
                             edit: true,
                             size: Some((192, 108)),
@@ -156,7 +156,7 @@ pub fn font_families(app: &SlideApp) -> Vec<String> {
         v.push(m.theme.fonts.major.latin.clone());
         v.push(m.theme.fonts.minor.latin.clone());
     }
-    v.extend(deckcraft_fonts::FontDb::global().families());
+    v.extend(iridium_decks_fonts::FontDb::global().families());
     v.dedup();
     v
 }
@@ -189,7 +189,7 @@ fn font_group(app: &mut SlideApp, ui: &mut Ui, st: &Value) {
                         }
                     }
                     ui.separator();
-                    // Fonts installed while Iridium Decks runs (e.g. into ~/.local/share/fonts).
+                    // Fonts installed while Decks runs (e.g. into ~/.local/share/fonts).
                     if ui.button("Rescan Installed Fonts").clicked() {
                         run(app, "font.rescan", json!({}));
                         ui.close();
@@ -197,7 +197,7 @@ fn font_group(app: &mut SlideApp, ui: &mut Ui, st: &Value) {
                 });
                 let size_text = size.map(|s| widgets::fmt_num(s, "")).unwrap_or_default();
                 dropdown(ui, "size", &size_text, 52.0, en, |ui| {
-                    for s in deckcraft_engine::cmd::format::SIZES.iter().chain([72.0, 80.0, 88.0, 96.0].iter()) {
+                    for s in iridium_decks_engine::cmd::format::SIZES.iter().chain([72.0, 80.0, 88.0, 96.0].iter()) {
                         if ui.button(widgets::fmt_num(*s, "")).clicked() {
                             run(app, "format.size", json!({"size": s}));
                             ui.close();
@@ -401,7 +401,7 @@ fn drawing_group(app: &mut SlideApp, ui: &mut Ui) {
         let r = big_button(ui, Icon::Shapes, "Shapes", en).on_hover_text("Shapes");
         egui::Popup::menu(&r).show(|ui| {
             if let Some(p) = shapes_gallery(ui) {
-                app.session.set_tool(deckcraft_engine::ToolKind::Shape { preset: p.to_string() });
+                app.session.set_tool(iridium_decks_engine::ToolKind::Shape { preset: p.to_string() });
             }
         });
         big(app, ui, Icon::TextBox, "Text Box", "insert.textBox", json!({}));

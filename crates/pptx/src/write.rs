@@ -9,10 +9,10 @@ mod timing;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use deckcraft_geom::Xfrm;
-use deckcraft_model::text::{ListStyle, Paragraph, TextBody};
-use deckcraft_model::theme::Theme;
-use deckcraft_model::{
+use iridium_decks_geom::Xfrm;
+use iridium_decks_model::text::{ListStyle, Paragraph, TextBody};
+use iridium_decks_model::theme::Theme;
+use iridium_decks_model::{
     Background, Comment, Layout, LayoutId, Master, MediaId, PhType, Placeholder, Presentation, Shape, ShapeId, Slide, SlideId, defaults,
 };
 
@@ -39,7 +39,7 @@ const CT_CHARTEX: &str = "application/vnd.ms-office.chartex+xml";
 const RT_CHARTEX: &str = "http://schemas.microsoft.com/office/2014/relationships/chartEx";
 const CT_COMMENTS: &str = "application/vnd.openxmlformats-officedocument.presentationml.comments+xml";
 const CT_AUTHORS: &str = "application/vnd.openxmlformats-officedocument.presentationml.commentAuthors+xml";
-/// Modern threaded comments (read by PowerPoint 2021+ and Iridium Decks; the flattened legacy
+/// Modern threaded comments (read by PowerPoint 2021+ and Decks; the flattened legacy
 /// part next to it serves older readers).
 pub(crate) const CT_COMMENTS_MODERN: &str = "application/vnd.ms-powerpoint.comments+xml";
 const CT_AUTHORS_MODERN: &str = "application/vnd.ms-powerpoint.authors+xml";
@@ -196,7 +196,7 @@ impl Exp<'_> {
         o.rels.add_new("tags", &opc::relative(&o.name, &name), false)
     }
     /// An unchanged Office 2016 chart's `chartEx` part and its relationship id.
-    pub fn chartex_rel(&mut self, o: &mut Out, c: &deckcraft_model::Chart) -> Option<String> {
+    pub fn chartex_rel(&mut self, o: &mut Out, c: &iridium_decks_model::Chart) -> Option<String> {
         let (xml, preserved) = chart::chartex_part(c)?;
         self.n_chartex += 1;
         let name = format!("ppt/charts/chartEx{}.xml", self.n_chartex);
@@ -209,7 +209,7 @@ impl Exp<'_> {
         Some(o.rels.add_new(RT_CHARTEX, &opc::relative(&o.name, &name), false))
     }
 
-    pub fn chart_rel(&mut self, o: &mut Out, c: &deckcraft_model::Chart) -> String {
+    pub fn chart_rel(&mut self, o: &mut Out, c: &iridium_decks_model::Chart) -> String {
         self.n_chart += 1;
         let name = format!("ppt/charts/chart{}.xml", self.n_chart);
         let (xml, preserved) = chart::chart_xml(c);
@@ -246,7 +246,7 @@ fn background(w: &mut W, x: &mut Exp, o: &mut Out, bg: &Background) {
         Background::Fill { fill } => {
             w.open0("p:bgPr");
             match fill {
-                deckcraft_model::Fill::Background | deckcraft_model::Fill::Group => w.empty0("a:noFill"),
+                iridium_decks_model::Fill::Background | iridium_decks_model::Fill::Group => w.empty0("a:noFill"),
                 f => dml::fill(w, x, o, f),
             }
             w.empty0("a:effectLst");
@@ -319,7 +319,7 @@ fn clr_map_attrs(map: &[(String, String)]) -> A {
             .iter()
             .find(|(mk, _)| mk == k)
             .map(|(_, v)| v.as_str())
-            .filter(|v| deckcraft_color::SchemeSlot::from_xml(v).is_some_and(|s| deckcraft_color::SchemeSlot::THEME.contains(&s)))
+            .filter(|v| iridium_decks_color::SchemeSlot::from_xml(v).is_some_and(|s| iridium_decks_color::SchemeSlot::THEME.contains(&s)))
             .unwrap_or(d);
         a = a.a(k, v);
     }
@@ -377,7 +377,7 @@ fn slide_ext_list(w: &mut W, raw: Option<&str>, comment_rel: Option<&str>) {
     w.close("p:extLst");
 }
 
-fn notes_master_shapes(size: deckcraft_geom::Size) -> Vec<Shape> {
+fn notes_master_shapes(size: iridium_decks_geom::Size) -> Vec<Shape> {
     let (w, h) = (size.width, size.height);
     let mk = |id: u32, name: &str, kind: PhType, idx: u32, x: f64, y: f64, ww: f64, hh: f64| Shape {
         id: ShapeId(id),
@@ -388,8 +388,8 @@ fn notes_master_shapes(size: deckcraft_geom::Size) -> Vec<Shape> {
         ..Default::default()
     };
     let mut img = mk(4, "Slide Image Placeholder 3", PhType::SlideImage, 2, w * 0.125, h * 0.125, w * 0.75, h * 0.375);
-    img.fill = Some(deckcraft_model::Fill::None);
-    img.line = Some(deckcraft_model::Line::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::BLACK), 1.0));
+    img.fill = Some(iridium_decks_model::Fill::None);
+    img.line = Some(iridium_decks_model::Line::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::BLACK), 1.0));
     let mut body = mk(5, "Notes Placeholder 4", PhType::Body, 3, w * 0.1, h * 0.53, w * 0.8, h * 0.36);
     if let Some(t) = body.text.as_mut() {
         t.paragraphs = vec![Paragraph::new("Click to edit Master text styles")];
@@ -422,7 +422,7 @@ fn notes_master_write(p: &Presentation) -> Option<NotesMasterWrite> {
     if !has_notes && nm.is_none() {
         return None;
     }
-    let default_bg = || Background::Ref { idx: 1001, color: deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Bg1) };
+    let default_bg = || Background::Ref { idx: 1001, color: iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Bg1) };
     Some(match kept {
         Some(m) => NotesMasterWrite {
             shapes: m.shapes.clone(),
@@ -444,20 +444,20 @@ fn notes_master_write(p: &Presentation) -> Option<NotesMasterWrite> {
 }
 
 fn notes_style() -> ListStyle {
-    let mut ls = deckcraft_model::text::ListStyle::default();
+    let mut ls = iridium_decks_model::text::ListStyle::default();
     for i in 0..9u8 {
         ls.set(
             i,
-            deckcraft_model::text::LevelStyle {
-                para: deckcraft_model::text::ParaProps {
+            iridium_decks_model::text::LevelStyle {
+                para: iridium_decks_model::text::ParaProps {
                     margin_left: Some(36.0 * i as f64),
-                    align: Some(deckcraft_model::text::Align::Left),
+                    align: Some(iridium_decks_model::text::Align::Left),
                     ..Default::default()
                 },
-                run: deckcraft_model::text::RunProps {
+                run: iridium_decks_model::text::RunProps {
                     size: Some(12.0),
                     font: Some("+mn-lt".into()),
-                    fill: Some(deckcraft_model::Fill::solid(deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Tx1))),
+                    fill: Some(iridium_decks_model::Fill::solid(iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Tx1))),
                     ..Default::default()
                 },
             },
@@ -509,7 +509,7 @@ fn sanitized(p: &Presentation) -> std::borrow::Cow<'_, Presentation> {
             Arc::make_mut(m).layouts.push(Layout {
                 id,
                 name: "Blank".into(),
-                kind: deckcraft_model::LayoutType::Blank,
+                kind: iridium_decks_model::LayoutType::Blank,
                 show_master_shapes: true,
                 ..Default::default()
             });
@@ -665,7 +665,7 @@ pub fn export(p: &Presentation, main_ct: &str) -> Result<Vec<u8>, PptxError> {
             so.rels.add("comments", &opc::relative(&sname, &cname), false);
             x.pkg.xml_part(&cname, CT_COMMENTS, comments_xml(&s.comments, &mut authors, &mut author_map));
             // The modern threaded part next to the flattened legacy one (issue #70):
-            // PowerPoint 2021+ and Iridium Decks read replies and resolved state from it,
+            // PowerPoint 2021+ and Decks read replies and resolved state from it,
             // older readers keep the legacy part.
             let mname = format!("ppt/comments/modernComment{n_comments}.xml");
             let rid = so.rels.add(RT_COMMENTS_MODERN, &opc::relative(&sname, &mname), false);
@@ -777,7 +777,7 @@ fn master_xml(x: &mut Exp, o: &mut Out, m: &Master, layouts: &[(u64, String)]) -
     w.close("p:sldLayoutIdLst");
     w.open0("p:txStyles");
     let (dt, db, dother) = defaults::master_styles();
-    let pick = |s: &deckcraft_model::text::ListStyle, d: deckcraft_model::text::ListStyle| if s.is_empty() { d } else { s.clone() };
+    let pick = |s: &iridium_decks_model::text::ListStyle, d: iridium_decks_model::text::ListStyle| if s.is_empty() { d } else { s.clone() };
     dml::list_style(&mut w, x, o, "p:titleStyle", &pick(&m.title_style, dt));
     dml::list_style(&mut w, x, o, "p:bodyStyle", &pick(&m.body_style, db));
     dml::list_style(&mut w, x, o, "p:otherStyle", &pick(&m.other_style, dother));
@@ -902,7 +902,8 @@ fn modern_comment(
     let ai = author_slot(c, authors, author_map);
     let author = authors.get(ai).map(|(n, _, _)| n.clone()).unwrap_or_default();
     let dt = if valid_date(&c.date) { c.date.clone() } else { "2024-01-01T00:00:00.000".into() };
-    let mut a = A::new().a("id", crate::tables::guid(&format!("deckcraft-comment:{part}:{ti}"))).a("authorId", author_guid(&author)).a("created", dt);
+    let mut a =
+        A::new().a("id", crate::tables::guid(&format!("iridium-decks-comment:{part}:{ti}"))).a("authorId", author_guid(&author)).a("created", dt);
     if c.resolved {
         a = a.a("status", "resolved");
     }
@@ -917,7 +918,7 @@ fn modern_comment(
             let r_author = authors.get(ri_ai).map(|(n, _, _)| n.clone()).unwrap_or_default();
             let rdt = if valid_date(&r.date) { r.date.clone() } else { "2024-01-01T00:00:00.000".into() };
             let mut ra = A::new()
-                .a("id", crate::tables::guid(&format!("deckcraft-comment:{part}:{ti}:{ri}")))
+                .a("id", crate::tables::guid(&format!("iridium-decks-comment:{part}:{ti}:{ri}")))
                 .a("authorId", author_guid(&r_author))
                 .a("created", rdt);
             if r.resolved {
@@ -950,7 +951,7 @@ fn tx_body(w: &mut W, text: &str) {
 
 /// The modern author id for a name: the same GUID the authors part writes.
 fn author_guid(name: &str) -> String {
-    crate::tables::guid(&format!("deckcraft-comment-author:{name}"))
+    crate::tables::guid(&format!("iridium-decks-comment-author:{name}"))
 }
 
 /// Sections with every slide in exactly one section, in slide order.
@@ -1266,7 +1267,7 @@ fn app_xml(p: &Presentation) -> Vec<u8> {
             .a("xmlns", "http://schemas.openxmlformats.org/officeDocument/2006/extended-properties")
             .a("xmlns:vt", "http://schemas.openxmlformats.org/officeDocument/2006/docPropsVTypes"),
     );
-    w.elt("Application", "Iridium Decks");
+    w.elt("Application", "Decks");
     w.elt("Slides", &p.slides.len().to_string());
     w.elt("Notes", &p.slides.iter().filter(|s| !s.notes.is_empty()).count().to_string());
     w.elt("HiddenSlides", &p.slides.iter().filter(|s| s.hidden).count().to_string());

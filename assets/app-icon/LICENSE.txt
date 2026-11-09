@@ -1,8 +1,8 @@
-Iridium Decks app icon (iridium-decks.svg and every file derived from it in this directory:
+Decks app icon (iridium-decks.svg and every file derived from it in this directory:
 iridium-decks-1024.png, iridium-decks.icns, iridium-decks.ico, hicolor/).
 
 PLACEHOLDER artwork: original work written for this project by Iridium Technologies, Inc. (simple
-hand-written SVG geometry). No third-party material. Licensed like the rest of Iridium Decks, under
+hand-written SVG geometry). No third-party material. Licensed like the rest of Decks, under
 either of
 
   * Apache License, Version 2.0 (https://www.apache.org/licenses/LICENSE-2.0)

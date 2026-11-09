@@ -17,7 +17,7 @@ pub fn status_bar(app: &mut SlideApp, ui: &mut Ui) {
         let Some(st) = app.session.active() else { return };
         let n = st.doc.slides.len();
         let left = match st.selection.target {
-            deckcraft_engine::Target::Slides => format!("Slide {} of {}", (st.selection.slide + 1).min(n.max(1)), n),
+            iridium_decks_engine::Target::Slides => format!("Slide {} of {}", (st.selection.slide + 1).min(n.max(1)), n),
             _ => "Slide Master".to_string(),
         };
         let p = ui.painter();
@@ -170,7 +170,7 @@ fn labeled(ui: &mut Ui, icon: Icon, label: &str, on: bool) -> egui::Response {
 }
 
 /// The language of a slide's notes: the first notes run that has one.
-fn notes_lang(s: &deckcraft_model::Slide) -> Option<String> {
+fn notes_lang(s: &iridium_decks_model::Slide) -> Option<String> {
     s.notes.paragraphs.iter().flat_map(|p| &p.runs).find_map(|r| r.props.lang.clone())
 }
 
@@ -178,7 +178,7 @@ fn notes_lang(s: &deckcraft_model::Slide) -> Option<String> {
 pub fn notes_pane(app: &mut SlideApp, ui: &mut Ui) {
     let t = Tokens::get(ui.ctx());
     let Some(st) = app.session.active() else { return };
-    if st.selection.target != deckcraft_engine::Target::Slides {
+    if st.selection.target != iridium_decks_engine::Target::Slides {
         return;
     }
     let (idx, uid) = (st.selection.slide, st.uid);
@@ -244,7 +244,7 @@ pub fn notes_pane(app: &mut SlideApp, ui: &mut Ui) {
                     let line_start = before.rfind('\n').map_or(0, |i| before[..i].chars().count() + 1);
                     let line = buf.chars().skip(line_start).take_while(|c| *c != '\n').collect::<String>();
                     crate::squiggles::menu_word(
-                        &deckcraft_model::Paragraph::new(&line),
+                        &iridium_decks_model::Paragraph::new(&line),
                         &lang,
                         crate::squiggles::Tag::Notes { start: line_start },
                         a - line_start,
@@ -296,7 +296,7 @@ pub fn notes_pane(app: &mut SlideApp, ui: &mut Ui) {
                 buf = new;
                 app.squiggles.notes_menu = None;
                 draft.text = buf.clone();
-                deckcraft_model::edit::replace_text(&mut draft.body, &buf);
+                iridium_decks_model::edit::replace_text(&mut draft.body, &buf);
                 draft.edited = false;
                 let _ = app.run("slide.notes", json!({"body": draft.body, "index": idx}));
             }
@@ -312,13 +312,13 @@ pub fn notes_pane(app: &mut SlideApp, ui: &mut Ui) {
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used)]
 
-    use deckcraft_engine::Session;
     use egui::accesskit::{Role, Toggled};
     use egui::{Event, Modifiers, PointerButton};
     use egui_kittest::{
         Harness,
         kittest::{NodeT, Queryable},
     };
+    use iridium_decks_engine::Session;
     use serde_json::json;
 
     use crate::{Services, SlideApp, ViewMode};

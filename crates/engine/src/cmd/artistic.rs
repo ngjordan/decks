@@ -4,9 +4,9 @@
 //! the original is kept (`PictureFill::artistic`) so the effect can be changed or removed, and
 //! both are saved (`a14:imgLayer`). The effects approximate PowerPoint's look.
 
-use deckcraft_model::style::Artistic;
-use deckcraft_model::{MediaId, ShapeId, ShapeKind};
 use image::{GrayImage, Rgba, RgbaImage};
+use iridium_decks_model::style::Artistic;
+use iridium_decks_model::{MediaId, ShapeId, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, NO_ID_SPACE, bad, cmd, has_selection, str_param, targets};
@@ -181,7 +181,7 @@ fn artistic_effect(s: &mut Session, p: &Value) -> Result<Value> {
         }
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad("picture.artisticEffect", "no slide"))?;
         for (id, original, m) in set {
-            if let Some(sh) = deckcraft_model::find_shape_mut(list, id)
+            if let Some(sh) = iridium_decks_model::find_shape_mut(list, id)
                 && let ShapeKind::Picture { fill } = &mut sh.kind
             {
                 match (m, &effect2) {

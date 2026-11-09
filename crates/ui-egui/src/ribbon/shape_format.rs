@@ -15,7 +15,7 @@ fn transform_gallery(app: &mut SlideApp, ui: &mut Ui) {
     let mut picked = false;
     ui.horizontal_wrapped(|ui| {
         ui.spacing_mut().item_spacing = vec2(2.0, 2.0);
-        for p in deckcraft_geom::warp::CATALOG.iter().filter(|p| deckcraft_geom::warp::is_follow(p.id)) {
+        for p in iridium_decks_geom::warp::CATALOG.iter().filter(|p| iridium_decks_geom::warp::is_follow(p.id)) {
             if warp_tile(ui, p.id, p.label, current.as_deref() == Some(p.id)) {
                 run(app, "format.textWarp", json!({"preset": p.id}));
                 picked = true;
@@ -30,7 +30,7 @@ fn transform_gallery(app: &mut SlideApp, ui: &mut Ui) {
                 run(app, "format.textWarp", json!({"preset": "none"}));
                 picked = true;
             }
-            for p in deckcraft_geom::warp::CATALOG.iter().filter(|p| !deckcraft_geom::warp::is_follow(p.id)) {
+            for p in iridium_decks_geom::warp::CATALOG.iter().filter(|p| !iridium_decks_geom::warp::is_follow(p.id)) {
                 if warp_tile(ui, p.id, p.label, current.as_deref() == Some(p.id)) {
                     run(app, "format.textWarp", json!({"preset": p.id}));
                     picked = true;
@@ -70,20 +70,20 @@ fn paint_warp_icon(p: &egui::Painter, r: Rect, name: Option<&str>, color: Color3
         p.line_segment([pos2(r.min.x, y1), pos2(r.max.x, y1)], Stroke::new(1.0, color));
         return;
     };
-    let rect = deckcraft_geom::Rect::new((r.min.x + 1.0) as f64, (r.min.y + 1.0) as f64, (r.max.x - 1.0) as f64, (r.max.y - 1.0) as f64);
-    let Some(w) = deckcraft_geom::warp::warp(name, &[], rect) else { return };
+    let rect = iridium_decks_geom::Rect::new((r.min.x + 1.0) as f64, (r.min.y + 1.0) as f64, (r.max.x - 1.0) as f64, (r.max.y - 1.0) as f64);
+    let Some(w) = iridium_decks_geom::warp::warp(name, &[], rect) else { return };
     for band in &w.bands {
         match band {
-            deckcraft_geom::warp::Band::Fill { top, bottom } => {
+            iridium_decks_geom::warp::Band::Fill { top, bottom } => {
                 stroke_guide(p, top, color);
                 stroke_guide(p, bottom, color);
             }
-            deckcraft_geom::warp::Band::Follow { path, .. } => stroke_guide(p, path, color),
+            iridium_decks_geom::warp::Band::Follow { path, .. } => stroke_guide(p, path, color),
         }
     }
 }
 
-fn stroke_guide(p: &egui::Painter, g: &deckcraft_geom::warp::Guide, color: Color32) {
+fn stroke_guide(p: &egui::Painter, g: &iridium_decks_geom::warp::Guide, color: Color32) {
     let len = g.length();
     if !(len.is_finite() && len > 1.0) {
         return;
@@ -114,7 +114,7 @@ pub(super) fn shape_format(app: &mut SlideApp, ui: &mut Ui) {
         let r = big_button(ui, Icon::Shapes, "Shapes", true);
         egui::Popup::menu(&r).show(|ui| {
             if let Some(p) = shapes_gallery(ui) {
-                app.session.set_tool(deckcraft_engine::ToolKind::Shape { preset: p.to_string() });
+                app.session.set_tool(iridium_decks_engine::ToolKind::Shape { preset: p.to_string() });
             }
         });
         big(app, ui, Icon::TextBox, "Text\nBox", "insert.textBox", json!({}));
@@ -135,7 +135,7 @@ pub(super) fn shape_format(app: &mut SlideApp, ui: &mut Ui) {
         let can_merge = enabled(app, "shape.merge");
         let r = big_button(ui, Icon::MergeShapes, "Merge\nShapes", can_merge).on_hover_text("Merge Shapes");
         egui::Popup::menu(&r).show(|ui| {
-            for (op, label) in deckcraft_engine::cmd::merge::OPS {
+            for (op, label) in iridium_decks_engine::cmd::merge::OPS {
                 if ui.button(label).clicked() {
                     run(app, "shape.merge", json!({"op": op}));
                     ui.close();
@@ -236,17 +236,17 @@ fn smooth_corners_row(app: &mut SlideApp, ui: &mut egui::Ui) {
         let x = sh.xfrm?;
         let ss = x.w.min(x.h).max(0.0);
         let own = match &sh.geom {
-            deckcraft_model::Geom::Preset { name, adj } if name == "roundRect" => {
+            iridium_decks_model::Geom::Preset { name, adj } if name == "roundRect" => {
                 Some(ss * adj.first().copied().unwrap_or(16667.0).clamp(0.0, 50000.0) / 100000.0)
             }
-            deckcraft_model::Geom::Preset { name, .. } if name == "rect" => Some(ss * 16667.0 / 100000.0),
+            iridium_decks_model::Geom::Preset { name, .. } if name == "rect" => Some(ss * 16667.0 / 100000.0),
             _ => None,
         };
         Some((id, own))
     }) else {
         return;
     };
-    let key = egui::Id::unique(("deckcraft-smooth-corners", id.0));
+    let key = egui::Id::unique(("iridium-decks-smooth-corners", id.0));
     let mut state: (f64, f64) = ui.data(|d| d.get_temp(key)).unwrap_or((radius.unwrap_or(0.0), 0.0));
     if let Some(r) = radius {
         state.0 = r;

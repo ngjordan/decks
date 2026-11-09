@@ -51,7 +51,7 @@ pub(super) fn slide_master(app: &mut SlideApp, ui: &mut Ui) {
     group(ui, |ui| {
         let r = big_button(ui, Icon::Themes, "Themes", true);
         egui::Popup::menu(&r).show(|ui| {
-            for th in deckcraft_model::theme::builtin_themes() {
+            for th in iridium_decks_model::theme::builtin_themes() {
                 if ui.button(&th.name).clicked() {
                     run(app, "design.theme", json!({"name": th.name}));
                 }
@@ -72,7 +72,7 @@ pub(super) fn slide_master(app: &mut SlideApp, ui: &mut Ui) {
 
 pub(super) fn notes_master(app: &mut SlideApp, ui: &mut Ui) {
     group(ui, |ui| {
-        use deckcraft_model::PhType;
+        use iridium_decks_model::PhType;
         let shown = |app: &SlideApp, k: PhType| {
             app.session.active().and_then(|d| d.doc.notes_master.as_ref()).is_some_and(|m| m.shapes.iter().any(|s| s.ph_type() == Some(k)))
         };
@@ -112,11 +112,11 @@ pub(super) fn handout_master(app: &mut SlideApp, ui: &mut Ui) {
         });
     });
     group(ui, |ui| {
-        let shown = |app: &SlideApp, k: deckcraft_model::PhType| {
+        let shown = |app: &SlideApp, k: iridium_decks_model::PhType| {
             app.session.active().and_then(|d| d.doc.handout_master.as_ref()).is_some_and(|m| m.shapes.iter().any(|s| s.ph_type() == Some(k)))
         };
         rows(ui, |ui| {
-            use deckcraft_model::PhType;
+            use iridium_decks_model::PhType;
             for (label, key, k) in [
                 ("Header", "header", PhType::Header),
                 ("Date", "date", PhType::Date),

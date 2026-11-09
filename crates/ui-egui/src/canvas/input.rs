@@ -189,12 +189,12 @@ fn reported_pressure(ui: &Ui) -> Option<f32> {
 /// shape's own space and mapped through its transform, so a rotated or flipped shape shows the
 /// diagonal that matches where the drag actually goes (#745). Without a transform the mapping
 /// reduces to the classic NW/NE/E/SE/S/SW/W assignment.
-pub(super) fn resize_cursor(session: &deckcraft_engine::Session, id: deckcraft_model::ShapeId, handle: u8) -> egui::CursorIcon {
+pub(super) fn resize_cursor(session: &iridium_decks_engine::Session, id: iridium_decks_model::ShapeId, handle: u8) -> egui::CursorIcon {
     // The resize handles are drawn from the shape's effective box (a placeholder inherits it
     // from its layout), so the cursor follows the same one.
     let Some(d) = session.active() else { return egui::CursorIcon::Default };
     let Some(sh) = d.shape(id) else { return egui::CursorIcon::Default };
-    let x = deckcraft_engine::cmd::xfrm_of(&d.doc, &d.selection, sh);
+    let x = iridium_decks_engine::cmd::xfrm_of(&d.doc, &d.selection, sh);
     // The resize axis in the shape's own coordinates, as (dx, dy) from the box centre toward
     // the handle. Corners resize along the diagonal, edge handles along their edge. The
     // direction is normalised - the diagonal at 45 degrees whatever the shape's proportions -

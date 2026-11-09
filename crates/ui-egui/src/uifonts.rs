@@ -12,7 +12,7 @@
 use std::collections::HashSet;
 use std::sync::Arc;
 
-use deckcraft_fonts::{FontDb, FontFace};
+use iridium_decks_fonts::{FontDb, FontFace};
 
 /// Faces larger than this are left out (egui keeps a copy of each face it is given). Large enough
 /// for the stock macOS CJK collections the font database picks: `AppleSDGothicNeo.ttc` (about
@@ -113,7 +113,7 @@ impl UiFonts {
 
     /// Look through the text of a presentation the interface shows (once per revision): its
     /// title, slide text and names, notes, comments, sections and layout names.
-    pub fn note_doc(&mut self, ctx: &egui::Context, st: &deckcraft_engine::DocState) {
+    pub fn note_doc(&mut self, ctx: &egui::Context, st: &iridium_decks_engine::DocState) {
         if self.doc == Some((st.uid, st.revision)) {
             return;
         }
@@ -134,7 +134,7 @@ impl UiFonts {
 }
 
 /// The text of a presentation that the interface can show (not the slides' pictures of it).
-pub fn ui_text(st: &deckcraft_engine::DocState) -> String {
+pub fn ui_text(st: &iridium_decks_engine::DocState) -> String {
     let mut out = st.title();
     let mut add = |s: &str| {
         if s.chars().any(wanted) {
@@ -142,7 +142,7 @@ pub fn ui_text(st: &deckcraft_engine::DocState) -> String {
             out.push_str(s);
         }
     };
-    let body = |b: &deckcraft_model::text::TextBody, add: &mut dyn FnMut(&str)| {
+    let body = |b: &iridium_decks_model::text::TextBody, add: &mut dyn FnMut(&str)| {
         for p in &b.paragraphs {
             for r in &p.runs {
                 add(&r.text);
@@ -154,15 +154,15 @@ pub fn ui_text(st: &deckcraft_engine::DocState) -> String {
     for sec in &doc.sections {
         add(&sec.name);
     }
-    let shapes = |list: &[deckcraft_model::Shape], add: &mut dyn FnMut(&str)| {
-        deckcraft_model::walk(list, &mut |sh, _| {
+    let shapes = |list: &[iridium_decks_model::Shape], add: &mut dyn FnMut(&str)| {
+        iridium_decks_model::walk(list, &mut |sh, _| {
             add(&sh.name);
             add(&sh.title);
             add(&sh.descr);
             if let Some(t) = &sh.text {
                 body(t, add);
             }
-            if let deckcraft_model::ShapeKind::Table(tb) = &sh.kind {
+            if let iridium_decks_model::ShapeKind::Table(tb) = &sh.kind {
                 for row in &tb.rows {
                     for cell in &row.cells {
                         body(&cell.text, add);
@@ -175,7 +175,7 @@ pub fn ui_text(st: &deckcraft_engine::DocState) -> String {
         add(&s.name);
         shapes(&s.shapes, &mut add);
         body(&s.notes, &mut add);
-        let mut stack: Vec<&deckcraft_model::Comment> = s.comments.iter().collect();
+        let mut stack: Vec<&iridium_decks_model::Comment> = s.comments.iter().collect();
         while let Some(c) = stack.pop() {
             add(&c.author);
             add(&c.text);
@@ -244,7 +244,7 @@ mod tests {
 
     #[test]
     fn interface_text_of_a_presentation() {
-        let mut s = deckcraft_engine::Session::with_new();
+        let mut s = iridium_decks_engine::Session::with_new();
         let title = s.doc().unwrap().current_slide().unwrap().shapes[0].id.0;
         s.execute("text.set", &serde_json::json!({"id": title, "text": "한국어 제목"})).unwrap();
         s.execute("slide.notes", &serde_json::json!({"text": "発表者ノート"})).unwrap();

@@ -12,8 +12,8 @@ use super::{
     Align2, BackKey, Click, Color32, CornerRadius, Key, Layer, LinkJump, Pos2, Rect, RenderOpts, Sense, ShapeId, ShapeState, Show, ShowAction,
     ShowState, SlideApp, Source, Stroke, TextureHandle, Ui, json, pos2, show_fills_screen, state_for, theme, vec2, viewport_visible,
 };
-use deckcraft_anim::{StepStamp, TriggerPlay};
-use deckcraft_model::Presentation;
+use iridium_decks_anim::{StepStamp, TriggerPlay};
+use iridium_decks_model::Presentation;
 
 /// Per-frame values the show's draw steps share.
 #[derive(Clone, Copy)]
@@ -43,7 +43,7 @@ struct Sl {
     t: f64,
     plays: Vec<TriggerPlay>,
     stamps: Vec<StepStamp>,
-    media: Vec<(ShapeId, deckcraft_geom::Xfrm, deckcraft_model::MediaClip)>,
+    media: Vec<(ShapeId, iridium_decks_geom::Xfrm, iridium_decks_model::MediaClip)>,
     hidden: Vec<ShapeId>,
     times: Vec<(ShapeId, f64)>,
     gifs: Vec<crate::media::Gif>,
@@ -136,7 +136,7 @@ pub fn ui(app: &mut SlideApp, ui: &mut Ui) {
             {
                 let size =
                     crate::textures::fit_size((480, (480.0 * doc.slide_size.height / doc.slide_size.width.max(1.0)).clamp(1.0, 1e9) as u32), 640);
-                let image = deckcraft_render::render_slide(
+                let image = iridium_decks_render::render_slide(
                     &doc,
                     n,
                     &RenderOpts { scale: size.0 as f64 / doc.slide_size.width.max(1.0), size: Some(size), ..Default::default() },
@@ -337,7 +337,9 @@ fn begin_slide(app: &mut SlideApp, show: &Show, f: &Fr, size: (u32, u32)) -> Sl 
     let media = crate::media::slide_media(doc, idx);
     let hidden: Vec<ShapeId> = media
         .iter()
-        .filter(|(id, _, clip)| clip.hide_while_not_playing && !app.media.status(*id).is_some_and(|s| s.state != deckcraft_media::PlayState::Ended))
+        .filter(|(id, _, clip)| {
+            clip.hide_while_not_playing && !app.media.status(*id).is_some_and(|s| s.state != iridium_decks_media::PlayState::Ended)
+        })
         .map(|m| m.0)
         .collect();
     let gifs = app.media.gifs(doc_uid, doc, idx, now, &app.session.gif_paused);
@@ -421,7 +423,7 @@ fn draw_transition(show: &mut Show, f: &Fr, sl: &Sl, painter: &egui::Painter, te
             tr.from
                 .and_then(|i| doc.slides.get(i).map(|a| (i, a)))
                 .zip(doc.slides.get(idx))
-                .map(|((i, a), b)| (i, deckcraft_anim::morph_frame(doc, a, b, p, &hidden_b)))
+                .map(|((i, a), b)| (i, iridium_decks_anim::morph_frame(doc, a, b, p, &hidden_b)))
         }
         _ => None,
     };
@@ -430,14 +432,17 @@ fn draw_transition(show: &mut Show, f: &Fr, sl: &Sl, painter: &egui::Painter, te
         let threads = if cfg!(target_arch = "wasm32") { 0 } else { std::thread::available_parallelism().map(|n| n.get().min(8) as u16).unwrap_or(0) };
         let opts =
             RenderOpts { scale: size.0 as f64 / doc.slide_size.width.max(1.0), size: Some(size), state: Some(&f), threads, ..Default::default() };
-        let text: Vec<deckcraft_render::TextMorph> =
-            m.text.iter().map(|x| deckcraft_render::TextMorph { old: x.old, new: x.new, from: x.from, to: x.to, chars: x.chars, t: m.mix }).collect();
-        let paths: Vec<deckcraft_render::PathMorph> = m
+        let text: Vec<iridium_decks_render::TextMorph> = m
+            .text
+            .iter()
+            .map(|x| iridium_decks_render::TextMorph { old: x.old, new: x.new, from: x.from, to: x.to, chars: x.chars, t: m.mix })
+            .collect();
+        let paths: Vec<iridium_decks_render::PathMorph> = m
             .paths
             .iter()
-            .map(|x| deckcraft_render::PathMorph { id: x.id, from: x.from.clone(), from_box: x.from_box, to_box: x.to_box, t: m.mix })
+            .map(|x| iridium_decks_render::PathMorph { id: x.id, from: x.from.clone(), from_box: x.from_box, to_box: x.to_box, t: m.mix })
             .collect();
-        let img = deckcraft_render::render_blend(doc, (from, idx), m.mix, &m.shapes, &text, &paths, &opts);
+        let img = iridium_decks_render::render_blend(doc, (from, idx), m.mix, &m.shapes, &text, &paths, &opts);
         let ci = crate::textures::to_color_image(&img, false);
         let frame = match tr.morph.take() {
             Some(mut h) => {
@@ -455,12 +460,12 @@ fn draw_transition(show: &mut Show, f: &Fr, sl: &Sl, painter: &egui::Painter, te
         if p < 1.0 {
             // Slides split into background and content are rendered once per transition;
             // every frame only composites cached textures.
-            if tr.parts.is_none() && deckcraft_anim::uses_slide_parts(&tr.kind, &tr.option) {
+            if tr.parts.is_none() && iridium_decks_anim::uses_slide_parts(&tr.kind, &tr.option) {
                 tr.parts = Some(part_textures(ctx, doc, tr.from, idx, size));
             }
             if tr.old.is_none()
                 && let Some(prev) = tr.from
-                && !deckcraft_anim::uses_slide_parts(&tr.kind, &tr.option)
+                && !iridium_decks_anim::uses_slide_parts(&tr.kind, &tr.option)
             {
                 let threads =
                     if cfg!(target_arch = "wasm32") { 0 } else { std::thread::available_parallelism().map(|n| n.get().min(8) as u16).unwrap_or(0) };
@@ -507,9 +512,9 @@ fn draw_transition(show: &mut Show, f: &Fr, sl: &Sl, painter: &egui::Painter, te
 /// slide coming back the part of the old one.
 pub(super) fn transition_layers(kind: &str, option: &str, reverse: bool, p: f64, aspect: f64) -> Vec<Layer> {
     if !reverse {
-        return deckcraft_anim::transition_frame(kind, option, p, aspect);
+        return iridium_decks_anim::transition_frame(kind, option, p, aspect);
     }
-    let mut layers = deckcraft_anim::transition_frame(kind, option, 1.0 - p, aspect);
+    let mut layers = iridium_decks_anim::transition_frame(kind, option, 1.0 - p, aspect);
     for l in &mut layers {
         l.source = swap_old_new(l.source);
     }

@@ -50,7 +50,7 @@ impl Session {
                     }
                     continue;
                 }
-                let geo = deckcraft_render::shape_geometry(sh, x.w, x.h);
+                let geo = iridium_decks_render::shape_geometry(sh, x.w, x.h);
                 for hd in &geo.handles {
                     if (x.affine() * hd.pos - p).hypot() <= tol * 1.6 {
                         return Some(Hit::Adjust { id: *id, index: hd.index });
@@ -120,7 +120,7 @@ impl Session {
                 self.tool.hover = self.hit_test(p, tol);
                 self.tool.guide_hover =
                     if self.tool.hover.is_none() && matches!(self.tool.kind, ToolKind::Select) { self.guide_at(p, tol) } else { None };
-                let line_tool = matches!(&self.tool.kind, ToolKind::Shape { preset } if deckcraft_geom::preset::is_line_like(preset));
+                let line_tool = matches!(&self.tool.kind, ToolKind::Shape { preset } if iridium_decks_geom::preset::is_line_like(preset));
                 if line_tool {
                     self.update_sites(p, tol, None);
                 } else {
@@ -346,7 +346,7 @@ impl Session {
                 let orig = st.shape(id).map(|s| xfrm_of(&st.doc, &st.selection, s)).unwrap_or_default();
                 let found = st.shape(id).and_then(|sh| {
                     let ctx = crate::cmd::text::ctx_for(&st.doc, &st.selection)?;
-                    let bp = deckcraft_model::resolve::body(&ctx, sh);
+                    let bp = iridium_decks_model::resolve::body(&ctx, sh);
                     bp.warp.map(|n| (n, bp.warp_adj))
                 });
                 if let Some((name, base)) = found {
@@ -508,7 +508,7 @@ impl Session {
                         }
                     }
                     ToolKind::Shape { preset } => {
-                        let line = deckcraft_geom::preset::is_line_like(preset);
+                        let line = iridium_decks_geom::preset::is_line_like(preset);
                         let rect = match preview.filter(|_| dragged) {
                             Some(x) => x,
                             None if line => Xfrm::new(start.x, start.y, 72.0, 0.0),

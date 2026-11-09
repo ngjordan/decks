@@ -1,4 +1,4 @@
-//! Iridium Decks's egui frontend: a PowerPoint-style UI over `deckcraft-engine`.
+//! Decks's egui frontend: a PowerPoint-style UI over `iridium-decks-engine`.
 //!
 //! The UI is thin: every action goes through [`SlideApp::run`], which handles UI commands
 //! (views, panes, zoom) here and sends everything else to the engine. The ribbon, menus,
@@ -6,17 +6,17 @@
 #![deny(clippy::unwrap_used, clippy::expect_used, clippy::panic, clippy::unimplemented, clippy::todo, clippy::unreachable)]
 #![forbid(unsafe_code)]
 
-/// Iridium Decks as craft-update knows it, with its 128 px icon and accent colour: the update
+/// Decks as craft-update knows it, with its 128 px icon and accent colour: the update
 /// prompt shows both, and an AppImage's menu entry gets the icon.
 #[cfg(not(target_arch = "wasm32"))]
 pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     id: "iridium-decks",
-    name: "Iridium Decks",
+    name: "Decks",
     tagline: "Presentations and slide shows",
-    repo: "ngjordan/iridium-decks",
+    repo: "ngjordan/decks",
     former_ids: &[],
     former_names: &[],
-    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ph.iridium.decks.png")),
+    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ph.decks.png")),
     accent: Some([0x0b, 0x6e, 0x4f]),
     developer: "Iridium Technologies, Inc.",
 };
@@ -47,8 +47,8 @@ pub mod widgets;
 use std::collections::HashMap;
 use std::sync::mpsc::Receiver;
 
-use deckcraft_engine::{Mods, Session, Target, UiRequest};
-use deckcraft_model::{LayoutId, MasterId, SlideId};
+use iridium_decks_engine::{Mods, Session, Target, UiRequest};
+use iridium_decks_model::{LayoutId, MasterId, SlideId};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 
@@ -143,7 +143,7 @@ pub const UI_COMMANDS: &[(&str, &str, Option<&str>, &str)] = &[
         Some("Cmd+P"),
         "{layout?, perPage?, slides?, includeHidden?, frame?, paper?: letter|a4|legal|a3, orientation?: portrait|landscape}",
     ),
-    ("app.about", "About Iridium Decks", None, "{}"),
+    ("app.about", "About Decks", None, "{}"),
     ("app.checkUpdates", "Check for Updates…", None, "{}"),
     ("app.palette", "Command Palette", Some("Cmd+Shift+P"), "{}"),
     ("app.preferences", "Preferences…", Some("Cmd+,"), "{}"),
@@ -183,7 +183,7 @@ struct AnimPreview {
     /// Where on the play-everything clock playback began (Play From the selected effect).
     from: f64,
     elapsed: f64,
-    timeline: deckcraft_anim::Timeline,
+    timeline: iridium_decks_anim::Timeline,
 }
 
 /// The app state a queued synthetic control-channel input is meant for.
@@ -323,7 +323,7 @@ pub struct SlideApp {
     /// Selection pane: folded groups, renaming, drag and drop.
     pub selpane: selpane::State,
     /// Arrange ▸ Align: Align to Slide (`true`) or Align Selected Objects, ticked for that selection.
-    pub(crate) align_to: Option<(Vec<deckcraft_model::ShapeId>, bool)>,
+    pub(crate) align_to: Option<(Vec<iridium_decks_model::ShapeId>, bool)>,
     /// View › New Window: a second window on one presentation. `None` when it is closed.
     pub doc_window: Option<doc_window::DocWindow>,
     /// Slide Sorter: folded sections, inline rename, dragging a whole section.

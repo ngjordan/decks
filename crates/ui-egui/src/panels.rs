@@ -1,8 +1,8 @@
 //! Task panes on the right: Format Shape, Format Background, Animation, Selection, Comments and
 //! Design Ideas.
 
-use deckcraft_model::{AnimClass, AnimStart, Fill, ShapeKind};
 use egui::{Align2, Color32, CornerRadius, Rect, Sense, Stroke, Ui, pos2, vec2};
+use iridium_decks_model::{AnimClass, AnimStart, Fill, ShapeKind};
 use serde_json::{Value, json};
 
 use crate::icons::{self, Icon};
@@ -85,8 +85,8 @@ fn run(app: &mut SlideApp, id: &str, p: Value) {
     let _ = app.run(id, p);
 }
 
-fn scheme(app: &SlideApp) -> deckcraft_color::ColorScheme {
-    app.session.active().and_then(|d| d.doc.masters.first().map(|m| m.scheme())).unwrap_or_else(|| deckcraft_model::Theme::default().colors)
+fn scheme(app: &SlideApp) -> iridium_decks_color::ColorScheme {
+    app.session.active().and_then(|d| d.doc.masters.first().map(|m| m.scheme())).unwrap_or_else(|| iridium_decks_model::Theme::default().colors)
 }
 
 fn color_button(
@@ -94,7 +94,7 @@ fn color_button(
     ui: &mut Ui,
     label: &str,
     none_label: Option<&str>,
-    on_pick: impl Fn(Option<deckcraft_model::ColorRef>) -> (String, Value),
+    on_pick: impl Fn(Option<iridium_decks_model::ColorRef>) -> (String, Value),
 ) {
     let sc = scheme(app);
     ui.horizontal(|ui| {
@@ -132,11 +132,11 @@ mod pattern_fill_tests;
 mod tests {
     #![allow(clippy::unwrap_used, clippy::expect_used, clippy::panic)]
 
-    use deckcraft_color::{ColorTransform, SchemeSlot};
-    use deckcraft_engine::Session;
-    use deckcraft_model::{ColorRef, Fill, ShapeId};
     use egui_kittest::Harness;
     use egui_kittest::kittest::{NodeT, Queryable};
+    use iridium_decks_color::{ColorTransform, SchemeSlot};
+    use iridium_decks_engine::Session;
+    use iridium_decks_model::{ColorRef, Fill, ShapeId};
     use serde_json::json;
 
     use super::{fill_transparency_to_apply, solid_fill_transparency_percent};
@@ -246,8 +246,8 @@ mod tests {
     }
 
     fn picture_fill(transparency: f64) -> serde_json::Value {
-        let png = deckcraft_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
-        json!({"picture": deckcraft_engine::cmd::base64_encode(&png), "transparency": transparency})
+        let png = iridium_decks_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
+        json!({"picture": iridium_decks_engine::cmd::base64_encode(&png), "transparency": transparency})
     }
 
     /// The "Color" drop buttons in the pane: the fill's, when it shows, and the line's.
@@ -333,9 +333,9 @@ mod tests {
         let pane = |group: bool| {
             let mut s = Session::with_new();
             s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
-            let png = deckcraft_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
-            let pic =
-                s.execute("insert.picture", &json!({"data": deckcraft_engine::cmd::base64_encode(&png), "name": "red.png"})).unwrap()["id"].clone();
+            let png = iridium_decks_render::Image { width: 2, height: 2, pixels: [255, 0, 0, 255].repeat(4) }.to_png();
+            let pic = s.execute("insert.picture", &json!({"data": iridium_decks_engine::cmd::base64_encode(&png), "name": "red.png"})).unwrap()["id"]
+                .clone();
             if group {
                 let shape = s.execute("shape.insert", &json!({"preset": "rect", "rect": [500.0, 40.0, 120.0, 80.0]})).unwrap()["id"].clone();
                 s.execute("edit.select", &json!({"ids": [pic, shape]})).unwrap();
@@ -378,8 +378,8 @@ mod tests {
     fn a_group_that_keeps_its_fill_shows_slide_background_fill() {
         let mut s = Session::with_new();
         s.execute("slide.new", &json!({"layout": "blank"})).unwrap();
-        let png = deckcraft_render::Image { width: 2, height: 2, pixels: [0, 0, 0, 0].repeat(4) }.to_png();
-        let pic = s.execute("insert.picture", &json!({"data": deckcraft_engine::cmd::base64_encode(&png), "name": "clear.png"})).unwrap()["id"]
+        let png = iridium_decks_render::Image { width: 2, height: 2, pixels: [0, 0, 0, 0].repeat(4) }.to_png();
+        let pic = s.execute("insert.picture", &json!({"data": iridium_decks_engine::cmd::base64_encode(&png), "name": "clear.png"})).unwrap()["id"]
             .as_u64()
             .unwrap();
         let shape = s.execute("shape.insert", &json!({"preset": "rect", "rect": [500.0, 40.0, 120.0, 80.0]})).unwrap()["id"].as_u64().unwrap();

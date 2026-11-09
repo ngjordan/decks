@@ -6,8 +6,8 @@
 //! After each change the shape's box is fitted around the outline again, keeping it in place on
 //! the slide (rotation and flips included).
 
-use deckcraft_geom::{PathEl, Point, Xfrm};
-use deckcraft_model::{CustomPath, Geom, Shape, ShapeId, ShapeKind};
+use iridium_decks_geom::{PathEl, Point, Xfrm};
+use iridium_decks_model::{CustomPath, Geom, Shape, ShapeId, ShapeKind};
 use serde_json::{Value, json};
 
 use super::{CommandSpec, bad, cmd, f64_param, has_selection, id_param, ok, str_param, xfrm_of};
@@ -201,7 +201,7 @@ pub fn vertices(segs: &[Seg]) -> Vec<usize> {
     (0..segs.len()).filter(|i| segs.get(*i).and_then(Seg::end).is_some() && !closes_onto_start(segs, *i)).collect()
 }
 
-fn shift(segs: &mut [Seg], i: usize, which: &[usize], d: deckcraft_geom::Vec2) {
+fn shift(segs: &mut [Seg], i: usize, which: &[usize], d: iridium_decks_geom::Vec2) {
     if let Some(s) = segs.get_mut(i) {
         let mut pts = s.points_mut();
         for w in which {
@@ -224,7 +224,7 @@ fn end_points(seg: Option<&Seg>) -> &'static [usize] {
 }
 
 /// Moves the vertex ending segment `si` by `d`, with the control points attached to it.
-fn move_vertex(segs: &mut [Seg], si: usize, d: deckcraft_geom::Vec2) {
+fn move_vertex(segs: &mut [Seg], si: usize, d: iridium_decks_geom::Vec2) {
     // A closed sub-path's start is also its closing edge's end.
     let close = if matches!(segs.get(si), Some(Seg::M(_))) {
         (si + 1..segs.len()).take_while(|j| !matches!(segs.get(*j), Some(Seg::M(_)))).find(|j| closes_onto_start(segs, *j))
@@ -405,7 +405,7 @@ fn close_at(segs: &mut Vec<Seg>, si: usize) -> bool {
 
 /// Custom paths of a preset shape, in shape-local points.
 fn to_custom(sh: &Shape, w: f64, h: f64) -> Vec<CustomPath> {
-    let geo = deckcraft_render::shape_geometry(sh, w, h);
+    let geo = iridium_decks_render::shape_geometry(sh, w, h);
     geo.paths
         .iter()
         .map(|sp| {
@@ -448,10 +448,10 @@ fn normalize(paths: &mut [CustomPath], w: f64, h: f64) {
 fn refit(sh: &mut Shape) {
     let (Some(x), Geom::Custom { paths }) = (sh.xfrm, &mut sh.geom) else { return };
     let mut all: Vec<Vec<Seg>> = paths.iter().map(|p| parse(&p.d)).collect();
-    let mut bb: Option<deckcraft_geom::Rect> = None;
+    let mut bb: Option<iridium_decks_geom::Rect> = None;
     for s in all.iter_mut().flatten() {
         for q in s.points_mut() {
-            bb = Some(bb.map_or(deckcraft_geom::Rect::from_points(*q, *q), |b| b.union_pt(*q)));
+            bb = Some(bb.map_or(iridium_decks_geom::Rect::from_points(*q, *q), |b| b.union_pt(*q)));
         }
     }
     let Some(bb) = bb else { return };
@@ -460,7 +460,7 @@ fn refit(sh: &mut Shape) {
         return;
     }
     let c = x.affine() * Point::new(bb.x0 + w / 2.0, bb.y0 + h / 2.0);
-    let off = deckcraft_geom::Vec2::new(bb.x0, bb.y0);
+    let off = iridium_decks_geom::Vec2::new(bb.x0, bb.y0);
     for (p, segs) in paths.iter_mut().zip(&mut all) {
         for s in segs.iter_mut() {
             for q in s.points_mut() {
@@ -508,7 +508,7 @@ pub(crate) fn prepare(s: &mut Session, id: ShapeId) -> Result<()> {
     }
     s.edit(|doc, sel| {
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad("shape.editPoints", "no slide"))?;
-        if let Some(sh) = deckcraft_model::find_shape_mut(list, id) {
+        if let Some(sh) = iridium_decks_model::find_shape_mut(list, id) {
             match &mut sh.geom {
                 Geom::Custom { paths } => normalize(paths, x.w, x.h),
                 Geom::Preset { .. } => {
@@ -536,7 +536,7 @@ fn edit_points(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// Vertices of every path of `sh` in slide points.
-pub fn slide_vertices(doc: &deckcraft_model::Presentation, sel: &crate::Selection, sh: &Shape) -> Vec<Vec<Point>> {
+pub fn slide_vertices(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, sh: &Shape) -> Vec<Vec<Point>> {
     let Geom::Custom { paths } = &sh.geom else { return vec![] };
     let x = xfrm_of(doc, sel, sh);
     let a = x.affine();
@@ -583,7 +583,7 @@ pub(crate) fn edit_path(
     prepare(s, id)?;
     s.edit(|doc, sel| {
         let list = crate::shapes_mut(doc, sel).ok_or_else(|| bad(cmd, "no slide"))?;
-        let sh = deckcraft_model::find_shape_mut(list, id).ok_or_else(|| bad(cmd, "no such shape"))?;
+        let sh = iridium_decks_model::find_shape_mut(list, id).ok_or_else(|| bad(cmd, "no such shape"))?;
         let x = sh.xfrm.ok_or_else(|| bad(cmd, "the shape has no position"))?;
         let Geom::Custom { paths } = &mut sh.geom else { return Err(bad(cmd, "not a freeform")) };
         let cp = paths.get_mut(path).ok_or_else(|| bad(cmd, "no such path"))?;
@@ -647,7 +647,7 @@ fn delete_point(s: &mut Session, p: &Value) -> Result<Value> {
 }
 
 /// The vertex of `sh` near slide point `p`: (path, index).
-pub fn vertex_at(doc: &deckcraft_model::Presentation, sel: &crate::Selection, sh: &Shape, p: Point, tol: f64) -> Option<(usize, usize)> {
+pub fn vertex_at(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, sh: &Shape, p: Point, tol: f64) -> Option<(usize, usize)> {
     for (pi, vs) in slide_vertices(doc, sel, sh).iter().enumerate() {
         for (i, q) in vs.iter().enumerate() {
             if (*q - p).hypot() <= tol {
@@ -715,7 +715,7 @@ fn nearest_on_segment(segs: &[Seg], si: usize, p0: Point, scale: (f64, f64), loc
 }
 
 /// The segment of `sh`'s outline near slide point `p`: (path, index of the vertex ending it, t).
-pub fn segment_at(doc: &deckcraft_model::Presentation, sel: &crate::Selection, sh: &Shape, p: Point, tol: f64) -> Option<(usize, usize, f64)> {
+pub fn segment_at(doc: &iridium_decks_model::Presentation, sel: &crate::Selection, sh: &Shape, p: Point, tol: f64) -> Option<(usize, usize, f64)> {
     let Geom::Custom { paths } = &sh.geom else { return None };
     let x = xfrm_of(doc, sel, sh);
     let local = x.affine().inverse() * p;
@@ -866,7 +866,7 @@ fn set_handle(segs: &mut [Seg], si: usize, out: bool, p: Point, kind: Option<&st
 
 /// Handles of vertex `index` of path `path` of `sh` in slide points: (incoming, outgoing, vertex).
 pub fn slide_handles(
-    doc: &deckcraft_model::Presentation,
+    doc: &iridium_decks_model::Presentation,
     sel: &crate::Selection,
     sh: &Shape,
     path: usize,

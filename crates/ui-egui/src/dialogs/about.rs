@@ -20,28 +20,30 @@ pub fn about(_app: &mut SlideApp, ui: &mut Ui) {
     ui.vertical_centered(|ui| {
         let (r, _) = ui.allocate_exact_size(vec2(64.0, 64.0), Sense::hover());
         paint_logo(ui.painter(), r);
-        ui.label(egui::RichText::new("Iridium Decks").font(theme::bold(22.0)));
+        ui.label(egui::RichText::new("Decks").font(theme::bold(22.0)));
         ui.label(egui::RichText::new(version_line()).color(t.text_dim));
         ui.add_space(6.0);
         ui.label("Presentations and slide shows, rebuilt from scratch in pure Rust.");
         ui.label("An open-source, clean-room project. Not affiliated with Microsoft.");
         ui.add_space(6.0);
-        ui.hyperlink_to("Iridium Technologies, Inc.", deckcraft_engine::links::DISCORD);
-        ui.hyperlink_to("iridium.ph", deckcraft_engine::links::APP_PAGE);
-        ui.hyperlink_to("Source on GitHub", deckcraft_engine::links::GITHUB);
-        ui.label(egui::RichText::new("Based on DeckCraft by the ArtCraft team.").size(11.0).color(t.text_dim));
+        ui.hyperlink_to("Iridium Technologies, Inc.", iridium_decks_engine::links::DISCORD);
+        ui.hyperlink_to("iridium.ph", iridium_decks_engine::links::APP_PAGE);
+        ui.hyperlink_to("Source on GitHub", iridium_decks_engine::links::GITHUB);
+        ui.label(egui::RichText::new("Based on Decks by the upstream team.").size(11.0).color(t.text_dim));
         ui.add_space(6.0);
-        ui.label(egui::RichText::new("MIT OR Apache-2.0 · © 2026 ArtCraft Team and the Iridium Decks contributors").size(11.0).color(t.text_faint));
+        ui.label(
+            egui::RichText::new("MIT OR Apache-2.0 · © 2026 the upstream project Team and the Decks contributors").size(11.0).color(t.text_faint),
+        );
     });
 }
 
 /// "Version X.Y.Z" plus, for release builds, the short commit and build date. The version comes
 /// from `[workspace.package] version` (the single source of truth, `cargo xtask version`); the
-/// release workflow sets `DECKCRAFT_BUILD_SHA` / `DECKCRAFT_BUILD_DATE` at build time.
+/// release workflow sets `IRIDIUM_DECKS_BUILD_SHA` / `IRIDIUM_DECKS_BUILD_DATE` at build time.
 pub fn version_line() -> String {
     let mut s = format!("Version {}", env!("CARGO_PKG_VERSION"));
-    let sha = option_env!("DECKCRAFT_BUILD_SHA").map(|s| s.get(..9).unwrap_or(s)).filter(|s| !s.is_empty());
-    let date = option_env!("DECKCRAFT_BUILD_DATE").filter(|s| !s.is_empty());
+    let sha = option_env!("IRIDIUM_DECKS_BUILD_SHA").map(|s| s.get(..9).unwrap_or(s)).filter(|s| !s.is_empty());
+    let date = option_env!("IRIDIUM_DECKS_BUILD_DATE").filter(|s| !s.is_empty());
     match (sha, date) {
         (Some(sha), Some(date)) => s.push_str(&format!(" ({sha}, {date})")),
         (Some(x), None) | (None, Some(x)) => s.push_str(&format!(" ({x})")),
@@ -50,7 +52,7 @@ pub fn version_line() -> String {
     s
 }
 
-/// Iridium Decks's mark, drawn in code: a slide card with a play triangle in our orange.
+/// Decks's mark, drawn in code: a slide card with a play triangle in our orange.
 pub fn paint_logo(p: &egui::Painter, r: Rect) {
     let orange = Color32::from_rgb(0xF2, 0x6B, 0x1D);
     let deep = Color32::from_rgb(0xC2, 0x4E, 0x14);
@@ -84,7 +86,7 @@ mod about_credits_tests {
     /// or Models was open. Click through Contributors, Models and back to About.
     #[test]
     fn about_dialog_tabs_keep_responding() {
-        let mut app = SlideApp::new(deckcraft_engine::Session::with_new(), Services::default());
+        let mut app = SlideApp::new(iridium_decks_engine::Session::with_new(), Services::default());
         app.dialog = Some(Dialog::new("about"));
         let mut h = Harness::builder().with_size(egui::vec2(1440.0, 900.0)).with_step_dt(1.0 / 60.0).build_ui_state(
             |ui, app: &mut SlideApp| {

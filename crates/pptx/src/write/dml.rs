@@ -1,10 +1,10 @@
 //! DrawingML writing: colours, fills, lines, effects, transforms and text.
 
-use deckcraft_geom::{Xfrm, pt_to_emu};
-use deckcraft_model::style::{
+use iridium_decks_geom::{Xfrm, pt_to_emu};
+use iridium_decks_model::style::{
     ColorBase, ColorRef, Compound, Dash, Effects, Fill, GradientFlip, GradientShape, Line, LineAlign, LineCap, LineJoin, PictureFill, PictureMode,
 };
-use deckcraft_model::text::{
+use iridium_decks_model::text::{
     Action, AutoFit, BodyProps, Bullet, Caps, Hyperlink, ListStyle, ParaProps, Paragraph, RunKind, RunProps, Spacing, Strike, TextBody,
 };
 
@@ -39,13 +39,13 @@ pub fn color(w: &mut W, c: &ColorRef) {
         ColorBase::Rgb { rgb } => ("a:srgbClr", A::new().a("val", rgb.hex())),
         ColorBase::Scheme { slot } => ("a:schemeClr", A::new().a("val", slot.xml_name())),
         // The reader keeps any name a file has; only names the schema allows are written.
-        ColorBase::Preset { name } => ("a:prstClr", A::new().a("val", if deckcraft_color::is_preset_name(name) { name } else { "black" })),
+        ColorBase::Preset { name } => ("a:prstClr", A::new().a("val", if iridium_decks_color::is_preset_name(name) { name } else { "black" })),
         ColorBase::System { name, last } => {
-            ("a:sysClr", A::new().a("val", if deckcraft_color::is_system_name(name) { name } else { "windowText" }).a("lastClr", last.hex()))
+            ("a:sysClr", A::new().a("val", if iridium_decks_color::is_system_name(name) { name } else { "windowText" }).a("lastClr", last.hex()))
         }
     };
     let rgb_alpha = match &c.base {
-        ColorBase::Rgb { rgb } if rgb.a < 255 && !c.mods.iter().any(|m| matches!(m, deckcraft_color::ColorTransform::Alpha(_))) => {
+        ColorBase::Rgb { rgb } if rgb.a < 255 && !c.mods.iter().any(|m| matches!(m, iridium_decks_color::ColorTransform::Alpha(_))) => {
             Some((rgb.a as i64 * 100_000 / 255) as i32)
         }
         _ => None,
@@ -122,7 +122,7 @@ pub fn blip_fill(w: &mut W, x: &mut Exp, o: &mut Out, tag: &str, pf: &PictureFil
             color(w, &ColorRef::rgb(c));
             w.close("a:clrFrom");
             w.open0("a:clrTo");
-            color(w, &ColorRef::rgb(c).with(deckcraft_color::ColorTransform::Alpha(0)));
+            color(w, &ColorRef::rgb(c).with(iridium_decks_color::ColorTransform::Alpha(0)));
             w.close("a:clrTo");
             w.close("a:clrChange");
         }
@@ -258,7 +258,7 @@ pub fn line(w: &mut W, x: &mut Exp, o: &mut Out, tag: &str, l: &Line) {
     w.close(tag);
 }
 
-fn shadow(w: &mut W, tag: &str, s: &deckcraft_model::style::Shadow) {
+fn shadow(w: &mut W, tag: &str, s: &iridium_decks_model::style::Shadow) {
     let mut a = A::new().a("blurRad", emu(s.blur).max(0)).a("dist", emu(s.dist).max(0)).a("dir", ang(s.dir));
     if tag == "a:outerShdw" {
         if s.sx != 1.0 {
@@ -284,7 +284,7 @@ fn shadow(w: &mut W, tag: &str, s: &deckcraft_model::style::Shadow) {
     w.close(tag);
 }
 
-fn gradient(w: &mut W, g: &deckcraft_model::style::Gradient) {
+fn gradient(w: &mut W, g: &iridium_decks_model::style::Gradient) {
     w.open("a:gradFill", A::new().o("flip", g.flip.map(GradientFlip::xml)).a("rotWithShape", if g.rotate_with_shape { "1" } else { "0" }));
     // No stops: no `a:gsLst`, so the gradient keeps taking them from its style's fill.
     let mut stops = g.stops.clone();
@@ -479,7 +479,7 @@ pub fn body_pr(w: &mut W, b: &BodyProps) {
         .b("spcFirstLastPara", b.space_first_last)
         .b("compatLnSpc", b.compat_ln_spc)
         .o("vertOverflow", b.vert_overflow.map(|v| v.xml()))
-        .o("horzOverflow", deckcraft_model::text::TextOverflow::horz_xml(b.horz_overflow));
+        .o("horzOverflow", iridium_decks_model::text::TextOverflow::horz_xml(b.horz_overflow));
     let warp = b.warp.as_deref().filter(|s| !s.is_empty() && s.chars().all(|c| c.is_ascii_alphanumeric()));
     if warp.is_none() && b.autofit.is_none() {
         w.empty("a:bodyPr", a);
@@ -493,7 +493,7 @@ pub fn body_pr(w: &mut W, b: &BodyProps) {
         if adj.is_empty() {
             w.empty0("a:avLst");
         } else {
-            let single = deckcraft_geom::warp::adjust_count(p) <= 1 && b.warp_adj.len() == 1;
+            let single = iridium_decks_geom::warp::adjust_count(p) <= 1 && b.warp_adj.len() == 1;
             w.open0("a:avLst");
             for (i, v) in adj {
                 let n = if single { "adj".to_string() } else { format!("adj{}", i + 1) };
@@ -824,7 +824,7 @@ pub fn has_math(tb: &TextBody) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use deckcraft_color::Rgba;
+    use iridium_decks_color::Rgba;
 
     #[test]
     fn unknown_preset_and_system_names_save_as_black_and_window_text() {

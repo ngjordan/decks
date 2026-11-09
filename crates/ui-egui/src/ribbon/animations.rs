@@ -8,7 +8,7 @@ use super::{
 /// Render animation preview, gallery, add/effect options, trigger, timing, and playback controls.
 pub(super) fn animations(app: &mut SlideApp, ui: &mut Ui) {
     let has_sel = app.session.active().is_some_and(|d| !d.selection.shapes.is_empty());
-    let cur: Option<deckcraft_model::Animation> = app.session.active().and_then(|d| {
+    let cur: Option<iridium_decks_model::Animation> = app.session.active().and_then(|d| {
         let s = d.current_slide()?;
         let id = d.selection.shapes.first()?;
         s.animations.iter().find(|a| a.shape == *id).cloned()
@@ -21,7 +21,7 @@ pub(super) fn animations(app: &mut SlideApp, ui: &mut Ui) {
         }
     });
     group(ui, |ui| {
-        let quick: Vec<_> = deckcraft_model::anim::ANIMATIONS
+        let quick: Vec<_> = iridium_decks_model::anim::ANIMATIONS
             .iter()
             .filter(|a| {
                 matches!(
@@ -65,7 +65,7 @@ pub(super) fn animations(app: &mut SlideApp, ui: &mut Ui) {
             {
                 ui.label(egui::RichText::new(label).font(theme::bold(12.0)));
                 ui.horizontal_wrapped(|ui| {
-                    for a in deckcraft_model::anim::ANIMATIONS.iter().filter(|a| a.2 == cls) {
+                    for a in iridium_decks_model::anim::ANIMATIONS.iter().filter(|a| a.2 == cls) {
                         let (r, resp) = ui.allocate_exact_size(vec2(56.0, 54.0), Sense::click());
                         if resp.hovered() {
                             ui.painter().rect_filled(r, CornerRadius::same(4), Tokens::get(ui.ctx()).hover);
@@ -108,7 +108,7 @@ pub(super) fn animations(app: &mut SlideApp, ui: &mut Ui) {
         let max_h = (r.ctx.viewport_rect().height() - 160.0).max(120.0);
         egui::Popup::menu(&r).width(260.0).show(|ui| {
             egui::ScrollArea::vertical().id_salt("add_animation").max_height(max_h).show(ui, |ui| {
-                for a in deckcraft_model::anim::ANIMATIONS.iter().filter(|a| a.2 != AnimClass::Media) {
+                for a in iridium_decks_model::anim::ANIMATIONS.iter().filter(|a| a.2 != AnimClass::Media) {
                     if ui
                         .button(format!(
                             "{} — {}",
@@ -160,9 +160,9 @@ pub(super) fn animations(app: &mut SlideApp, ui: &mut Ui) {
             ui.horizontal(|ui| {
                 ui.label("Start:");
                 let s = cur.as_ref().map(|c| match c.start {
-                    deckcraft_model::AnimStart::OnClick => "On Click",
-                    deckcraft_model::AnimStart::WithPrevious => "With Previous",
-                    deckcraft_model::AnimStart::AfterPrevious => "After Previous",
+                    iridium_decks_model::AnimStart::OnClick => "On Click",
+                    iridium_decks_model::AnimStart::WithPrevious => "With Previous",
+                    iridium_decks_model::AnimStart::AfterPrevious => "After Previous",
                 });
                 dropdown(ui, "astart", s.unwrap_or(""), 112.0, cur.is_some(), |ui| {
                     for (l, v) in [("On Click", "onClick"), ("With Previous", "withPrevious"), ("After Previous", "afterPrevious")] {
@@ -212,7 +212,7 @@ pub(super) fn marked_options<'a>(options: &'a [&'a str], current: Option<&str>) 
 
 /// One row of Animations ▸ Effect Options for the selected effect.
 pub(super) fn animation_effect_rows(effect: &str, class: AnimClass, current: Option<&str>) -> Vec<(&'static str, bool)> {
-    let opts = deckcraft_model::anim::animation_info(effect, class).map(|x| x.5).unwrap_or(&[]);
+    let opts = iridium_decks_model::anim::animation_info(effect, class).map(|x| x.5).unwrap_or(&[]);
     marked_options(opts, current)
 }
 
@@ -280,19 +280,19 @@ fn title_first(value: &str) -> String {
     chars.next().map(|c| c.to_uppercase().collect::<String>() + chars.as_str()).unwrap_or_default()
 }
 
-pub(super) fn text_build_id(build: deckcraft_model::anim::TextBuild) -> &'static str {
+pub(super) fn text_build_id(build: iridium_decks_model::anim::TextBuild) -> &'static str {
     match build {
-        deckcraft_model::anim::TextBuild::ByParagraph => "byParagraph",
-        deckcraft_model::anim::TextBuild::ByWord => "byWord",
-        deckcraft_model::anim::TextBuild::ByLetter => "byLetter",
-        deckcraft_model::anim::TextBuild::AsOne => "asOne",
+        iridium_decks_model::anim::TextBuild::ByParagraph => "byParagraph",
+        iridium_decks_model::anim::TextBuild::ByWord => "byWord",
+        iridium_decks_model::anim::TextBuild::ByLetter => "byLetter",
+        iridium_decks_model::anim::TextBuild::AsOne => "asOne",
     }
 }
 
 #[cfg(test)]
 mod animation_option_label_tests {
     use super::animation_option_label;
-    use deckcraft_model::anim::ANIMATIONS;
+    use iridium_decks_model::anim::ANIMATIONS;
 
     #[test]
     fn labels_every_animation_gallery_option_without_changing_its_code() {

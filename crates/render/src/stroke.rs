@@ -15,7 +15,7 @@ pub(crate) fn stroke(
     lw: f64,
     alpha: f64,
 ) {
-    use deckcraft_model::style::{LineCap, LineJoin};
+    use iridium_decks_model::style::{LineCap, LineJoin};
     let cap = match line.cap.unwrap_or_default() {
         LineCap::Flat => kurbo::Cap::Butt,
         LineCap::Round => kurbo::Cap::Round,
@@ -56,7 +56,7 @@ pub(crate) fn stroke(
     }
     // Compound lines: each band stroked along the path moved to its place across the width.
     let compound = line.compound.unwrap_or_default();
-    if compound != deckcraft_model::style::Compound::Single && lw * scale_of(m) >= 1.5 {
+    if compound != iridium_decks_model::style::Compound::Single && lw * scale_of(m) >= 1.5 {
         let tolerance = 0.1 / scale_of(m).max(1e-6);
         for &(a, b) in compound::bands(compound) {
             let d = (-0.5 + (a + b) / 2.0) * lw;
@@ -155,7 +155,7 @@ fn square_dash_ends(path: &BezPath, pattern: &[f64], width: f64) -> BezPath {
 /// A gradient line's paint: laid out, as PowerPoint lays it, over the box the stroke covers (the
 /// path's bounds grown by half the line width), so a horizontal line's vertical gradient runs
 /// across its width.
-fn line_gradient(rctx: &Ctx, g: &deckcraft_model::style::Gradient, ph: Option<Rgba>, path: &BezPath, lw: f64, alpha: f64) -> peniko::Gradient {
+fn line_gradient(rctx: &Ctx, g: &iridium_decks_model::style::Gradient, ph: Option<Rgba>, path: &BezPath, lw: f64, alpha: f64) -> peniko::Gradient {
     let bounds = path.bounding_box().inflate(lw / 2.0, lw / 2.0);
     let bounds = paint::tile_box(bounds, g.tile);
     let stops: Vec<(f64, Rgba)> = g.stops.iter().map(|s| (s.pos, rctx.color(&s.color, ph))).collect();
@@ -232,7 +232,7 @@ fn end_points(path: &BezPath) -> Option<((Point, Point), (Point, Point))> {
 
 /// An arrowhead's width and length for a line `lw` wide. PowerPoint sizes them in multiples of
 /// the line width (small 2, medium 3, large 5), but never smaller than for a 2 pt line.
-pub(crate) fn head_size(e: &deckcraft_model::style::LineEnd, lw: f64) -> (f64, f64) {
+pub(crate) fn head_size(e: &iridium_decks_model::style::LineEnd, lw: f64) -> (f64, f64) {
     let sz = |s: &str| match s {
         "sm" => 2.0,
         "lg" => 5.0,
@@ -254,8 +254,8 @@ fn open_arrow_setback(wl: f64, ll: f64, lw: f64) -> f64 {
 /// corners, and to where an open arrow's legs meet. Ovals and diamonds sit on the end itself.
 pub(crate) fn head_trims(line: &Line, lw: f64) -> (f64, f64) {
     // A square cap reaches half a width past the line's end: leave that off too.
-    let cap = if line.cap == Some(deckcraft_model::style::LineCap::Square) { lw / 2.0 } else { 0.0 };
-    let trim = |e: &Option<deckcraft_model::style::LineEnd>| {
+    let cap = if line.cap == Some(iridium_decks_model::style::LineCap::Square) { lw / 2.0 } else { 0.0 };
+    let trim = |e: &Option<iridium_decks_model::style::LineEnd>| {
         let Some(e) = e else { return 0.0 };
         let (wl, ll) = head_size(e, lw);
         match e.kind.as_str() {

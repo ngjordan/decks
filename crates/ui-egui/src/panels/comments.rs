@@ -70,7 +70,7 @@ pub(super) fn comments(app: &mut SlideApp, ui: &mut Ui) {
         app.dialog = Some(crate::dialogs::Dialog::new("comment"));
     }
     ui.separator();
-    let threads: Vec<(usize, Vec<deckcraft_model::Comment>)> = app
+    let threads: Vec<(usize, Vec<iridium_decks_model::Comment>)> = app
         .session
         .active()
         .map(|st| st.doc.slides.iter().enumerate().filter(|(_, sl)| !sl.comments.is_empty()).map(|(i, sl)| (i, sl.comments.clone())).collect())
@@ -96,7 +96,7 @@ fn focus_comment(app: &mut SlideApp, slide: usize, index: usize) {
 }
 
 /// Render one comment card, preserving its slide/index identity and focus state through actions.
-fn comment_card(app: &mut SlideApp, ui: &mut Ui, slide: usize, index: usize, c: &deckcraft_model::Comment, focused: bool) {
+fn comment_card(app: &mut SlideApp, ui: &mut Ui, slide: usize, index: usize, c: &iridium_decks_model::Comment, focused: bool) {
     let t = Tokens::get(ui.ctx());
     let stroke = if focused { Stroke::new(2.0, t.accent) } else { Stroke::NONE };
     let shown = egui::Frame::NONE

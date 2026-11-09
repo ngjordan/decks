@@ -68,7 +68,7 @@ fn budget_total(reserved: usize, replacing: usize, bytes: usize) -> Option<usize
 pub struct MemoryPlan {
     /// The callback's `ColorImage` (`width * height * 4`).
     pub color_image: usize,
-    /// The RGBA `Vec<u8>` handed to `deckcraft_render::Image`.
+    /// The RGBA `Vec<u8>` handed to `iridium_decks_render::Image`.
     pub rgba: usize,
     /// `Image::to_png`'s straight-alpha copy.
     pub encoder_copy: usize,

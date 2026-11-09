@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
-use deckcraft_model::text::RunKind;
-use deckcraft_model::{Background, Fill, PhType};
+use iridium_decks_model::text::RunKind;
+use iridium_decks_model::{Background, Fill, PhType};
 use serde_json::json;
 
 use crate::{Session, Target};
@@ -19,7 +19,7 @@ fn applies_the_theme_of_another_deck_and_undoes() {
     let t = &s.doc().unwrap().doc.masters[0].theme;
     assert_eq!(t.fonts.major.latin, "Lato");
     assert_eq!(t.fonts.minor.latin, "Source Sans 3");
-    assert_eq!(t.colors.get(deckcraft_color::SchemeSlot::Accent1).hex().to_lowercase(), "123456");
+    assert_eq!(t.colors.get(iridium_decks_color::SchemeSlot::Accent1).hex().to_lowercase(), "123456");
     assert!(s.doc().unwrap().doc.validate().is_empty());
     s.execute("edit.undo", &json!({})).unwrap();
     assert_eq!(s.doc().unwrap().doc.masters[0].theme, before);
@@ -29,7 +29,7 @@ fn applies_the_theme_of_another_deck_and_undoes() {
 
 /// A 4:3 brand template: a logo and a background on the master, its layouts renamed (so slides
 /// can only find them by kind) and its content layout's title moved.
-fn brand_template() -> (String, Vec<u8>, deckcraft_model::Xfrm) {
+fn brand_template() -> (String, Vec<u8>, iridium_decks_model::Xfrm) {
     let mut img = image::RgbaImage::new(2, 2);
     img.put_pixel(0, 0, image::Rgba([200, 20, 30, 255]));
     let mut logo = Vec::new();
@@ -39,27 +39,28 @@ fn brand_template() -> (String, Vec<u8>, deckcraft_model::Xfrm) {
     let title = t
         .edit(|doc, _| {
             let media = doc.add_media("logo.png", "image/png", logo.clone()).unwrap();
-            let id = deckcraft_model::ShapeId(doc.alloc_id().unwrap());
+            let id = iridium_decks_model::ShapeId(doc.alloc_id().unwrap());
             let m = Arc::make_mut(doc.masters.get_mut(0).unwrap());
-            m.shapes.push(deckcraft_model::Shape {
+            m.shapes.push(iridium_decks_model::Shape {
                 id,
                 name: "Logo".into(),
-                kind: deckcraft_model::ShapeKind::Picture { fill: deckcraft_model::style::PictureFill { media, ..Default::default() } },
-                xfrm: Some(deckcraft_model::Xfrm { x: 600.0, y: 20.0, w: 100.0, h: 40.0, ..Default::default() }),
+                kind: iridium_decks_model::ShapeKind::Picture { fill: iridium_decks_model::style::PictureFill { media, ..Default::default() } },
+                xfrm: Some(iridium_decks_model::Xfrm { x: 600.0, y: 20.0, w: 100.0, h: 40.0, ..Default::default() }),
                 ..Default::default()
             });
-            m.background = Some(Background::Fill { fill: Fill::solid(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(0x0A, 0x2B, 0x4C))) });
+            m.background =
+                Some(Background::Fill { fill: Fill::solid(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(0x0A, 0x2B, 0x4C))) });
             for l in &mut m.layouts {
                 l.name = format!("Brand {}", l.name);
             }
-            let obj = m.layouts.iter_mut().find(|l| l.kind == deckcraft_model::LayoutType::TitleAndContent).unwrap();
+            let obj = m.layouts.iter_mut().find(|l| l.kind == iridium_decks_model::LayoutType::TitleAndContent).unwrap();
             let title = obj.shapes.iter_mut().find(|sh| sh.ph_type().is_some_and(PhType::is_title)).unwrap();
-            let x = deckcraft_model::Xfrm { x: 72.0, y: 400.0, w: 576.0, h: 80.0, ..Default::default() };
+            let x = iridium_decks_model::Xfrm { x: 72.0, y: 400.0, w: 576.0, h: 80.0, ..Default::default() };
             title.xfrm = Some(x);
             Ok(x)
         })
         .unwrap();
-    (crate::cmd::base64_encode(&deckcraft_pptx::export_as(&t.doc().unwrap().doc, "potx").unwrap()), logo, title)
+    (crate::cmd::base64_encode(&iridium_decks_pptx::export_as(&t.doc().unwrap().doc, "potx").unwrap()), logo, title)
 }
 
 #[test]
@@ -81,7 +82,7 @@ fn a_template_brings_its_master_and_layouts_and_slides_follow() {
     assert!(m.layouts.iter().all(|l| l.name.starts_with("Brand ")));
     assert!(matches!(m.background, Some(Background::Fill { fill: Fill::Solid { .. } })));
     let pic = m.shapes.iter().find(|sh| sh.name == "Logo").expect("the master's logo comes along");
-    let deckcraft_model::ShapeKind::Picture { fill } = &pic.kind else { panic!("logo is a picture") };
+    let iridium_decks_model::ShapeKind::Picture { fill } = &pic.kind else { panic!("logo is a picture") };
     assert_eq!(doc.media(fill.media).map(|m| m.data.as_ref().clone()), Some(logo));
     // The 4:3 master stretches to this deck's 16:9.
     let k = doc.slide_size.width / 720.0;
@@ -137,10 +138,10 @@ fn effect_scheme_replaces_format_and_keeps_colours_and_fonts() {
     let mut s = crate::Session::with_new();
     let listed = s.execute("design.themes", &json!({})).unwrap();
     let names: Vec<String> = listed["effectSchemes"].as_array().unwrap().iter().filter_map(|v| v.as_str().map(str::to_string)).collect();
-    assert_eq!(names, ["Iridium Decks", "Soft", "Crisp", "Lift", "Glow", "Plain"]);
+    assert_eq!(names, ["Decks", "Soft", "Crisp", "Lift", "Glow", "Plain"]);
 
     let n = undo_len(&s);
-    s.execute("design.effects", &json!({"name": "Iridium Decks"})).unwrap();
+    s.execute("design.effects", &json!({"name": "Decks"})).unwrap();
     assert_eq!(undo_len(&s), n, "the scheme already on the theme is not an undo step");
     let err = s.execute("design.effects", &json!({"name": "Office"})).unwrap_err().to_string();
     assert!(err.contains("no effect scheme"), "{err}");
@@ -171,7 +172,7 @@ fn effect_scheme_replaces_format_and_keeps_colours_and_fonts() {
     assert_eq!(plain.lines[2].width, Some(0.75));
 }
 
-fn shapes(s: &Session) -> Vec<deckcraft_model::Shape> {
+fn shapes(s: &Session) -> Vec<iridium_decks_model::Shape> {
     s.doc().unwrap().shapes().to_vec()
 }
 

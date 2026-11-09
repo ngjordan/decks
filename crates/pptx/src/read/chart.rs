@@ -1,7 +1,7 @@
 //! Chart parts (`c:chartSpace`) → [`Chart`]. The original XML is kept in `Chart.raw`.
 
-use deckcraft_model::chart::{Chart, ChartType, ErrorBars, Series, Trendline, TrendlineType};
-use deckcraft_model::style::Fill;
+use iridium_decks_model::chart::{Chart, ChartType, ErrorBars, Series, Trendline, TrendlineType};
+use iridium_decks_model::style::Fill;
 
 use crate::xml::El;
 
@@ -20,9 +20,9 @@ fn simple_fill(sp: Option<&El>) -> Option<Fill> {
     None
 }
 
-fn simple_line(sp: Option<&El>) -> Option<deckcraft_model::Line> {
+fn simple_line(sp: Option<&El>) -> Option<iridium_decks_model::Line> {
     let ln = sp?.child("ln")?;
-    let mut l = deckcraft_model::Line { width: super::dml::pt(ln, "w"), ..Default::default() };
+    let mut l = iridium_decks_model::Line { width: super::dml::pt(ln, "w"), ..Default::default() };
     l.fill = simple_fill(Some(ln));
     Some(l)
 }
@@ -436,8 +436,8 @@ fn trendline(e: &El) -> Option<Trendline> {
 }
 
 /// The colour of the first `a:defRPr` or `a:rPr` with a solid fill under `e`.
-fn text_color(e: Option<&El>) -> Option<deckcraft_model::ColorRef> {
-    fn rec(e: &El, depth: usize) -> Option<deckcraft_model::ColorRef> {
+fn text_color(e: Option<&El>) -> Option<iridium_decks_model::ColorRef> {
+    fn rec(e: &El, depth: usize) -> Option<iridium_decks_model::ColorRef> {
         if depth > 8 {
             return None;
         }
@@ -461,8 +461,8 @@ const MAX_KEPT_DEPTH: usize = 8;
 pub const MAX_KEPT_TOTAL_BYTES: usize = 32 * 1024 * 1024;
 
 /// Relationships and parts a chart points at, so a later save can write them back.
-pub(crate) fn capture_kept(imp: &mut super::Imp, chart_part: &str) -> deckcraft_model::chart::ChartKept {
-    use deckcraft_model::chart::{ChartKept, ChartRel};
+pub(crate) fn capture_kept(imp: &mut super::Imp, chart_part: &str) -> iridium_decks_model::chart::ChartKept {
+    use iridium_decks_model::chart::{ChartKept, ChartRel};
 
     let key = crate::opc::norm(chart_part);
     if let Some(cached) = imp.kept_charts.get(&key) {
@@ -497,12 +497,12 @@ fn safe_rel(id: &str, ty: &str, target: &str) -> bool {
 fn copy_part(
     pkg: &crate::opc::Package,
     part: &str,
-    out: &mut Vec<deckcraft_model::chart::ChartPart>,
+    out: &mut Vec<iridium_decks_model::chart::ChartPart>,
     seen: &mut std::collections::HashMap<String, bool>,
     retained_bytes: &mut usize,
     depth: usize,
 ) -> bool {
-    use deckcraft_model::chart::ChartPart;
+    use iridium_decks_model::chart::ChartPart;
 
     if depth > MAX_KEPT_DEPTH || out.len() >= MAX_KEPT_PARTS {
         log::warn!("pptx: chart part closure stopped at {part}");
@@ -631,11 +631,11 @@ mod tests {
         // A pattern-filled series and an empty one with an outline, as PowerPoint writes them.
         let xml = br#"<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><c:chart><c:plotArea><c:barChart><c:barDir val="col"/><c:ser><c:idx val="0"/><c:spPr><a:pattFill prst="openDmnd"><a:fgClr><a:schemeClr val="accent4"/></a:fgClr><a:bgClr><a:schemeClr val="bg1"/></a:bgClr></a:pattFill></c:spPr><c:val><c:numLit><c:ptCount val="1"/><c:pt idx="0"><c:v>5</c:v></c:pt></c:numLit></c:val></c:ser><c:ser><c:idx val="1"/><c:spPr><a:noFill/><a:ln w="19050"><a:solidFill><a:schemeClr val="accent4"/></a:solidFill></a:ln></c:spPr><c:val><c:numLit><c:ptCount val="1"/><c:pt idx="0"><c:v>3</c:v></c:pt></c:numLit></c:val></c:ser></c:barChart></c:plotArea></c:chart></c:chartSpace>"#;
         let c = read_chart_xml(xml).unwrap();
-        let accent4 = deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Accent4);
-        let pattern = deckcraft_model::style::PatternFill {
+        let accent4 = iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Accent4);
+        let pattern = iridium_decks_model::style::PatternFill {
             preset: "openDmnd".into(),
             fg: accent4.clone(),
-            bg: deckcraft_model::ColorRef::scheme(deckcraft_color::SchemeSlot::Bg1),
+            bg: iridium_decks_model::ColorRef::scheme(iridium_decks_color::SchemeSlot::Bg1),
         };
         assert_eq!(c.series[0].fill, Some(Fill::Pattern(pattern.clone())));
         assert_eq!(c.series[1].fill, Some(Fill::None));
@@ -735,7 +735,7 @@ mod tests {
         // LibreOffice's templates set light axis text for dark slides on the axes' c:txPr.
         let xml = r#"<c:chartSpace xmlns:c="http://schemas.openxmlformats.org/drawingml/2006/chart" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"><c:chart><c:plotArea><c:barChart><c:barDir val="col"/><c:ser><c:idx val="0"/><c:val><c:numRef><c:numCache><c:ptCount val="1"/><c:pt idx="0"><c:v>1</c:v></c:pt></c:numCache></c:numRef></c:val></c:ser><c:axId val="1"/><c:axId val="2"/></c:barChart><c:catAx><c:axId val="1"/><c:txPr><a:bodyPr/><a:p><a:pPr><a:defRPr sz="1000"><a:solidFill><a:srgbClr val="FFFFFF"/></a:solidFill></a:defRPr></a:pPr></a:p></c:txPr></c:catAx><c:valAx><c:axId val="2"/></c:valAx></c:plotArea></c:chart></c:chartSpace>"#;
         let c = read_chart_xml(xml.as_bytes()).unwrap();
-        assert_eq!(c.text_color, Some(deckcraft_model::ColorRef::rgb(deckcraft_color::Rgba::rgb(255, 255, 255))));
+        assert_eq!(c.text_color, Some(iridium_decks_model::ColorRef::rgb(iridium_decks_color::Rgba::rgb(255, 255, 255))));
         assert!(!c.cat_reversed);
         let rev = read_chart_xml(
             xml.replace("<c:catAx><c:axId val=\"1\"/>", "<c:catAx><c:axId val=\"1\"/><c:scaling><c:orientation val=\"maxMin\"/></c:scaling>")

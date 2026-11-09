@@ -15,7 +15,7 @@ fn seed_theme_fonts(d: &mut Dialog) {
 
 fn theme_font_choices(app: &SlideApp, selected: &str) -> Vec<String> {
     let mut v = crate::ribbon::font_families(app);
-    for scheme in deckcraft_model::theme::builtin_font_schemes() {
+    for scheme in iridium_decks_model::theme::builtin_font_schemes() {
         v.push(scheme.major.latin);
         v.push(scheme.minor.latin);
     }
