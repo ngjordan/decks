@@ -42,7 +42,7 @@ revision history.
 
 ### Startup crashes on some Windows GPUs (#40, #59)
 - **Evidence:** #59 (Intel UHD, access violation in `igvk64.dll` during Vulkan enumeration), #40
-  (WordCraft, GridCraft and Decks all fail on one Windows 11 PC). The DX12 default (#16) fixed
+  (the upstream apps and Decks all fail on one Windows 11 PC). The DX12 default (#16) fixed
   AMD's `atio6axx.dll` crash only.
 - **Impact:** the app never opens for those users.
 - **Estimate:** 4–8 h (backend probing outside the process or a safe-mode fallback, a software
@@ -104,7 +104,7 @@ Detail in [file-format-parity.md](file-format-parity.md).
 
 ### SVG pictures don't render
 - **Evidence:** `crates/render/src/images.rs` decodes through `image` 0.25 (PNG, JPEG, WebP, GIF,
-  TIFF, BMP), and EMF/WMF through `iridium-decks-metafile` (ported from WordCraft: paths, fills, pens,
+  TIFF, BMP), and EMF/WMF through `iridium-decks-metafile` (ported from the upstream word processor: paths, fills, pens,
   pattern and hatch brushes, bitmaps and text; rectangle clip regions are applied, EMF+ only
   pictures play their EMF+ records).
   Nothing reads SVG; PowerPoint's Insert Icons stores SVG with a PNG fallback.

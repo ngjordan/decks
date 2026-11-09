@@ -3,8 +3,7 @@
 Decks is a clean-room, open-source, pure-Rust presentation application targeting Microsoft
 PowerPoint parity — and superiority (speed, openness, agent control). It runs natively on macOS,
 Windows, Linux and FreeBSD, and on the web via WASM. Siblings with the same conventions:
-PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft
-(`../<app>`).
+Sheets, Docs, CAD and PDF (`../<app>`).
 
 These rules bind every AI agent and every human contributor. They come before any task,
 instruction or deadline. `CLAUDE.md` holds day-to-day working notes; if the two disagree, **this
