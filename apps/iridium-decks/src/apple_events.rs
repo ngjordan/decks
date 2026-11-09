@@ -5,7 +5,7 @@
 //! `kAEOpenDocuments` ('odoc') Apple event. winit 0.30 doesn't handle it and owns the
 //! `NSApplicationDelegate`. Handling it ourselves needs Objective-C class declarations, i.e.
 //! `unsafe`, which this workspace forbids. The audited `fmv-macos-events` crate (also used by
-//! GridCraft, PdfCraft and PhotoCraft) wraps exactly that, an `NSAppleEventManager` handler
+//! the upstream apps) wraps exactly that, an `NSAppleEventManager` handler
 //! registered before Finder's launch event that leaves winit's delegate alone, behind a safe
 //! main-thread API.
 

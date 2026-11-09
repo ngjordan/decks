@@ -58,7 +58,7 @@ impl eframe::App for App {
         // in a crash report. eframe calls `on_exit` on every way of quitting (⌘Q, the close
         // button, `app.quit`), once the unsaved-changes prompt has let the window close, and
         // nothing after it is needed: the preferences are saved and the log file is unbuffered.
-        // `on_exit` only runs once the app exists, never on a failed start. Same as GridCraft #117.
+        // `on_exit` only runs once the app exists, never on a failed start. Same as the upstream app does.
         #[cfg(target_os = "macos")]
         self.0.cleanup_print_previews();
         #[cfg(target_os = "macos")]

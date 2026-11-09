@@ -487,7 +487,7 @@ type Planes3 = (Vec<u8>, Vec<u8>, Vec<u8>);
 
 /// Validate the hand-built stream and its expected output with ffmpeg when available.
 fn cross_check_ffmpeg(stream: &[u8], expected: &[Planes3], name: &str) {
-    // The ffmpeg cross-check lives in FilmCraft (test oracle); this copy checks the expected planes only.
+    // The ffmpeg cross-check lives in the upstream app (test oracle); this copy checks the expected planes only.
     let _ = (stream, expected, name);
 }
 

@@ -34,7 +34,7 @@ impl Class {
 /// prefix.
 pub const TABLE: &[(&str, Class)] = &[
     ("geom", Class::Layer(0)),
-    // Codecs and containers (ported from FilmCraft): L0 standalone leaves, L1 codecs over
+    // Codecs and containers (ported from the upstream app): L0 standalone leaves, L1 codecs over
     // `bitstream`, and `media` (probe, decode, playback mixer) at L2.
     ("bitstream", Class::Standalone),
     ("matroska", Class::Standalone),
@@ -47,7 +47,7 @@ pub const TABLE: &[(&str, Class)] = &[
     ("isobmff", Class::Layer(1)),
     ("media", Class::Layer(2)),
     ("color", Class::Layer(0)),
-    // WMF/EMF reader (ported from WordCraft).
+    // WMF/EMF reader (ported from the upstream word processor).
     ("metafile", Class::Layer(0)),
     ("model", Class::Layer(1)),
     ("fonts", Class::Layer(1)),

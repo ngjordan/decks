@@ -27,7 +27,7 @@ iridium-decks-engine = { path = "crates/engine" }
 iridium-decks-mcp = { path = "crates/mcp" }
 iridium-decks-ui-egui = { path = "crates/ui-egui" }
 iridium-decks-media = { path = "crates/media" }
-# codecs (ported from FilmCraft, same owner and licence)
+# codecs (ported from the upstream app, same owner and licence)
 iridium-decks-bitstream = { path = "crates/bitstream" }
 iridium-decks-h264 = { path = "crates/h264" }
 iridium-decks-hevc = { path = "crates/hevc" }

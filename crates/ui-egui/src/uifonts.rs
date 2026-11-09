@@ -6,7 +6,7 @@
 //! Sans CJK) and added after the interface faces. Nothing is bundled for it: on the web, where
 //! there are no installed fonts, only the embedded faces are used.
 //!
-//! Ported from WordCraft's IME composition and window-caption fallback (#565, #840), widened from
+//! Ported from the upstream word processor's IME composition and window-caption fallback (#565, #840), widened from
 //! the composition and caption to every text the interface draws from the presentation.
 
 use std::collections::HashSet;

@@ -571,7 +571,7 @@ impl<'a> SliceDecoder<'a> {
     /// clip_mv(mvL0 − mvCol), both clipped to the spec's motion-vector range −2^15..2^15−1.
     /// The i32 maths cannot overflow; a truncating `as i16` used to wrap mvL0 past the range,
     /// after which the mvL1 subtraction overflowed a debug build. mvL1 is scaled from the
-    /// unclamped mvL0 with only the results clipped, as the sibling SoundCraft decoder's
+    /// unclamped mvL0 with only the results clipped, as the upstream sibling decoder's
     /// review established (soundcraft#994): dsf 512, mvCol 32767 keeps mvL1 at 32767.
     fn temporal_direct_mvs(dsf: i32, mv_col: [i16; 2]) -> ([i16; 2], [i16; 2]) {
         let clamp = |v: i32| v.clamp(-(1 << 15), (1 << 15) - 1) as i16;

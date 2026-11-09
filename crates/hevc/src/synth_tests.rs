@@ -546,7 +546,7 @@ fn as_u8(p: &crate::Plane) -> &[u8] {
 
 /// Compare with ffmpeg's decode of the same stream (skipped when ffmpeg is absent).
 fn check_ffmpeg(name: &str, stream: &[u8], pics: &[crate::Picture]) {
-    // The ffmpeg cross-check lives in FilmCraft (test oracle).
+    // The ffmpeg cross-check lives in the upstream app (test oracle).
     let _ = (name, stream, pics);
 }
 
