@@ -27,6 +27,7 @@ iridium-decks-engine = { path = "crates/engine" }
 iridium-decks-mcp = { path = "crates/mcp" }
 iridium-decks-ui-egui = { path = "crates/ui-egui" }
 iridium-decks-media = { path = "crates/media" }
+iridium-decks-shell = { path = "crates/decks-shell" }
 # codecs (ported from the upstream app, same owner and licence)
 iridium-decks-bitstream = { path = "crates/bitstream" }
 iridium-decks-h264 = { path = "crates/h264" }

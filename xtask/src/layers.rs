@@ -61,6 +61,8 @@ pub const TABLE: &[(&str, Class)] = &[
     ("ui-egui", Class::Layer(6)),
     ("mcp", Class::Layer(6)),
     ("testkit", Class::Testkit),
+    // Desktop shell library: hosts `ui-egui` with the native services; L7, desktop-only (not in the wasm set).
+    ("shell", Class::Layer(7)),
     // L7 apps and tooling
     ("iridium-decks", Class::Exempt),
     ("cli", Class::Exempt),

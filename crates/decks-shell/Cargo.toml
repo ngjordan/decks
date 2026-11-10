@@ -1,0 +1,26 @@
+[package]
+name = "iridium-decks-shell"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Decks desktop shell: the app's window logic as a library (the standalone app and the Office suite both host it)"
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+iridium-decks-engine = { workspace = true }
+iridium-decks-ui-egui = { workspace = true }
+iridium-decks-media = { workspace = true }
+eframe = { workspace = true }
+egui = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+rfd = { workspace = true }
+arboard = { workspace = true, features = ["image-data"] }
+image = { workspace = true }
+cpal = "0.16"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+fmv-macos-events = "=0.1.0"

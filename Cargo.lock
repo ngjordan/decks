@@ -2225,20 +2225,14 @@ dependencies = [
 name = "iridium-decks"
 version = "0.15.0"
 dependencies = [
- "arboard",
  "chrono",
- "cpal",
  "craft-update",
  "eframe",
  "egui",
  "fmv-macos-events",
- "image",
- "iridium-decks-engine",
- "iridium-decks-media",
+ "iridium-decks-shell",
  "iridium-decks-ui-egui",
  "log",
- "rfd",
- "serde_json",
  "winit",
  "winresource",
 ]
@@ -2482,6 +2476,24 @@ dependencies = [
  "skrifa 0.47.0",
  "vello_common",
  "vello_cpu",
+]
+
+[[package]]
+name = "iridium-decks-shell"
+version = "0.15.0"
+dependencies = [
+ "arboard",
+ "cpal",
+ "eframe",
+ "egui",
+ "fmv-macos-events",
+ "image",
+ "iridium-decks-engine",
+ "iridium-decks-media",
+ "iridium-decks-ui-egui",
+ "log",
+ "rfd",
+ "serde_json",
 ]
 
 [[package]]

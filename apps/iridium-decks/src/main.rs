@@ -16,30 +16,18 @@
 
 #[cfg(target_os = "macos")]
 mod apple_events;
-mod audio;
-mod control_server;
 #[cfg(all(unix, not(target_os = "macos")))]
 mod display;
 #[cfg(any(target_os = "windows", test))]
 mod graphics;
 mod logging;
-#[cfg(not(target_arch = "wasm32"))]
-mod pasteboard;
 
-use iridium_decks_engine::Session;
-use iridium_decks_ui_egui::{Services, SlideApp};
+use iridium_decks_shell::{Launch, Shell};
 
-struct App(
-    SlideApp,
-    /// Files opened from Finder and quit requests (see `apple_events`).
-    #[cfg(target_os = "macos")]
-    fmv_macos_events::Inbox,
-);
+struct App(Shell);
 
 impl eframe::App for App {
     fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        #[cfg(target_os = "macos")]
-        apple_events::poll(&self.1, &mut self.0, ctx);
         self.0.logic(ctx);
     }
     /// Forward native raw input to the wrapped application once per pass.
@@ -50,20 +38,23 @@ impl eframe::App for App {
         self.0.ui(ui);
     }
     fn on_exit(&mut self) {
-        save_prefs(&self.0);
-        // macOS (#279): end the process here, before eframe tears the window down. AccessKit's
-        // macOS adapter subclasses the window's content view and restores its class on teardown;
-        // AppKit's Touch Bar support observes that view (KVO), so in the next display cycle
-        // `-[_NSTouchBarFinderObservation invalidate]` throws "not registered" and the quit ends
-        // in a crash report. eframe calls `on_exit` on every way of quitting (⌘Q, the close
-        // button, `app.quit`), once the unsaved-changes prompt has let the window close, and
-        // nothing after it is needed: the preferences are saved and the log file is unbuffered.
-        // `on_exit` only runs once the app exists, never on a failed start. Same as the upstream app does.
-        #[cfg(target_os = "macos")]
-        self.0.cleanup_print_previews();
-        #[cfg(target_os = "macos")]
-        std::process::exit(0);
+        self.0.save_state();
+        end_process();
     }
+}
+
+/// macOS (#279): end the process here, before eframe tears the window down. AccessKit's
+/// macOS adapter subclasses the window's content view and restores its class on teardown;
+/// AppKit's Touch Bar support observes that view (KVO), so in the next display cycle
+/// `-[_NSTouchBarFinderObservation invalidate]` throws "not registered" and the quit ends
+/// in a crash report. eframe calls `on_exit` on every way of quitting (⌘Q, the close
+/// button, `app.quit`), once the unsaved-changes prompt has let the window close, and
+/// nothing after it is needed: the preferences are saved and the log file is unbuffered.
+/// `on_exit` only runs once the app exists, never on a failed start. Same as the upstream app does.
+/// This stays out of the shell library: in a suite it would end every app.
+fn end_process() {
+    #[cfg(target_os = "macos")]
+    std::process::exit(0);
 }
 
 /// The per-user settings directory: `ui.json`, `prefs.json` and `logs/` live here.
@@ -77,63 +68,6 @@ fn config_dir() -> Option<std::path::PathBuf> {
             .map(std::path::PathBuf::from)
             .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".config")))
             .map(|c| c.join("iridium-decks"))
-    }
-}
-
-fn load_prefs(app: &mut SlideApp) {
-    if std::env::var_os("IRIDIUM_DECKS_NO_PREFS").is_some() {
-        return;
-    }
-    let Some(dir) = config_dir() else { return };
-    let (ui, prefs) = iridium_decks_ui_egui::settings::load(&dir);
-    if let Some(ui) = ui {
-        app.ui = ui;
-    }
-    if let Some(prefs) = prefs {
-        app.session.prefs = prefs;
-    }
-}
-
-fn save_prefs(app: &SlideApp) {
-    if std::env::var_os("IRIDIUM_DECKS_NO_PREFS").is_some() {
-        return;
-    }
-    if let Some(dir) = config_dir() {
-        iridium_decks_ui_egui::settings::save(&dir, &app.ui, &app.session.prefs);
-    }
-}
-
-fn services() -> Services {
-    Services {
-        pick_open: Some(Box::new(|purpose: &str| {
-            let d = rfd::FileDialog::new();
-            let d = match purpose {
-                "picture" => d.add_filter("Pictures", &["png", "jpg", "jpeg", "gif", "webp", "bmp", "tif", "tiff"]),
-                "audio" => d.add_filter(
-                    "Audio",
-                    &["wav", "mp3", "m4a", "m4b", "aac", "flac", "ogg", "oga", "opus", "aif", "aiff", "aifc", "caf", "wma", "weba", "mka"],
-                ),
-                "video" => d.add_filter("Video", &["mp4", "m4v", "mov", "webm", "mkv", "wmv"]),
-                "theme" => d.add_filter("Themes and presentations", &["thmx", "pptx", "potx", "ppsx"]).add_filter("Office Theme", &["thmx"]),
-                _ => d
-                    .add_filter("Presentations", &["iridium-decks", "pptx", "potx", "ppsx"])
-                    .add_filter("Decks", &["iridium-decks"])
-                    .add_filter("PowerPoint", &["pptx", "potx", "ppsx"])
-                    .add_filter("Outline", &["txt", "md"]),
-            };
-            d.pick_file().map(|p| p.to_string_lossy().to_string())
-        })),
-        pick_save: Some(Box::new(|name: &str| rfd::FileDialog::new().set_file_name(name).save_file().map(|p| p.to_string_lossy().to_string()))),
-        read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
-        write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),
-        clipboard_image: Some(Box::new(pasteboard::image_png)),
-        clipboard_html: Some(Box::new(pasteboard::html)),
-        clipboard_set_html: Some(Box::new(pasteboard::set_html)),
-        // Media is mixed and clocked by the output device; `IRIDIUM_DECKS_NO_AUDIO` plays silently.
-        audio_out: std::env::var_os("IRIDIUM_DECKS_NO_AUDIO")
-            .is_none()
-            .then(|| Box::new(audio::CpalOut::default()) as Box<dyn iridium_decks_media::AudioOut>),
-        ..Default::default()
     }
 }
 
@@ -267,39 +201,17 @@ fn main() -> eframe::Result {
         "Decks",
         options,
         Box::new(move |cc| {
-            iridium_decks_ui_egui::install_ime_pass_hooks(&cc.egui_ctx);
-            let mut app = SlideApp::new(Session::new(), services());
-            load_prefs(&mut app);
-            app.enable_update_checks();
-            // AutoRecover: reopen what a previous run left unsaved, then keep it current.
-            if std::env::var_os("IRIDIUM_DECKS_NO_RECOVERY").is_none() {
-                app.session.recovery_dir = iridium_decks_engine::recovery::default_dir();
-                if let Ok(v) = app.session.execute("file.recovery.open", &serde_json::json!({}))
-                    && let Some(n) = v.get("opened").and_then(|o| o.as_array()).map(Vec::len).filter(|n| *n > 0)
-                {
-                    app.set_status(format!("Recovered {n} unsaved presentation{} from the last session", if n == 1 { "" } else { "s" }));
-                }
-            }
-            app.integrated_titlebar = cfg!(target_os = "macos");
-            if let Some(port) = control_port {
-                let rx = control_server::start(port, cc.egui_ctx.clone());
-                app = app.with_control(rx);
-            }
-            if sample && let Err(e) = iridium_decks_engine::sample::open_sample(&mut app.session) {
-                log::error!("sample: {e}");
-            }
-            // A .ppsx opened last starts its slide show (#862).
-            for (f, e) in app.open_from_system(&files) {
-                log::error!("{f}: {e}");
-            }
-            if show {
-                app.start_show(0, false);
-            }
-            Ok(Box::new(App(
-                app,
-                #[cfg(target_os = "macos")]
-                apple_events.connect(&cc.egui_ctx),
-            )))
+            Ok(Box::new(App(Shell::new(
+                cc,
+                Launch {
+                    control_port,
+                    files,
+                    sample,
+                    show,
+                    #[cfg(target_os = "macos")]
+                    apple_events: apple_events.connect(&cc.egui_ctx),
+                },
+            ))))
         }),
     )
 }
@@ -313,13 +225,8 @@ mod tests {
     #[test]
     fn on_exit_ends_the_process_on_macos() {
         if std::env::var_os("IRIDIUM_DECKS_TEST_ON_EXIT").is_some() {
-            let mut app = App(
-                SlideApp::new(Session::new(), Services::default()),
-                #[cfg(target_os = "macos")]
-                fmv_macos_events::Inbox::default(),
-            );
             println!("calling on_exit");
-            eframe::App::on_exit(&mut app);
+            end_process();
             println!("on_exit returned");
             return;
         }
