@@ -67,7 +67,7 @@ craft-update = { git = "https://github.com/ngjordan/craft-libs", version = "=0.1
 craft-ui = { git = "https://github.com/ngjordan/craft-libs", rev = "04428cee1e5bb2b85c3b6537aeb10ba0da228ff9", version = "=0.1.0" }
 i_overlay = "9"
 quick-xml = "0.41"
-zip = { version = "3", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 
 # ui
 egui = { version = "0.37", default-features = false }
