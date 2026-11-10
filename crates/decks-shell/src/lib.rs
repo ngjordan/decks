@@ -29,6 +29,9 @@ pub struct Launch {
 
 pub struct Shell {
     app: SlideApp,
+    fonts: egui::FontDefinitions,
+    style: egui::Style,
+    zoom: f32,
     #[cfg(target_os = "macos")]
     apple_events: fmv_macos_events::Inbox,
 }
@@ -107,8 +110,19 @@ fn open_reporting(app: &mut SlideApp, p: &str) {
 impl Shell {
     /// Build the shell: services, preferences, AutoRecover, the control server, then the files
     /// and flags the app was started with.
+    ///
+    /// Thin wrapper over [`Shell::new_for_host`]; Decks has no extra that needs the real window.
     pub fn new(cc: &eframe::CreationContext<'_>, launch: Launch) -> Self {
-        iridium_decks_ui_egui::install_ime_pass_hooks(&cc.egui_ctx);
+        Self::new_for_host(&cc.egui_ctx, cc.storage, launch)
+    }
+
+    /// Host-facing constructor: no `CreationContext`, so a host can build the module later.
+    /// `storage` is unused: Decks keeps its settings in files (`config_dir`).
+    ///
+    /// `SlideApp` installs its fonts, theme and zoom lazily on its first frame, so this installs
+    /// the same ones now (the first frame repeats them harmlessly) and captures them.
+    pub fn new_for_host(ctx: &egui::Context, _storage: Option<&dyn eframe::Storage>, launch: Launch) -> Self {
+        iridium_decks_ui_egui::install_ime_pass_hooks(ctx);
         let mut app = SlideApp::new(Session::new(), services());
         load_prefs(&mut app);
         app.enable_update_checks();
@@ -123,7 +137,7 @@ impl Shell {
         }
         app.integrated_titlebar = cfg!(target_os = "macos");
         if let Some(port) = launch.control_port {
-            let rx = control_server::start(port, cc.egui_ctx.clone());
+            let rx = control_server::start(port, ctx.clone());
             app = app.with_control(rx);
         }
         if launch.sample
@@ -138,12 +152,40 @@ impl Shell {
         if launch.show {
             app.start_show(0, false);
         }
+        use iridium_decks_ui_egui::theme;
+        let zoom = app.ui.ui_scale.clamp(0.5, 3.0);
+        ctx.set_zoom_factor(zoom);
+        let fonts = theme::font_definitions(&app.ui_fonts.faces);
+        ctx.set_fonts(fonts.clone());
+        theme::apply(ctx, &theme::Tokens::for_brightness(app.ui.brightness));
         Self {
             app,
+            fonts,
+            style: ctx.global_style().as_ref().clone(),
+            zoom,
             #[cfg(target_os = "macos")]
             apple_events: launch.apple_events,
         }
     }
+
+    /// The font set this module installed, captured at construction.
+    pub fn fonts(&self) -> egui::FontDefinitions {
+        self.fonts.clone()
+    }
+
+    /// The style this module left behind, captured at construction.
+    pub fn style(&self) -> egui::Style {
+        self.style.clone()
+    }
+
+    /// The zoom factor this module left behind, captured at construction.
+    pub fn zoom(&self) -> f32 {
+        self.zoom
+    }
+
+    /// Re-install the native menu. Decks builds no native menu of its own (the menu bar is
+    /// drawn in egui; the macOS app menu is the windowing library's), so this is a no-op.
+    pub fn install_native_menu(&self) {}
 
     /// Per-frame logic, called before `ui`. On macOS first opens the documents and acts on the
     /// quit requests that arrived as Apple events since the last frame.
