@@ -17,7 +17,7 @@ use std::sync::Arc;
 use iridium_decks_model::text::{Paragraph, TextBody};
 use iridium_decks_model::{LayoutType, Presentation, ShapeKind, defaults};
 
-pub const MIMETYPE: &str = "application/vnd.storyteller.iridium-decks+zip";
+pub const MIMETYPE: &str = "application/vnd.ph.iridium-decks+zip";
 /// Files written before the SlideCraft → Decks rename (`.slidecraft`) are still read.
 pub const LEGACY_MIMETYPE: &str = concat!("application/vnd.storyteller.", "slide", "craft+zip");
 pub const EXTENSION: &str = "iridium-decks";
