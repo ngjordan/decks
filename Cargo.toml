@@ -63,7 +63,7 @@ image = { version = "0.25", default-features = false, features = ["png", "jpeg",
 craft-media = { git = "https://github.com/ngjordan/craft-libs", rev = "04428cee1e5bb2b85c3b6537aeb10ba0da228ff9", version = "=0.1.0", default-features = false }
 craft-pdf = { git = "https://github.com/ngjordan/craft-libs", rev = "04428cee1e5bb2b85c3b6537aeb10ba0da228ff9", version = "=0.1.0", default-features = false, features = ["write", "write-simple-text"] }
 # craft-update: app-specific pretend versions apply to startup and manual checks.
-craft-update = { git = "https://github.com/ngjordan/craft-libs", version = "=0.1.0", rev = "9f9b19b7140e", features = ["egui"] }
+craft-update = { git = "https://github.com/ngjordan/craft-libs", version = "=0.1.0", rev = "d38561ef0f67dc32286c439febcc3d1f0bb2e125", features = ["egui"] }
 craft-ui = { git = "https://github.com/ngjordan/craft-libs", rev = "04428cee1e5bb2b85c3b6537aeb10ba0da228ff9", version = "=0.1.0" }
 i_overlay = "9"
 quick-xml = "0.41"
