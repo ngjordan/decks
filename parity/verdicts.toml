@@ -1174,9 +1174,9 @@ note = "Ctrl+V with an image on the clipboard fetches clipboard_image (keys.rs:1
 title = "Insert screenshot"
 verdict = "ABSENT"
 level = "read"
-evidence = ["docs/gaps.md:289"]
+evidence = ["crates/engine/src/cmd/insert.rs:32", "crates/engine/src/cmd/insert.rs:56"]
 commands = []
-note = "No insert.screenshot command in cmd/ (grep: only inspect.rs mentions the word); gaps.md:289 lists it as future work"
+note = "No insert.screenshot command in cmd/ (grep: only inspect.rs mentions the word); gaps.md:289 lists it as future work. The insert command table (insert.rs specs(), picture registered at line 56) has no insert.screenshot entry"
 
 [verdict."insert-audio-any-common-format"]
 title = "Insert audio (any common format)"
