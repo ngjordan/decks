@@ -1444,11 +1444,11 @@ note = "slide-level compare with revisions, accept/reject and a revisions pane (
 
 [verdict."track-changes-version-history"]
 title = "Track changes / version history"
-verdict = "ABSENT"
+verdict = "PARTIAL"
 level = "read"
-evidence = ["crates/engine/src/cmd/review.rs:62", "crates/engine/src/compare.rs:26"]
+evidence = ["crates/engine/src/cmd/review.rs:703", "crates/engine/src/cmd/review.rs:62"]
 commands = ["review.revisions"]
-note = "no track changes or version history: review.revisions only lists compare revisions and errors outside a comparison (review.rs:687-688)"
+note = "there is no track changes: review.revisions only lists the revisions of a two-document comparison and errors outside a comparison, so the command does the show-changes half of the feature and not the tracking half"
 
 [verdict."ink-pens-highlighter-eraser"]
 title = "Ink pens, highlighter, eraser"
