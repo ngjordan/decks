@@ -4,13 +4,13 @@
 #
 #   curl -fsSLO https://raw.githubusercontent.com/flatpak/flatpak-builder-tools/master/cargo/flatpak-cargo-generator.py
 #   python3 flatpak-cargo-generator.py Cargo.lock -o packaging/linux/flatpak/cargo-sources.json
-#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/ph.decks.yml
-#   flatpak run ph.decks
+#   flatpak-builder --user --install --force-clean build-flatpak packaging/linux/flatpak/ph.iridium.decks.yml
+#   flatpak run ph.iridium.decks
 #
 # For Flathub, replace the `dir` source with a `git` source pinned to a release tag and commit.
-# The release's .flatpak bundles are built from ph.decks.bundle.yml instead (it
+# The release's .flatpak bundles are built from ph.iridium.decks.bundle.yml instead (it
 # repackages the Linux tarball); keep runtime-version and finish-args identical in both.
-id: ph.decks
+id: ph.iridium.decks
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -49,14 +49,14 @@ modules:
       - cargo --offline build --release --locked -p iridium-decks
       - install -Dm755 target/release/iridium-decks /app/bin/iridium-decks
       - install -Dm644 NOTICE /app/share/doc/iridium-decks/NOTICE
-      - install -Dm644 packaging/linux/ph.decks.desktop /app/share/applications/ph.decks.desktop
-      - install -Dm644 packaging/linux/ph.decks.mime.xml /app/share/mime/packages/ph.decks.xml
+      - install -Dm644 packaging/linux/ph.iridium.decks.desktop /app/share/applications/ph.iridium.decks.desktop
+      - install -Dm644 packaging/linux/ph.iridium.decks.mime.xml /app/share/mime/packages/ph.iridium.decks.xml
       - mkdir -p /app/share/icons && cp -R assets/app-icon/hicolor /app/share/icons/
       - >-
         version=$(awk '/^\[/{p=($0=="[workspace.package]");next} p&&$1=="version"{gsub(/[" ]/,"",$3);print $3;exit}' Cargo.toml);
         install -d /app/share/metainfo;
         sed -e "s/@VERSION@/$version/" -e "s/@DATE@/$(date -u +%Y-%m-%d)/"
-        packaging/linux/ph.decks.metainfo.xml.in > /app/share/metainfo/ph.decks.metainfo.xml
+        packaging/linux/ph.iridium.decks.metainfo.xml.in > /app/share/metainfo/ph.iridium.decks.metainfo.xml
     sources:
       - type: dir
         path: ../../..

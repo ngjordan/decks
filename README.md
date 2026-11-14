@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/app-icon/hicolor/256x256/apps/ph.decks.png" width="128" height="128" alt="Decks icon: a presentation screen with a bar chart on an orange tile">
+  <img src="assets/app-icon/hicolor/256x256/apps/ph.iridium.decks.png" width="128" height="128" alt="Decks icon: a presentation screen with a bar chart on an orange tile">
 </p>
 
 <h1 align="center">Decks</h1>

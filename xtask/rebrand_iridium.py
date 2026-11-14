@@ -19,8 +19,8 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 PRODUCT = "Decks"
 OLD = "Decks"
-APP_ID = "ph.decks"
-NEW_APP_ID = "ph.decks"
+APP_ID = "ph.iridium.decks"
+NEW_APP_ID = "ph.iridium.decks"
 ICON_OLD = "iridium-decks"
 ICON_NEW = "iridium-decks"
 

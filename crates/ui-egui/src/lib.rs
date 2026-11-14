@@ -14,10 +14,10 @@ pub const UPDATE_APP: craft_update::app::App = craft_update::app::App {
     name: "Decks",
     tagline: "Presentations and slide shows",
     repo: "ngjordan/decks",
-    bundle: "ph.decks",
+    bundle: "ph.iridium.decks",
     former_ids: &[],
     former_names: &[],
-    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ph.decks.png")),
+    icon_png: Some(include_bytes!("../../../assets/app-icon/hicolor/128x128/apps/ph.iridium.decks.png")),
     accent: Some([0x0b, 0x6e, 0x4f]),
     developer: "Iridium Technologies, Inc.",
 };

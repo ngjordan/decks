@@ -9,9 +9,9 @@
 # and load X11, Wayland, xkbcommon, Vulkan and ALSA at runtime; the freedesktop runtime has all
 # of them, and the GPU driver comes from its org.freedesktop.Platform.GL extension.
 #
-# ph.decks.yml (same directory) is the from-source manifest for Flathub. Keep
+# ph.iridium.decks.yml (same directory) is the from-source manifest for Flathub. Keep
 # runtime-version and finish-args identical in both (packaging-lint checks this).
-id: ph.decks
+id: ph.iridium.decks
 runtime: org.freedesktop.Platform
 runtime-version: '25.08'
 sdk: org.freedesktop.Sdk
@@ -41,11 +41,11 @@ modules:
     build-commands:
       - install -Dm755 bin/iridium-decks /app/bin/iridium-decks
       - install -Dm755 bin/iridium-decks-cli /app/bin/iridium-decks-cli
-      - install -Dm644 share/applications/ph.decks.desktop /app/share/applications/ph.decks.desktop
+      - install -Dm644 share/applications/ph.iridium.decks.desktop /app/share/applications/ph.iridium.decks.desktop
       # .iridium-decks; the runtime's shared-mime-info already knows the PowerPoint types.
-      - install -Dm644 share/mime/packages/ph.decks.xml /app/share/mime/packages/ph.decks.xml
+      - install -Dm644 share/mime/packages/ph.iridium.decks.xml /app/share/mime/packages/ph.iridium.decks.xml
       # Already has the release's version and date substituted by package.sh.
-      - install -Dm644 share/metainfo/ph.decks.metainfo.xml /app/share/metainfo/ph.decks.metainfo.xml
+      - install -Dm644 share/metainfo/ph.iridium.decks.metainfo.xml /app/share/metainfo/ph.iridium.decks.metainfo.xml
       - mkdir -p /app/share/icons /app/share/doc && cp -R share/icons/hicolor /app/share/icons/ && cp -R share/doc/iridium-decks /app/share/doc/
     sources:
       - type: dir

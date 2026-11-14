@@ -71,7 +71,7 @@ fn config_dir() -> Option<std::path::PathBuf> {
     }
 }
 
-const APP_ID: &str = "ph.decks";
+const APP_ID: &str = "ph.iridium.decks";
 
 const USAGE: &str = "\
 Usage: iridium-decks [--control PORT] [--sample] [--show] [FILE...]
@@ -113,7 +113,7 @@ fn startup(mut control_port: Option<u16>, args: impl IntoIterator<Item = String>
 }
 
 fn app_icon() -> Option<egui::IconData> {
-    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ph.decks.png");
+    let png: &[u8] = include_bytes!("../../../assets/app-icon/hicolor/256x256/apps/ph.iridium.decks.png");
     eframe::icon_data::from_png_bytes(png).map_err(|e| log::warn!("app icon: {e}")).ok()
 }
 
@@ -299,7 +299,7 @@ mod tests {
     fn every_desktop_offers_the_same_file_types() {
         let plist = include_str!("../../../packaging/macos/Info.plist.in");
         let wxs = include_str!("../../../packaging/windows/iridium-decks.wxs");
-        let desktop = include_str!("../../../packaging/linux/ph.decks.desktop");
+        let desktop = include_str!("../../../packaging/linux/ph.iridium.decks.desktop");
 
         let mut mac = plist_strings(plist, "CFBundleTypeExtensions");
         // The native type is declared by its UTI; its extension is in the exported type.

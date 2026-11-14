@@ -4,6 +4,6 @@
     <comment>Decks presentation</comment>
     <sub-class-of type="application/zip"/>
     <glob pattern="*.iridium-decks"/>
-    <icon name="ph.decks"/>
+    <icon name="ph.iridium.decks"/>
   </mime-type>
 </mime-info>

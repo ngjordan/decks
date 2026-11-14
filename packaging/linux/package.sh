@@ -17,7 +17,7 @@ set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ph.decks
+APP_ID=ph.iridium.decks
 
 verify_sha256() {
   local expected="$1"

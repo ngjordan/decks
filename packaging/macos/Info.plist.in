@@ -13,7 +13,7 @@
   <key>CFBundleExecutable</key>
   <string>Decks</string>
   <key>CFBundleIdentifier</key>
-  <string>ph.decks</string>
+  <string>ph.iridium.decks</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundlePackageType</key>
@@ -63,7 +63,7 @@
       <string>Decks</string>
       <key>LSItemContentTypes</key>
       <array>
-        <string>ph.decks.presentation</string>
+        <string>ph.iridium.decks.presentation</string>
       </array>
     </dict>
     <dict>
@@ -121,7 +121,7 @@
   <array>
     <dict>
       <key>UTTypeIdentifier</key>
-      <string>ph.decks.presentation</string>
+      <string>ph.iridium.decks.presentation</string>
       <key>UTTypeDescription</key>
       <string>Decks Presentation</string>
       <key>UTTypeConformsTo</key>

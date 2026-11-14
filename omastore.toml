@@ -1,6 +1,6 @@
 kind = "app"
 categories = ["Office"]
-icon = "assets/app-icon/hicolor/256x256/apps/ph.decks.png"
+icon = "assets/app-icon/hicolor/256x256/apps/ph.iridium.decks.png"
 
 [linux.x86_64]
 asset = "iridium-decks-{version}-linux-x86_64.tar.gz"

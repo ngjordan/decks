@@ -11,12 +11,12 @@
 # `appstreamcli compose`; the freedesktop runtime and SDK named in the manifest are
 # installed per-user from Flathub. Unless --no-test, the bundle is then installed per-user and
 # `iridium-decks-cli --version` is run inside the sandbox as a smoke test.
-# Manifest: packaging/linux/flatpak/ph.decks.bundle.yml.
+# Manifest: packaging/linux/flatpak/ph.iridium.decks.bundle.yml.
 set -euo pipefail
 # shellcheck source=../common.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../common.sh"
 HERE="$ROOT/packaging/linux"
-APP_ID=ph.decks
+APP_ID=ph.iridium.decks
 FLATHUB=https://dl.flathub.org/repo/flathub.flatpakrepo
 
 TEST=1
