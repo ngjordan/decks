@@ -6,6 +6,9 @@
 
 mod audio;
 mod control_server;
+// The system pasteboard. A browser tab has its own clipboard API and
+// arboard has no wasm32 backend.
+#[cfg(not(target_arch = "wasm32"))]
 mod pasteboard;
 
 use iridium_decks_engine::Session;
@@ -66,6 +69,9 @@ fn load_prefs(app: &mut SlideApp) {
 
 fn services() -> Services {
     Services {
+        // The native file dialog is blocking; rfd has only the async dialog in a browser, which a sync
+        // closure cannot await. Unset on wasm32: the web host supplies its own file flow.
+        #[cfg(not(target_arch = "wasm32"))]
         pick_open: Some(Box::new(|purpose: &str| {
             let d = rfd::FileDialog::new();
             let d = match purpose {
@@ -84,11 +90,15 @@ fn services() -> Services {
             };
             d.pick_file().map(|p| p.to_string_lossy().to_string())
         })),
+        #[cfg(not(target_arch = "wasm32"))]
         pick_save: Some(Box::new(|name: &str| rfd::FileDialog::new().set_file_name(name).save_file().map(|p| p.to_string_lossy().to_string()))),
         read: Some(Box::new(|p: &str| std::fs::read(p).map_err(|e| e.to_string()))),
         write: Some(Box::new(|p: &str, b: &[u8]| std::fs::write(p, b).map_err(|e| e.to_string()))),
+        #[cfg(not(target_arch = "wasm32"))]
         clipboard_image: Some(Box::new(pasteboard::image_png)),
+        #[cfg(not(target_arch = "wasm32"))]
         clipboard_html: Some(Box::new(pasteboard::html)),
+        #[cfg(not(target_arch = "wasm32"))]
         clipboard_set_html: Some(Box::new(pasteboard::set_html)),
         // Media is mixed and clocked by the output device; `IRIDIUM_DECKS_NO_AUDIO` plays silently.
         audio_out: std::env::var_os("IRIDIUM_DECKS_NO_AUDIO")
@@ -125,6 +135,8 @@ impl Shell {
         iridium_decks_ui_egui::install_ime_pass_hooks(ctx);
         let mut app = SlideApp::new(Session::new(), services());
         load_prefs(&mut app);
+        // The web build never touches the network on its own.
+        #[cfg(not(target_arch = "wasm32"))]
         app.enable_update_checks();
         // AutoRecover: reopen what a previous run left unsaved, then keep it current.
         if std::env::var_os("IRIDIUM_DECKS_NO_RECOVERY").is_none() {
