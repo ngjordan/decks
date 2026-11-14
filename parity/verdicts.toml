@@ -5,7 +5,7 @@
 [verdict."start-screen-new-templates-themes-recent"]
 title = "Start screen (new, templates/themes, recent)"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/backstage/files.rs:70"]
 commands = []
 note = "Backstage Files page: new presentation, template tiles (engine templates::matching) and recent files; the start screen is the backstage, not a separate dialog"
@@ -13,7 +13,7 @@ note = "Backstage Files page: new presentation, template tiles (engine templates
 [verdict."ribbon-with-home-insert-draw-design-transitions-animations-s"]
 title = "Ribbon with Home/Insert/Draw/Design/Transitions/Animations/Slide Show/Review/View tabs"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/ribbon.rs:120"]
 commands = []
 note = "TABS covers Home/Insert/Draw/Design/Transitions/Animations/Slide Show/Record/Review/View (ribbon.rs:120); each tab renders from ribbon/<tab>.rs"
@@ -29,7 +29,7 @@ note = "contextual() (ribbon.rs:85-116) pushes Shape Format, Picture Format, Tab
 [verdict."quick-access-toolbar-title-bar-commands"]
 title = "Quick Access toolbar / title bar commands"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/ribbon/qat.rs:48"]
 commands = []
 note = "QAT carries Print and other commands (QatItem list, qat.rs:48)"
@@ -37,7 +37,7 @@ note = "QAT carries Print and other commands (QatItem list, qat.rs:48)"
 [verdict."native-menu-bar-macos-with-every-command"]
 title = "Native menu bar (macOS) with every command"
 verdict = "ABSENT"
-level = "wired"
+level = "read"
 evidence = ["docs/gaps.md:298", "crates/ui-egui/src/menus.rs:179"]
 commands = []
 note = "menus::menu_tree() builds the tree but nothing installs a native macOS menu bar (gaps.md:298, beta blocker); only in-app egui menus"
@@ -45,7 +45,7 @@ note = "menus::menu_tree() builds the tree but nothing installs a native macOS m
 [verdict."command-palette-tell-me-search"]
 title = "Command palette / Tell me search"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/app.rs:354"]
 commands = ["commands.list"]
 note = "app.palette opens the command palette rendered by menus::palette (app.rs:354)"
@@ -85,15 +85,15 @@ note = "Session holds several documents and window.next cycles them (file.rs:717
 [verdict."preferences-autosave-units-defaults"]
 title = "Preferences (autosave, units, defaults)"
 verdict = "PARTIAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/dialogs/body.rs:1337"]
 commands = []
-note = "preferences dialog exists (dlg_preferences, body.rs:1337); which settings it covers (autosave, units, defaults) not traced end-to-end"
+note = "Preferences dialog (body.rs:1337) applies dark appearance live with Cancel revert; autosave/units/defaults pages not confirmed"
 
 [verdict."new-blank-presentation"]
 title = "New blank presentation"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/menus.rs:186"]
 commands = []
 note = "File menu New Presentation runs the file.new UI command (menus.rs:186; exercised in ui tests.rs:271)"
@@ -261,10 +261,10 @@ note = "move reorders an id block and reassigns sections (slide.rs:284-312)"
 [verdict."sections-add-rename-remove-move-collapse"]
 title = "Sections (add, rename, remove, move, collapse)"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/slide.rs:55"]
+level = "read"
+evidence = ["crates/engine/src/cmd/slide.rs:631"]
 commands = ["section.add", "section.rename", "section.remove", "section.move"]
-note = "section.add/rename/remove/removeAll/move registered in slide.rs specs; handler bodies not re-read in this pass"
+note = "section.add body read (slide.rs:631): splits slides into Default Section + new section; rename/remove/move bodies not read"
 
 [verdict."slide-layouts-11-standard"]
 title = "Slide layouts (11 standard)"
@@ -357,8 +357,8 @@ note = "view.fit resets zoom to fit the window (commands.rs:124); zoom slider an
 [verdict."rulers-gridlines-guides"]
 title = "Rulers, gridlines, guides"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/arrange.rs:15", "crates/engine/src/cmd/arrange.rs:24", "crates/engine/src/cmd/arrange.rs:26", "crates/engine/src/cmd/format.rs:206"]
+level = "read"
+evidence = ["crates/engine/src/cmd/arrange.rs:476"]
 commands = ["guide.add", "guide.move", "guide.list", "format.ruler"]
 note = "guide.add/move/delete/list and format.ruler registered; canvas rulers in ui-egui canvas/rulers.rs"
 
@@ -397,10 +397,10 @@ note = "master_view selects Target::Master or Target::Layout for editing, follow
 [verdict."insert-rename-delete-layouts-insert-placeholders"]
 title = "Insert/rename/delete layouts, insert placeholders"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/design.rs:126", "crates/engine/src/cmd/design.rs:127", "crates/engine/src/cmd/design.rs:128", "crates/engine/src/cmd/design.rs:129"]
+level = "read"
+evidence = ["crates/engine/src/cmd/design/master_view.rs:230"]
 commands = ["master.insertLayout", "master.renameLayout", "master.deleteLayout", "master.insertPlaceholder"]
-note = "master.insertLayout/renameLayout/deleteLayout/insertPlaceholder registered in design/master_view.rs; bodies not re-read in this pass"
+note = "master.insertLayout body read (design/master_view.rs:230); rename/delete/insertPlaceholder not read"
 
 [verdict."handout-and-notes-masters"]
 title = "Handout and Notes masters"
@@ -461,7 +461,7 @@ note = "solid/gradient/picture/pattern backgrounds with transparency, tiling and
 [verdict."hide-background-graphics"]
 title = "Hide background graphics"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/design/slide_background.rs:297"]
 commands = ["design.hideBackgroundGraphics"]
 note = "hide_bg_graphics toggles master graphics on slides (slide_background.rs:297)"
@@ -509,8 +509,8 @@ note = "shape.presets lists the geom preset catalogue; shape.insert draws any pr
 [verdict."action-buttons"]
 title = "Action buttons"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:152", "crates/engine/src/cmd/insert.rs:106"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/links.rs:85"]
 commands = ["insert.actionButton", "shape.action"]
 note = "insert.actionButton inserts action buttons and shape.action sets their actions; bodies not re-read in this pass"
 
@@ -541,7 +541,7 @@ note = "glue re-picks sites through connect::sites as shapes move (used by conne
 [verdict."freeform-curve-and-scribble-tools"]
 title = "Freeform, curve and scribble tools"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape.rs:43"]
 commands = ["shape.freeform"]
 note = "shape.freeform builds closed or smooth paths from points; curve and scribble tools in the Draw tab"
@@ -549,23 +549,23 @@ note = "shape.freeform builds closed or smooth paths from points; curve and scri
 [verdict."edit-points"]
 title = "Edit points"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/points.rs:18", "crates/engine/src/cmd/points.rs:27", "crates/engine/src/cmd/points.rs:28", "crates/engine/src/cmd/points.rs:29", "crates/engine/src/cmd/points.rs:56"]
+level = "read"
+evidence = ["crates/engine/src/cmd/points.rs:524"]
 commands = ["shape.editPoints", "shape.points", "shape.movePoint", "shape.addPoint", "shape.deletePoint"]
-note = "shape.editPoints/points/movePoint/addPoint/deletePoint/pointType/segmentType registered in cmd/points.rs; fidelity against PowerPoint edit points not re-checked"
+note = "shape.editPoints toggles edit mode (points.rs:524); vertex/segment ops and PowerPoint fidelity not read"
 
 [verdict."merge-shapes-union-combine-fragment-intersect-subtract"]
 title = "Merge shapes (union, combine, fragment, intersect, subtract)"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/merge.rs:22"]
+level = "read"
+evidence = ["crates/engine/src/cmd/merge.rs:195"]
 commands = ["shape.merge"]
-note = "shape.merge performs union/combine/fragment/intersect/subtract (cmd/merge.rs)"
+note = "shape.merge validates op in union/combine/fragment/intersect/subtract and needs 2+ shapes (merge.rs:195-243)"
 
 [verdict."change-shape"]
 title = "Change shape"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape.rs:93"]
 commands = ["shape.change"]
 note = "shape.change swaps the preset of an existing shape"
@@ -581,23 +581,23 @@ note = "text_box inserts with click-to-create sideways growth and autofit"
 [verdict."wordart"]
 title = "WordArt"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:94"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/text_fields.rs:6"]
 commands = ["insert.wordArt"]
-note = "insert.wordArt registered; WordArt rendering fidelity partial per the checklist row"
+note = "insert.wordArt body read (insert/text_fields.rs:6): a styled text box (size 54, 4 scheme fills, outline), not PowerPoint WordArt styles/transforms"
 
 [verdict."text-warp-transforms"]
 title = "Text warp transforms"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:137"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/text_effects.rs:29"]
 commands = ["format.textWarp"]
-note = "format.textWarp registered; text warp transforms partial per the checklist row"
+note = "format.textWarp body read (format/text_effects.rs:29): validates preset against geom::warp, up to 8 adjusts; rendering fidelity not read"
 
 [verdict."shape-quick-styles"]
 title = "Shape quick styles"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape.rs:130"]
 commands = ["shape.quickStyle"]
 note = "shape.quickStyle applies quick styles"
@@ -605,7 +605,7 @@ note = "shape.quickStyle applies quick styles"
 [verdict."set-as-default-shape"]
 title = "Set as default shape"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape.rs:151"]
 commands = ["shape.setDefault"]
 note = "shape.setDefault makes a shape the default for new shapes"
@@ -661,7 +661,7 @@ note = "head/tail arrowheads with headSize/tailSize (line_end)"
 [verdict."shadow-outer-inner-presets"]
 title = "Shadow (outer, inner, presets)"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape/appearance.rs:357"]
 commands = ["shape.effects"]
 note = "effects handles shadow outer/inner/perspective with shadowProps"
@@ -685,7 +685,7 @@ note = "bevel and threeD camera/rotation/depth/material handled; rendering parti
 [verdict."format-painter"]
 title = "Format Painter"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/format.rs:255", "crates/engine/src/cmd/format.rs:256"]
 commands = ["format.painter", "format.painterApply"]
 note = "format.painter captures formatting, format.painterApply applies it"
@@ -701,7 +701,7 @@ note = "Format Shape pane has Fill/Line/Effects/Size/Text Box pages (format_shap
 [verdict."size-and-position-exact-lock-aspect-ratio"]
 title = "Size and position (exact), lock aspect ratio"
 verdict = "REAL"
-level = "wired"
+level = "read"
 evidence = ["crates/engine/src/cmd/shape.rs:82", "crates/engine/src/cmd/shape.rs:72"]
 commands = ["shape.sizePosition", "shape.setBounds"]
 note = "shape.sizePosition takes x/y/w/h/rot/scale/lockAspect; shape.setBounds and shape.resize also registered"
@@ -733,10 +733,10 @@ note = "arrange.align and arrange.distribute registered in cmd/arrange.rs"
 [verdict."group-ungroup-regroup"]
 title = "Group, ungroup, regroup"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/arrange.rs:40", "crates/engine/src/cmd/arrange.rs:41", "crates/engine/src/cmd/arrange.rs:42"]
+level = "read"
+evidence = ["crates/engine/src/cmd/arrange.rs:344"]
 commands = ["arrange.group", "arrange.ungroup", "arrange.regroup"]
-note = "arrange.group/ungroup/regroup registered in cmd/arrange.rs"
+note = "arrange.group (arrange.rs:199-223) and ungroup (344) bodies read; regroup delegates to group (382)"
 
 [verdict."selection-pane-names-visibility-order"]
 title = "Selection pane (names, visibility, order)"
@@ -765,8 +765,8 @@ note = "shape.lock locks shapes (locked-shape hit-testing covered by #1621 regre
 [verdict."alt-text"]
 title = "Alt text"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/shape.rs:140"]
+level = "read"
+evidence = ["crates/engine/src/cmd/shape.rs:354"]
 commands = ["shape.altText"]
 note = "shape.altText sets alternative text"
 
@@ -789,40 +789,40 @@ note = "format.font sets the family per run; only Regular/Bold/Italic faces are 
 [verdict."font-colour-highlight"]
 title = "Font colour, highlight"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:69", "crates/engine/src/cmd/format.rs:97"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/font.rs:97"]
 commands = ["format.color", "format.highlight"]
-note = "format.color and format.highlight registered"
+note = "format.color body read (font.rs:97, also colours chart text); format.highlight body not read"
 
 [verdict."superscript-subscript-caps-character-spacing"]
 title = "Superscript, subscript, caps, character spacing"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:63", "crates/engine/src/cmd/format.rs:64", "crates/engine/src/cmd/format.rs:107", "crates/engine/src/cmd/format.rs:108"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/font.rs:38"]
 commands = ["format.superscript", "format.subscript", "format.caps", "format.spacing"]
-note = "format.superscript/subscript/caps/spacing registered"
+note = "superscript/subscript bodies read; caps and spacing not read"
 
 [verdict."change-case-grow-shrink-font-clear-formatting"]
 title = "Change case, grow/shrink font, clear formatting"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:98", "crates/engine/src/cmd/format.rs:67", "crates/engine/src/cmd/format.rs:68", "crates/engine/src/cmd/format.rs:117"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/text_effects.rs:59"]
 commands = ["format.case", "format.grow", "format.shrink", "format.clear"]
-note = "format.case/grow/shrink/clear registered"
+note = "format.case body read; grow/shrink/clear not read"
 
 [verdict."text-outline-and-text-effects"]
 title = "Text outline and text effects"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:128", "crates/engine/src/cmd/format.rs:127"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/text_effects.rs:23"]
 commands = ["format.textOutline", "format.textShadow"]
-note = "format.textOutline/textShadow/textTransparency registered; text effects partial per the checklist row"
+note = "text_outline body read (colour+width line on run); textShadow/textTransparency not read; no glow/reflection on text"
 
 [verdict."paragraph-alignment-indents-spacing-line-spacing"]
 title = "Paragraph alignment, indents, spacing, line spacing"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:197", "crates/engine/src/cmd/format.rs:146", "crates/engine/src/cmd/format.rs:186", "crates/engine/src/cmd/format.rs:188"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:122"]
 commands = ["format.paragraph", "format.align", "format.indent", "format.lineSpacing"]
 note = "format.paragraph/align/indent/lineSpacing and the paragraph dialog registered"
 
@@ -853,42 +853,42 @@ note = "format.indent/outdent move list levels (Tab / Shift+Tab)"
 [verdict."tab-stops"]
 title = "Tab stops"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:216"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/ruler.rs:38"]
 commands = ["format.tabs"]
 note = "format.tabs registered; ruler tabs in canvas/rulers.rs"
 
 [verdict."columns"]
 title = "Columns"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:235"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:370"]
 commands = ["format.columns"]
 note = "format.columns registered"
 
 [verdict."vertical-anchor-margins-wrap"]
 title = "Vertical anchor, margins, wrap"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:225", "crates/engine/src/cmd/format.rs:246", "crates/engine/src/cmd/format.rs:245"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:336"]
 commands = ["format.anchor", "format.margins", "format.wrap"]
-note = "format.anchor/margins/wrap registered"
+note = "anchor body read; margins/wrap not read"
 
 [verdict."autofit-shrink-on-overflow-resize-shape"]
 title = "Autofit (shrink on overflow, resize shape)"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:244"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:398"]
 commands = ["format.autofit"]
 note = "format.autofit registered"
 
 [verdict."text-direction-rotated-stacked"]
 title = "Text direction (rotated, stacked)"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:226", "crates/engine/src/cmd/format.rs:155"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:345"]
 commands = ["format.direction", "format.rtl"]
-note = "format.direction and format.rtl registered"
+note = "direction body read (vertical/270/stacked); rtl not read"
 
 [verdict."find-and-replace-replace-fonts"]
 title = "Find and replace, replace fonts"
@@ -901,8 +901,8 @@ note = "text.find/text.replace registered (find.rs:15,24) and font.replace for r
 [verdict."spelling-check"]
 title = "Spelling check"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/review.rs:39", "crates/engine/src/cmd/review.rs:40"]
+level = "read"
+evidence = ["crates/engine/src/cmd/review.rs:354"]
 commands = ["review.spelling", "review.spellingChange"]
 note = "review.spelling/spellingChange registered (Hunspell-based spell.rs); row stays partial per the checklist"
 
@@ -917,10 +917,10 @@ note = "autocorrect dialog with replace-as-you-type pairs via text.autocorrect (
 [verdict."thesaurus"]
 title = "Thesaurus"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/review.rs:51"]
+level = "read"
+evidence = ["crates/ui-egui/src/panels/thesaurus.rs:5"]
 commands = ["review.thesaurus"]
-note = "review.thesaurus backed by engine thesaurus.rs; row stays partial per the checklist"
+note = "Thesaurus pane looks words up via engine thesaurus::lookup; no PowerPoint-style Replace/Insert flow confirmed"
 
 [verdict."symbols-and-emoji"]
 title = "Symbols and emoji"
@@ -941,34 +941,34 @@ note = "no equation objects: the Equation dialog linearises a^2-style text into 
 [verdict."hyperlinks-url-slide-email"]
 title = "Hyperlinks (URL, slide, email)"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:115"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/links.rs:6"]
 commands = ["insert.hyperlink"]
 note = "insert.hyperlink registered (cmd/insert/links.rs)"
 
 [verdict."date-time-and-slide-number-fields"]
 title = "Date/time and slide number fields"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:96", "crates/engine/src/cmd/insert.rs:95"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/text_fields.rs:123"]
 commands = ["insert.dateTime", "insert.slideNumber"]
-note = "insert.dateTime and insert.slideNumber insert fields"
+note = "insert.dateTime body read (opens dialog when no params, else applies date options); slideNumber body not read"
 
 [verdict."right-to-left-and-complex-scripts"]
 title = "Right-to-left and complex scripts"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:155", "crates/engine/src/cmd/format.rs:79"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/paragraph.rs:25"]
 commands = ["format.rtl", "format.language"]
-note = "format.rtl and format.language registered; RTL/complex scripts partial per the checklist row"
+note = "format.rtl body read: flips paragraph rtl + swaps left/right align; no complex-script shaping/layout in handlers read"
 
 [verdict."east-asian-text-cjk-fonts-line-breaking"]
 title = "East Asian text (CJK fonts, line breaking)"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/format.rs:79"]
+level = "read"
+evidence = ["crates/engine/src/cmd/format/font.rs:180"]
 commands = ["format.language"]
-note = "format.language carries language settings; CJK line breaking partial per the checklist row"
+note = "format.language sets run language only (font.rs:180); no CJK line-breaking in the handler"
 
 [verdict."insert-table-grid-picker-dialog"]
 title = "Insert table (grid picker, dialog)"
@@ -1005,10 +1005,10 @@ note = "table.insertRowAbove/Below, insertColumnLeft/Right, deleteRow/deleteColu
 [verdict."merge-and-split-cells"]
 title = "Merge and split cells"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/table.rs:51", "crates/engine/src/cmd/table.rs:52"]
+level = "read"
+evidence = ["crates/engine/src/cmd/table.rs:340"]
 commands = ["table.merge", "table.split"]
-note = "table.merge and table.split registered"
+note = "table.merge body read (from/to cells, error if cannot merge); split read at table.rs:352"
 
 [verdict."distribute-rows-columns-sizes"]
 title = "Distribute rows/columns, sizes"
@@ -1021,18 +1021,18 @@ note = "table.distributeRows/Columns, rowHeight, columnWidth registered"
 [verdict."cell-fill-borders-margins-alignment"]
 title = "Cell fill, borders, margins, alignment"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/table.rs:79", "crates/engine/src/cmd/table.rs:88", "crates/engine/src/cmd/table.rs:97", "crates/engine/src/cmd/table.rs:106"]
+level = "read"
+evidence = ["crates/engine/src/cmd/table.rs:414"]
 commands = ["table.cellFill", "table.borders", "table.cellMargins", "table.cellAlign"]
-note = "table.cellFill/borders/cellMargins/cellAlign registered"
+note = "cellFill body read; borders/margins/align not read"
 
 [verdict."keyboard-navigation-between-cells"]
 title = "Keyboard navigation between cells"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/table.rs:147"]
+level = "read"
+evidence = ["crates/engine/src/cmd/table.rs:635"]
 commands = ["table.selectCells"]
-note = "table.selectCells plus in-cell text.edit keys provide cell navigation"
+note = "table.selectCells body read; Tab/arrow cell navigation key handling not read"
 
 [verdict."insert-chart-column-bar-line-area-pie-doughnut-scatter"]
 title = "Insert chart (column, bar, line, area, pie, doughnut, scatter)"
@@ -1045,10 +1045,10 @@ note = "insert.chart with the core chart types (column, bar, line, area, pie, do
 [verdict."other-chart-types-radar-stock-combo-waterfall-funnel-treemap"]
 title = "Other chart types (radar, stock, combo, waterfall, funnel, treemap, sunburst, histogram, box)"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:124"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/chart.rs:75"]
 commands = ["chart.type"]
-note = "chart.type registered; radar/stock/combo/waterfall/funnel/treemap/sunburst/histogram/box partial per the checklist row"
+note = "chart.type body read: sets kind incl. Waterfall/Histogram/Pareto/BoxWhisker/Funnel/Treemap; rendering fidelity not read"
 
 [verdict."edit-chart-data"]
 title = "Edit chart data"
@@ -1061,10 +1061,10 @@ note = "chart.data sets categories and series (chart.rs:90); the spreadsheet-lik
 [verdict."chart-elements-title-legend-labels-axes-gridlines"]
 title = "Chart elements (title, legend, labels, axes, gridlines)"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:134"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert/chart.rs:171"]
 commands = ["chart.options"]
-note = "chart.options registered; chart elements (title, legend, labels, axes, gridlines) partial per the checklist row"
+note = "chart.options body read (histogram bins, waterfall totals, ...); full element coverage not read"
 
 [verdict."chart-styles-and-colours"]
 title = "Chart styles and colours"
@@ -1077,18 +1077,18 @@ note = "chart.options carries styles/colours; partial per the checklist row"
 [verdict."insert-smartart-lists-processes-cycles-hierarchy"]
 title = "Insert SmartArt (lists, processes, cycles, hierarchy)"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/insert.rs:143"]
+level = "read"
+evidence = ["crates/engine/src/cmd/insert.rs:358"]
 commands = ["insert.smartArt"]
-note = "insert.smartArt registered with lists/processes/cycles/hierarchy; row partial per the checklist"
+note = "insert.smartArt body read: kind+nodes/items into smartart::insert"
 
 [verdict."text-pane-and-layout-switching"]
 title = "Text pane and layout switching"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/smartart.rs:216", "crates/engine/src/cmd/smartart.rs:234", "crates/engine/src/cmd/smartart.rs:225"]
+level = "read"
+evidence = ["crates/engine/src/cmd/smartart/edit.rs:366"]
 commands = ["smartArt.layout", "smartArt.toText", "smartArt.fromText"]
-note = "smartArt.layout/toText/fromText/setNodes registered; text pane and layout switching partial per the checklist row"
+note = "smartArt.layout body read (switch kind, clears PowerPoint layout xml); no interactive text pane read"
 
 [verdict."insert-picture-png-jpeg-gif-webp-bmp-tiff"]
 title = "Insert picture (PNG, JPEG, GIF, WebP, BMP, TIFF)"
@@ -1117,18 +1117,18 @@ note = "rect crop via left/top/right/bottom values (picture.rs:3-16); crop-to-sh
 [verdict."corrections-colour-transparency-recolor-and-set-transparent"]
 title = "Corrections, colour, transparency (recolor and Set Transparent Color done; sharpen/soften and colour temperature pending)"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/recolor.rs:14", "crates/engine/src/cmd/recolor.rs:26", "crates/engine/src/cmd/shape.rs:161"]
+level = "read"
+evidence = ["crates/engine/src/cmd/recolor.rs:111"]
 commands = ["picture.recolor", "picture.transparentColor", "picture.adjust"]
-note = "picture.recolor/recolors/transparentColor/adjust registered; sharpen/soften and colour temperature still pending per the checklist row"
+note = "picture.recolor body read (preset validation, applies to picture adjust); sharpen/soften/temperature pending"
 
 [verdict."artistic-effects"]
 title = "Artistic effects"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/artistic.rs:27"]
+level = "read"
+evidence = ["crates/engine/src/cmd/artistic.rs:142"]
 commands = ["picture.artisticEffect"]
-note = "picture.artisticEffect registered; 7 of 22 effects approximated and round-tripped, the rest pending (gaps.md:288)"
+note = "picture.artisticEffect body read; 7 of 22 effects per gaps.md:288"
 
 [verdict."remove-background"]
 title = "Remove background"
@@ -1149,18 +1149,18 @@ note = "picture.style/styles registered (cmd/picture_style.rs)"
 [verdict."change-reset-picture"]
 title = "Change / reset picture"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/shape.rs:179", "crates/engine/src/cmd/shape.rs:170"]
+level = "read"
+evidence = ["crates/engine/src/cmd/shape/picture.rs:60"]
 commands = ["picture.change", "picture.reset"]
-note = "picture.change and picture.reset registered"
+note = "picture.change body read (replaces media, resets crop); reset not read"
 
 [verdict."compress-pictures"]
 title = "Compress pictures"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/compress.rs:15"]
+level = "read"
+evidence = ["crates/engine/src/cmd/compress.rs:148"]
 commands = ["picture.compress"]
-note = "picture.compress registered (cmd/compress.rs, displayed-size aware per the checklist notes)"
+note = "picture.compress body read (ppi 36-1200, deleteCropped, all)"
 
 [verdict."paste-image-from-clipboard-fails-on-windows-1414-linux-not-r"]
 title = "Paste image from clipboard (fails on Windows, #1414; Linux not re-checked)"
@@ -1173,10 +1173,10 @@ note = "Ctrl+V with an image on the clipboard fetches clipboard_image (keys.rs:1
 [verdict."insert-screenshot"]
 title = "Insert screenshot"
 verdict = "ABSENT"
-level = "wired"
+level = "read"
 evidence = ["docs/gaps.md:289"]
 commands = []
-note = "no insert-screenshot command or ribbon entry; listed as future work (gaps.md:289)"
+note = "No insert.screenshot command in cmd/ (grep: only inspect.rs mentions the word); gaps.md:289 lists it as future work"
 
 [verdict."insert-audio-any-common-format"]
 title = "Insert audio (any common format)"
@@ -1213,18 +1213,18 @@ note = "media.options carries trim, fade, volume, loop and play-across; media.po
 [verdict."record-audio-screen-recording"]
 title = "Record audio / screen recording"
 verdict = "ABSENT"
-level = "wired"
-evidence = ["docs/gaps.md:289"]
+level = "read"
+evidence = ["crates/ui-egui/src/ribbon/slide_show.rs:35"]
 commands = []
-note = "no record-audio or screen-recording command; future work (gaps.md:289)"
+note = "No audio/screen capture: Record button says \"needs audio capture (coming soon)\"; gaps.md:289"
 
 [verdict."icons-3-d-models-stock-content"]
 title = "Icons, 3-D models, stock content"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/engine/src/icons.rs:5", "docs/gaps.md:292"]
+level = "read"
+evidence = ["crates/engine/src/icons.rs:5"]
 commands = ["insert.icon", "insert.icons"]
-note = "Insert Icons places Lucide stroke icons (icons.rs, insert.icon/icons); 3-D models and stock content absent (gaps.md:292)"
+note = "Insert Icons places Lucide stroke icons (engine/icons.rs header read); no 3-D models or stock content"
 
 [verdict."embedded-objects-ole-insert-foreign-objects-kept-on-round-tr"]
 title = "Embedded objects (OLE): insert; foreign objects kept on round trip"
@@ -1253,16 +1253,16 @@ note = "per-kind effect options and duration in ms; transition.timing also regis
 [verdict."advance-on-click-after-time-apply-to-all"]
 title = "Advance on click / after time, apply to all"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/transition.rs:42", "crates/engine/src/cmd/transition.rs:24"]
+level = "read"
+evidence = ["crates/engine/src/cmd/transition.rs:204"]
 commands = ["transition.applyAll", "transition.timing"]
-note = "transition.applyAll and transition.timing carry advance-on-click/after-time and apply-to-all"
+note = "transition.applyAll body read (copies current slide transition to all); timing body not read"
 
 [verdict."transition-sounds"]
 title = "Transition sounds"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/transition.rs:33"]
+level = "read"
+evidence = ["crates/engine/src/cmd/transition.rs:129"]
 commands = ["transition.sound"]
 note = "transition.sound registered"
 
@@ -1293,10 +1293,10 @@ note = "motion paths in anim/src/path.rs; fidelity partial per the checklist row
 [verdict."effect-options-start-on-click-with-after-duration-delay"]
 title = "Effect options, start (on click/with/after), duration, delay"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/animation.rs:44", "crates/engine/src/cmd/animation.rs:35"]
+level = "read"
+evidence = ["crates/engine/src/cmd/animation.rs:418"]
 commands = ["animation.options", "animation.timing"]
-note = "animation.options and animation.timing carry start (on click/with/after), duration and delay"
+note = "animation.options body read (option, textBuild); timing body not read"
 
 [verdict."animation-pane-reorder-timing"]
 title = "Animation pane (reorder, timing)"
@@ -1309,10 +1309,10 @@ note = "animation and timeline panes exist; reorder/timing depth partial per the
 [verdict."by-paragraph-text-builds"]
 title = "By-paragraph text builds"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/animation.rs:24"]
+level = "read"
+evidence = ["crates/engine/src/cmd/animation.rs:418"]
 commands = ["animation.add"]
-note = "by-paragraph text builds supported by animation.add"
+note = "animation.options textBuild byParagraph/byWord/byLetter read (animation.rs:418)"
 
 [verdict."triggers-separate-click-steps-and-paragraph-builds-round-tri"]
 title = "Triggers (separate click steps and paragraph builds round-trip; `crates/pptx/tests/it/trigger_steps.rs`)"
@@ -1365,16 +1365,16 @@ note = "Presenter View is its own viewport with next-slide preview (presenter.rs
 [verdict."pen-and-highlighter-ink-during-the-show"]
 title = "Pen and highlighter ink during the show"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/ui-egui/src/show/keys.rs:139", "crates/ui-egui/src/show/ui.rs:202"]
+level = "read"
+evidence = ["crates/ui-egui/src/show/keys.rs:141"]
 commands = []
-note = "pen and highlighter during the show wired through the show key handler and ink overlay (show/keys.rs:139, show/ui.rs:202); depth partial per the checklist row"
+note = "tool_key handles pen/laser/blank/clear keys (keys.rs:141); highlighter and ink depth not read"
 
 [verdict."laser-pointer"]
 title = "Laser pointer"
 verdict = "PARTIAL"
-level = "wired"
-evidence = ["crates/ui-egui/src/show/keys.rs:144", "docs/gaps.md:287"]
+level = "read"
+evidence = ["crates/ui-egui/src/show/keys.rs:144"]
 commands = []
 note = "Cmd+L toggles the laser pointer (show/keys.rs:144); not available from the presenter window (gaps.md:287)"
 
@@ -1389,8 +1389,8 @@ note = "rehearse mode set from the Slide Show tab and timed in the show (show/ui
 [verdict."custom-shows"]
 title = "Custom shows"
 verdict = "REAL"
-level = "wired"
-evidence = ["crates/engine/src/cmd/review.rs:96"]
+level = "read"
+evidence = ["crates/engine/src/cmd/review.rs:621"]
 commands = ["show.customShow"]
 note = "show.customShow registered; custom shows stored on the doc (slide.delete prunes them)"
 
@@ -1405,15 +1405,15 @@ note = "show.setup carries loop/kiosk/without-animation settings"
 [verdict."record-slide-show-narration"]
 title = "Record slide show (narration)"
 verdict = "ABSENT"
-level = "wired"
-evidence = ["docs/gaps.md:289"]
+level = "read"
+evidence = ["crates/ui-egui/src/ribbon/slide_show.rs:35"]
 commands = []
-note = "no record-slide-show/narration command; future work (gaps.md:289)"
+note = "Record button hover reads \"Recording narration needs audio capture (coming soon)\"; no record command"
 
 [verdict."multi-monitor-presenting"]
 title = "Multi-monitor presenting"
 verdict = "PARTIAL"
-level = "wired"
+level = "read"
 evidence = ["crates/ui-egui/src/show/presenter.rs:151"]
 commands = []
 note = "presenter view runs as its own OS window (presenter.rs:150-155); no display targeting or use-presenter-view monitor routing, so multi-monitor presenting is manual"
@@ -1509,8 +1509,8 @@ note = "file.render returns a base64 PNG per slide (file.rs:548) and the MCP hea
 [verdict."macos-windows-linux-builds"]
 title = "macOS, Windows, Linux builds"
 verdict = "PARTIAL"
-level = "wired"
-evidence = [".github/workflows/release.yml:46", ".github/workflows/ci.yml:24", ".github/workflows/packaging-lint.yml:28"]
+level = "read"
+evidence = [".github/workflows/release.yml:46"]
 commands = []
 note = "Linux CI (ci.yml:24), Windows packaging lint (packaging-lint.yml:28) and macOS signing in the release workflow (release.yml:46-51); the row is still open in the checklist"
 
@@ -1525,7 +1525,7 @@ note = "wasm release build exists (release.yml:18) plus the apps/iridium-decks-w
 [verdict."bsd-build"]
 title = "BSD build"
 verdict = "PARTIAL"
-level = "wired"
+level = "read"
 evidence = [".github/workflows/release.yml:12"]
 commands = []
 note = "FreeBSD build behind the has-freebsd input, off by default (release.yml:12-13)"
