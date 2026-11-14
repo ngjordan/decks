@@ -33,7 +33,7 @@ format plus PPTX), scriptable by agents (CLI, JSON control channel, MCP), and av
 
 | | Value | Kind |
 |---|---|---|
-| **Feature breadth** | **84%** weighted over 191 PowerPoint features (P0 92%, P1 82%, P2 55%) | measured: `cargo xtask parity` over [docs/parity-checklist.md](docs/parity-checklist.md) |
+| **Feature breadth** |**[parity/parity.md](parity/parity.md)**| measured: `cargo xtask parity` over [docs/parity-checklist.md](docs/parity-checklist.md) |
 | Menu-bar coverage | 59% of 217 app-specific PowerPoint menu items matched by name (lower bound) | measured: script over the PowerPoint menu dump and the 226 commands at d556ff9 (the registry has grown since; not re-measured) |
 | **Ready for real work** | **~55%** | estimated: weighted dimensions below |
 | Mainstream practitioner | ~53% | estimated: weekly-use areas × discounts for interaction (×0.92), stability (×0.92) and `.pptx` exchange (×0.88), [method](docs/target-app-parity.md#mainstream-practitioner-and-essentials-user) |
