@@ -460,7 +460,7 @@ pub(super) fn home(app: &mut SlideApp, ui: &mut Ui) {
     group(ui, |ui| {
         ui.vertical(|ui| {
             small(app, ui, Icon::Search, "Find", "app.find", json!({}));
-            small(app, ui, Icon::Spelling, "Replace", "app.replace", json!({}));
+            small(app, ui, Icon::Replace, "Replace", "app.replace", json!({}));
             if small_button(ui, Icon::Fonts, "Replace Fonts…", enabled(app, "font.replace"), false).clicked() {
                 app.dialog = Some(crate::dialogs::Dialog::new("replaceFonts"));
             }

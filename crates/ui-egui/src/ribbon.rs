@@ -51,7 +51,7 @@ use picture_format::picture_format;
 use playback::playback;
 use review::review;
 use shape_format::shape_format;
-use slide_show::{record, slide_show};
+use slide_show::slide_show;
 use smartart::smartart_design;
 pub use table::paint_table_style;
 use table::{table_design, table_layout};
@@ -117,7 +117,7 @@ fn contextual(app: &SlideApp) -> Vec<&'static str> {
     v
 }
 
-const TABS: [&str; 10] = ["Home", "Insert", "Draw", "Design", "Transitions", "Animations", "Slide Show", "Record", "Review", "View"];
+const TABS: [&str; 9] = ["Home", "Insert", "Draw", "Design", "Transitions", "Animations", "Slide Show", "Review", "View"];
 
 /// Tab row and the ribbon card.
 pub fn show(app: &mut SlideApp, ui: &mut Ui) {
@@ -219,7 +219,6 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
                         "Transitions" => transitions(app, ui),
                         "Animations" => animations(app, ui),
                         "Slide Show" => slide_show(app, ui),
-                        "Record" => record(app, ui),
                         "Review" => review(app, ui),
                         "View" => view(app, ui),
                         "Shape Format" => shape_format(app, ui),

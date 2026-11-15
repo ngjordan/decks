@@ -6,8 +6,8 @@ pub(super) fn find_dialog(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bo
     // "Find what:" has the keyboard when the dialog opens, so Ctrl+F and typing finds (#951).
     let mut what = d.get("text", "");
     ui.horizontal(|ui| {
-        ui.add_sized(vec2(120.0, 20.0), egui::Label::new("Find what:"));
-        let r = ui.add(egui::TextEdit::singleline(&mut what).desired_width(180.0));
+        let l = ui.add_sized(vec2(120.0, 20.0), egui::Label::new("Find what:"));
+        let r = ui.add(egui::TextEdit::singleline(&mut what).desired_width(180.0)).labelled_by(l.id);
         // Enter finds the next match and leaves the keyboard here, so the search can be changed.
         if !d.fields.contains_key("focused") || (r.lost_focus() && ui.input(|i| i.key_pressed(egui::Key::Enter))) {
             r.request_focus();
@@ -33,16 +33,18 @@ pub(super) fn find_dialog(app: &mut SlideApp, ui: &mut Ui, d: &mut Dialog) -> bo
         if replace_mode {
             if ui.add_enabled(has, egui::Button::new("Replace")).clicked() {
                 let cur: Option<Value> = serde_json::from_str(&d.get("cur", "")).ok();
+                find_next = true;
                 if let Some(at) = cur {
                     let mut p = q.clone();
                     p["with"] = json!(d.get("with", ""));
                     p["at"] = at;
-                    if app.session.execute("text.replace", &p).is_ok() {
+                    if app.run("text.replace", p).is_ok() {
                         let n = d.get("next", "1").parse::<usize>().unwrap_or(1);
                         d.fields.insert("next".into(), n.saturating_sub(1).to_string());
+                    } else {
+                        find_next = false;
                     }
                 }
-                find_next = true;
             }
             if ui.add_enabled(has, egui::Button::new("Replace All")).clicked() {
                 let mut p = q.clone();

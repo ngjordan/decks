@@ -281,6 +281,7 @@ icons! {
     Redo => "redo",
     More => "more",
     Search => "search",
+    Replace => "replace",
     Share => "share",
     CommentsBubble => "comments-bubble",
     File => "file",

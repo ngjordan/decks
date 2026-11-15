@@ -31,8 +31,6 @@ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
                 s.rehearse = true;
             }
         }
-        let r = big_button(ui, Icon::Record, "Record", false);
-        let _ = r.on_hover_text("Recording narration needs audio capture (coming soon)");
     });
     group(ui, |ui| {
         rows(ui, |ui| {
@@ -49,30 +47,5 @@ pub(super) fn slide_show(app: &mut SlideApp, ui: &mut Ui) {
                 run(app, "show.setup", json!({"showMediaControls": mc}));
             }
         });
-    });
-}
-
-pub(super) fn record(app: &mut SlideApp, ui: &mut Ui) {
-    group(ui, |ui| {
-        let r = big_button(ui, Icon::Cameo, "Cameo", false);
-        let _ = r.on_hover_text("Camera capture is not available yet");
-        if big_button(ui, Icon::PlayFromStart, "From\nBeginning", true).clicked() {
-            app.start_show(app.show_start_index(), false);
-            if let Some(s) = app.show.as_mut() {
-                s.rehearse = true;
-            }
-        }
-        if big_button(ui, Icon::PlayFromCurrent, "From\nCurrent Slide", true).clicked() {
-            let i = app.session.active().map(|d| d.selection.slide).unwrap_or(0);
-            app.start_show(i, false);
-            if let Some(s) = app.show.as_mut() {
-                s.rehearse = true;
-            }
-        }
-    });
-    group(ui, |ui| {
-        if big_button(ui, Icon::Help, "Learn\nMore", true).clicked() {
-            app.open_url(iridium_decks_engine::links::APP_PAGE);
-        }
     });
 }

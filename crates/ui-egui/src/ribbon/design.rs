@@ -28,7 +28,9 @@ pub(super) fn design(app: &mut SlideApp, ui: &mut Ui) {
         {
             run(app, "design.theme", json!({"name": n}));
         }
-        if small_button(ui, Icon::Themes, "Browse for Themes…", enabled(app, "design.browseTheme"), false).clicked() {
+        if small_button(ui, Icon::Themes, "Browse for Themes…", enabled(app, "design.browseTheme") && app.services.pick_open.is_some(), false)
+            .clicked()
+        {
             run(app, "app.browseThemeDialog", json!({}));
         }
     });

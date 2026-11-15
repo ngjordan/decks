@@ -117,7 +117,7 @@ impl Default for UiState {
             zoom: None,
             sorter_zoom: 1.0,
             recent: vec![],
-            presenter_view: true,
+            presenter_view: false,
             show_keep_cursor: false,
             ui_scale: 1.0,
             format_tab: "fill".into(),

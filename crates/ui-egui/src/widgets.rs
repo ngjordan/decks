@@ -507,7 +507,9 @@ pub fn gallery(
         if sel {
             painter.rect_stroke(rect.expand(1.0), CornerRadius::same(4), Stroke::new(1.5, t.accent), egui::StrokeKind::Inside);
         }
-        if resp.on_hover_text(tip(i)).clicked() {
+        let tip = tip(i);
+        resp.widget_info(|| egui::WidgetInfo::labeled(egui::Role::Button, true, &tip));
+        if resp.on_hover_text(&tip).clicked() {
             clicked = Some(i);
         }
     }
@@ -607,6 +609,17 @@ mod tests {
     use super::*;
     use egui::accesskit::Role;
     use egui_kittest::kittest::Queryable;
+
+    /// Gallery tiles are named buttons for assistive tech, not anonymous click targets.
+    #[test]
+    fn gallery_tiles_have_accessible_names() {
+        let mut harness = egui_kittest::Harness::builder().with_size(vec2(200.0, 100.0)).build_ui(|ui| {
+            theme::install_fonts(ui.ctx());
+            gallery(ui, 2, vec2(40.0, 30.0), None, |_, _, _| {}, |i| format!("Tile {i}"));
+        });
+        harness.run();
+        harness.get_by_role_and_label(Role::Button, "Tile 1");
+    }
 
     /// Office's large split button: the icon and the visible label text run the main command;
     /// only the chevron at the end of the label row opens the options menu. The old geometry made
